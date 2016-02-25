@@ -1,0 +1,134 @@
+{% extends "pdk_base.html" %}
+{% load static from staticfiles %}
+{% load passive_data_kit %}
+
+{% block sidebar %}
+	<ul class="nav nav-sidebar">
+		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+	</ul>
+	<ul class="nav nav-sidebar">
+		<li><label>Groups</label></li>
+		{% for group in groups %}
+			<li><a href="#group_{{ group.pk }}">{{ group.name }} <span class="badge pull-right">{{ group.sources.count }}</span></a></li>
+		{% endfor %}
+		{% if solo_sources.count > 0 %}
+			<li><a href="#group_0">Ungrouped Sources <span class="badge pull-right">{{ solo_sources.count }}</span></a></li>
+		{% endif %}
+	</ul>
+	<ul class="nav nav-sidebar">
+		<li><label>Actions</label></li>
+		<li><a href="#add_source">Add Data Source</a></li>
+	</ul>
+{% endblock %}
+
+{% block content %}
+	<div class="row">
+		<div class="col-md-12">
+			<h2 class="sub-header"><a name="alerts"></a>Alerts</h2> 
+		</div>
+		
+		<div class="col-md-12">
+			<div class="alert alert-info" role="alert">Alerts will show up here once sanity checks are wired up...</div>
+		</div>
+	</div>
+	{% for group in groups %}
+		<div class="row">
+			<div class="col-md-12">
+				<h2 class="sub-header"><a name="group_{{ group.pk }}"></a>{{ group.name }}</h2> 
+			</div>
+			
+			<div class="col-md-12">
+				{% sources_table group.sources %}
+			</div>
+		</div>
+	{% endfor %}
+	{% if solo_sources.count > 0 %}
+		<div class="row">
+			<div class="col-md-12">
+				<h2 class="sub-header"><a name="group_0"></a>Ungrouped Sources</h2> 
+			</div>
+			<div class="col-md-12">
+				{% sources_table solo_sources %}
+			</div>
+		</div>
+	{% endif %}
+	<div class="row">
+		<div class="col-md-12">
+			<h2 class="sub-header"><a name="add_source"></a>Add Data Source</h2> 
+		</div>
+		<div class="col-md-4">
+			<label for="field_assigned_group">&nbsp;</label>
+			<p>
+				Adding a data source will display a summary in the group table above.
+			<p>
+			
+			<p>
+				<em>Note that adding or removing a data source only affects its visibility on this screen.</em>
+				It does not add or remove any data contributed by the data source.
+			</p>
+		</div>
+		<form method="POST">
+			<div class="col-md-4">
+				{% csrf_token %}
+				<div class="form-group">
+					<label for="field_source_identifier">Data Source Identifier</label>
+					<input type="text" class="form-control typeahead" name="source_identifier" id="field_source_identifier" placeholder="Data Source Identifier">
+				</div>
+				<div class="form-group">
+					<label for="field_friendly_name">Human-Readable Name (Optional)</label>
+					<input type="text" class="form-control" name="friendly_name" id="field_friendly_name" placeholder="Human-Readable Name">
+				</div>
+				<button type="submit" class="btn btn-default">Add Data Source&#8230;</button>
+			</div>
+			<div class="col-md-4">
+				<div class="form-group">
+					<label for="field_assigned_group">Assigned Group (Optional)</label>
+					<select name="assigned_group" id="field_assigned_group" class="form-control">
+						<option value="0">New Group</option>
+						{% for group in groups %}
+							<option value="{{ group.pk }}">{{ group.name }}</option>
+						{% endfor %}
+						<option value="-1">No Group</option>
+					</select>
+				</div>
+				<div class="form-group" id="form-pdk-group-name">
+					<label for="field_new_group_name">New Group Name</label>
+					<input type="text" class="form-control" name="new_group_name" id="field_new_group_name" placeholder="New Group Name">
+				</div>
+				<input type="hidden" name="operation" value="add_source" />
+			</div>
+		</form>
+	</div>
+	<!-- Modal -->
+	<div class="modal fade" id="delete_source_modal" tabindex="-1" role="dialog" aria-labelledby="delete_source_modal_label">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="delete_source_modal_label">Delete data source?</h4>
+				</div>
+				<div class="modal-body">
+					<p>Are you sure you want to delete <strong id="remove_source_name">NAME</strong>?</p>
+					
+					<p>
+						<em>
+							Deleting this data source only removes it from the dashboard. 
+							Its data will remain intact in the database.
+						</em>
+					</p> 
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary" id="btn_delete_source">Delete Source</button>
+				</div>
+			</div>
+		</div>
+		<form action="" method="POST" id="form_delete_source">
+			{% csrf_token %}
+			<input type="hidden" name="operation" value="remove_source" />
+			<input type="hidden" name="pk" value="" id="delete_source_pk" />
+		</form>
+	</div>
+
+	<script data-main="{% static  'pdk/js/home.js' %}" src="{% static  'pdk/js/lib/require.js' %}"></script>
+{% endblock %}
