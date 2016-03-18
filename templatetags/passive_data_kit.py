@@ -1,6 +1,7 @@
 import arrow
 
 from django import template
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -117,7 +118,53 @@ class PointHzNode(template.Node):
 
         return render_to_string('tag_point_hz.html', context)
 
+@register.tag(name="to_hz")
+def to_hz(parser, token):
+    try:
+        tag_name, frequency = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
 
+    return ToHzNode(frequency)
+
+class ToHzNode(template.Node):
+    def __init__(self, frequency):
+        self.frequency = template.Variable(frequency)
+
+    def render(self, context):
+        frequency = self.frequency.resolve(context)
+
+        value = "{:10.3f}".format(frequency) + " Hz"
+
+        if frequency < 1.0:
+            value = "{:10.3f}".format(frequency * 1000) + " mHz"
+
+        tooltip = "{:10.3f}".format(frequency) + " samples per second"
+
+        if frequency < 1.0:
+            frequency *= 60
+
+            if frequency > 1.0:
+                tooltip = "{:10.3f}".format(frequency) + " samples per minute"
+            else:
+                frequency *= 60
+
+                if frequency > 1.0:
+                    tooltip = "{:10.3f}".format(frequency) + " samples per hour"
+                else:
+                    frequency *= 24
+
+                    if frequency > 1.0:
+                        tooltip = "{:10.3f}".format(frequency) + " samples per day"
+                    else:
+                        frequency *= 7
+
+                        tooltip = "{:10.3f}".format(frequency) + " samples per week"
+
+        context['value'] = value
+        context['tooltip'] = tooltip
+
+        return render_to_string('tag_point_hz.html', context)
 
 @register.tag(name="date_ago")
 def date_ago(parser, token):
@@ -192,3 +239,49 @@ class HumanDurationNode(template.Node):
         context['seconds'] = seconds_obj
 
         return render_to_string('tag_human_duration.html', context)
+
+
+@register.tag(name="generators_table")
+def generators_table(parser, token):
+    try:
+        tag_name, source = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
+
+    return GeneratorsTableNode(source)
+
+class GeneratorsTableNode(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        context['source'] = source
+
+        return render_to_string('tag_generators_table.html', context)
+        
+
+@register.tag(name="generator_label")
+def generator_label(parser, token):
+    try:
+        tag_name, generator_id = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
+
+    return GeneratorLabelNode(source)
+
+class GeneratorLabelNode(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        context['source'] = source
+
+        return render_to_string('tag_generators_table.html', context)
+        
+
+
+

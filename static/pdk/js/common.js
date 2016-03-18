@@ -7,6 +7,9 @@ requirejs.config({
         "jquery": {
             exports: "$"
         },
+        "moment": {
+            exports: "moment"
+        },
         "bootstrap": {
             deps: ['jquery', 'jquery-cookie'],
             exports: 'bootstrap'

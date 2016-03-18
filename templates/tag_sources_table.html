@@ -14,7 +14,7 @@
 		{% for source in sources.all %}
 			<tr>
 				<td>{{ source.name }}</td>
-				<td>{{ source.identifier }}</td>
+				<td><a href="{% url 'pdk_source' source.identifier %}">{{ source.identifier }}</a></td>
 				<td>{% latest_point source %}</td>
 				<td>{% point_count source %}</td>
 				<td>{% point_hz source %}</td>

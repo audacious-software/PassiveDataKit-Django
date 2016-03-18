@@ -1,0 +1,46 @@
+{% extends "pdk_base.html" %}
+{% load static from staticfiles %}
+{% load passive_data_kit %}
+
+{% block sidebar %}
+	<ul class="nav nav-sidebar">
+		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+	</ul>
+	<ul class="nav nav-sidebar">
+		<li><label>TODO</label></li>
+		<li><a href="#generators">Generators</a></li>
+	</ul>
+	<ul class="nav nav-sidebar">
+		<li><label>Actions</label></li>
+		<li><a href="#add_source">Add Data Source</a></li>
+	</ul>
+{% endblock %}
+
+{% block content %}
+	<div class="row">
+		<div class="col-md-12">
+			<h1 class="sub-header">{{ source.name }}: {{ source.identifier }}</h1> 
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header"><a name="alerts"></a>Alerts</h3> 
+		</div>
+		
+		<div class="col-md-12">
+			<div class="alert alert-info" role="alert">Alerts will show up here once sanity checks are wired up...</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header"><a name="generators"></a>Generators</h3> 
+		</div>
+		<div class="col-md-12">
+			{% generators_table source %}
+		</div>
+	</div>
+
+	<script data-main="{% static  'pdk/js/home.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+{% endblock %}
