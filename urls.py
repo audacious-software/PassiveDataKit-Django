@@ -1,11 +1,14 @@
 from django.conf.urls import url
 
-from .views import add_data_point, add_data_bundle, pdk_home, unmatched_sources, pdk_source, pdk_source_generator, pdk_visualization_data
+from .views import add_data_point, add_data_bundle, pdk_home, unmatched_sources, pdk_source, \
+                   pdk_source_generator, pdk_visualization_data, pdk_export, pdk_download_report
 
 urlpatterns = [
     url(r'^visualization/(?P<source_id>.+)/(?P<generator_id>.+)/(?P<page>\d+).json$', pdk_visualization_data, name='pdk_visualization_data'),
+    url(r'^report/(?P<report_id>\d+)/download$', pdk_download_report, name='pdk_download_report'),
     url(r'^source/(?P<source_id>.+)/(?P<generator_id>.+)$', pdk_source_generator, name='pdk_source_generator'),
     url(r'^source/(?P<source_id>.+)$', pdk_source, name='pdk_source'),
+    url(r'^export$', pdk_export, name='pdk_export'),
     url(r'^add-point.json$', add_data_point, name='pdk_add_data_point'),
     url(r'^add-bundle.json$', add_data_bundle, name='pdk_add_data_bundle'),
     url(r'^unmatched-sources.json$', unmatched_sources, name='pdk_unmatched_sources'),

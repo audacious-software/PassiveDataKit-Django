@@ -5,6 +5,8 @@ import importlib
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
+from django.db.models.signals import post_delete
+from django.dispatch.dispatcher import receiver
 
 
 def generator_label(identifier):
@@ -106,8 +108,27 @@ class DataSource(models.Model):
             generators.append(generator)
         
         return generators
+
         
 class DataPointVisualizations(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True)
     last_updated = models.DateTimeField(db_index=True)
+
+
+class ReportJob(models.Model):
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+    
+    requested = models.DateTimeField(db_index=True)
+    started = models.DateTimeField(db_index=True, null=True, blank=True)
+    completed = models.DateTimeField(db_index=True, null=True, blank=True)
+
+    parameters = JSONField()
+    
+    report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
+
+@receiver(post_delete, sender=ReportJob)
+def report_job_post_delete_handler(sender, **kwargs):
+    job = kwargs['instance']
+    storage, path = job.report.storage, job.report.path
+    storage.delete(path)

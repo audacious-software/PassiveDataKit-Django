@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, DataPointVisualizations
+from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
+                    DataPointVisualizations, ReportJob
 
 @admin.register(DataPointVisualizations)
 class DataPointVisualizationsAdmin(admin.ModelAdmin):
@@ -25,3 +26,8 @@ class DataBundleAdmin(admin.ModelAdmin):
 class DataBundleAdmin(admin.ModelAdmin):
     list_display = ('name', 'identifier', 'group')
     list_filter = ('group',)
+
+@admin.register(ReportJob)
+class ReportJobAdmin(admin.ModelAdmin):
+    list_display = ('requester', 'requested', 'started', 'completed')
+    list_filter = ('requested', 'started', 'completed',)

@@ -1,9 +1,10 @@
 import datetime
 import importlib
 import json
+import os
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, FileResponse
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.utils import timezone
@@ -11,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.admin.views.decorators import staff_member_required
 
-from .models import DataPoint, DataBundle, DataSourceGroup, DataSource, generator_label
+from .models import DataPoint, DataBundle, DataSourceGroup, DataSource, ReportJob, generator_label
 
 @csrf_exempt
 def add_data_point(request):
@@ -184,4 +185,69 @@ def pdk_visualization_data(request, source_id, generator_id, page):
         
     return HttpResponseNotFound()
 
+@staff_member_required
+def pdk_download_report(request, report_id):
+    job = ReportJob.objects.get(pk=int(report_id))
+
+    filename = settings.MEDIA_ROOT + '/' + job.report.name
     
+    response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
+    
+    response['Content-Length'] = os.path.getsize(filename)
+    response['Content-Disposition'] = 'attachment; filename=pdk-export.zip'
+    
+    return response
+    
+@staff_member_required
+def pdk_export(request):
+    c = RequestContext(request)
+    
+    c['sources'] = DataPoint.objects.all().order_by('source').values_list('source', flat=True).distinct()
+    c['generators'] = DataPoint.objects.all().order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
+
+    c['message'] = ''
+    c['message_type'] = 'ok'
+    
+    if request.method == 'POST':
+        export_sources = []
+        export_generators = []
+        
+        for source in c['sources']:
+            key = 'source_' + source
+            
+            if key in request.POST:
+                export_sources.append(source)
+
+        for generator in c['generators']:
+            key = 'generator_' + generator
+            
+            if key in request.POST:
+                export_generators.append(generator)
+        
+        if len(export_sources) == 0:
+            c['message_type'] = 'error'
+            
+            if len(export_generators) == 0:
+                c['message'] = 'Please select one or more sources and generators to export data.'
+            else:
+                c['message'] = 'Please select one or more sources to export data.'
+        elif len(export_generators) == 0:
+            c['message_type'] = 'error'
+            
+            c['message'] = 'Please select one or more generators to export data.'
+        else:
+            job = ReportJob(requester=request.user, requested=timezone.now())
+        
+            params = {}
+        
+            params['sources'] = export_sources
+            params['generators'] = export_generators
+        
+            job.parameters = params
+        
+            job.save()
+            
+            c['message_type'] = 'ok'
+            c['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.'
+        
+    return render_to_response('pdk_export.html', c)

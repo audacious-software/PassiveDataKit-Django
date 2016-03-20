@@ -1,0 +1,9 @@
+Your exported data report is now available.
+
+Please download it from:
+
+	{{ url }}{% url 'pdk_download_report' report.pk %}
+	
+Please contact your site administrator if you have any questions.
+
+-Petey Kay, The PDK Robot
