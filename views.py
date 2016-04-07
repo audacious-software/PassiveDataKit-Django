@@ -21,7 +21,7 @@ def add_data_point(request):
     if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
         
@@ -36,16 +36,34 @@ def add_data_point(request):
         point.save()
 
         return response
+    elif request.method == 'POST':
+        response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+        response['Access-Control-Request-Headers'] = 'Content-Type'
+        response['Access-Control-Allow-Headers'] = 'Content-Type'
+        
+        point = json.loads(request.POST['payload'])
+                
+        point = DataPoint(recorded=timezone.now())
+        point.source = point['passive-data-metadata']['source']
+        point.generator = point['passive-data-metadata']['generator']
+        point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
+        point.properties = point
+        
+        point.save()
+
+        return response
     elif request.method == 'OPTIONS':
         response = HttpResponse('', content_type='text/plain', status=200)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
         
         return response
     
-    return HttpResponseNotAllowed(['CREATE'])
+    return HttpResponseNotAllowed(['CREATE', 'POST'])
 
 
 @csrf_exempt
@@ -55,7 +73,7 @@ def add_data_bundle(request):
     if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
@@ -66,16 +84,30 @@ def add_data_bundle(request):
         bundle.save()
         
         return response
+    elif request.method == 'POST':
+        response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+        response['Access-Control-Request-Headers'] = 'Content-Type'
+        response['Access-Control-Allow-Headers'] = 'Content-Type'
+
+        points = json.loads(request.POST['payload'])
+                
+        bundle = DataBundle(recorded=timezone.now())
+        bundle.properties = points
+        bundle.save()
+        
+        return response
     elif request.method == 'OPTIONS':
         response = HttpResponse('', content_type='text/plain', status=200)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
         
         return response
     
-    return HttpResponseNotAllowed(['CREATE'])
+    return HttpResponseNotAllowed(['CREATE', 'POST'])
 
 @staff_member_required
 def pdk_home(request):
