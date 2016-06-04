@@ -15,7 +15,7 @@ python:
 services: postgresql
 
 before_install:
-  - export DJANGO_SETTINGS_MODULE=passive_data_kit/test_settings
+  - export DJANGO_SETTINGS_MODULE=pdk/settings
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
   
 install:
@@ -28,7 +28,8 @@ script:
   - django-admin.py startproject pdk
   - cd pdk
   - git clone https://github.com/audaciouscode/PassiveDataKit-Android.git
-  - cp -R PassiveDataKit-Django pdk/passive_data_kit
+  - cp -R PassiveDataKit-Django passive_data_kit
+  - cp passive_data_kit/test_settings.py ../pdk/settings.py
   - python manage.py migrate
   - python manage.py test
 
