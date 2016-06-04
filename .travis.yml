@@ -37,7 +37,7 @@ before_script:
   - psql -U postgres -c "create extension postgis"
   - psql -c "CREATE DATABASE travisci;" -U postgres
   - psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
-  - postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
+  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
 
 script:
   - django-admin.py startproject pdk
