@@ -15,7 +15,7 @@ python:
 services: postgresql
 
 before_install:
-  - export DJANGO_SETTINGS_MODULE=pdk/settings
+#   - export DJANGO_SETTINGS_MODULE=pdk/settings
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
   
 install:
