@@ -28,9 +28,10 @@ before_script:
   - sudo cat /etc/postgresql/9.5/main/pg_hba.conf
   - sudo ps xau
   - sudo /etc/init.d/postgresql restart
-  - sudo -u postgres psql -c "CREATE DATABASE travisci;" -U postgres
-  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
-  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
+  - sudo ps xau
+  - sudo -u postgres psql -c "CREATE DATABASE travisci;" -U postgres -h 127.0.0.1
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis" -d travisci  -h 127.0.0.1
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci  -h 127.0.0.1
 
 script:
   - django-admin.py startproject pdk
