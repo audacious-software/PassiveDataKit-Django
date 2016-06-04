@@ -38,7 +38,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'passive_data_kit/travis_urls'
+ROOT_URLCONF = 'passive_data_kit.travis_urls'
 
 TEMPLATES = [
     {

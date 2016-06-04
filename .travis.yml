@@ -3,8 +3,9 @@ language: python
 python:
   - 2.7
 
-services: postgresql
-
+addons:
+  postgresql: "9.5"
+  
 before_install:
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
   
@@ -13,6 +14,8 @@ install:
 
 before_script:
   - psql -c "CREATE DATABASE travisci;" -U postgres
+  - psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
+  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
 
 script:
   - django-admin.py startproject pdk
