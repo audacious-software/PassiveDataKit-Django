@@ -70,6 +70,8 @@ DATABASES = {
     }
 }
 
+DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
