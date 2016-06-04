@@ -1,5 +1,10 @@
 sudo: required
 
+env:
+  global:
+    - PGPORT=5433
+    - PGHOST=localhost
+
 language: python
 
 python:
