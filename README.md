@@ -1,5 +1,6 @@
 # PassiveDataKit-Django
 
+[![Build Status](https://travis-ci.org/audaciouscode/PassiveDataKit-Django.svg?branch=master)](https://travis-ci.org/audaciouscode/PassiveDataKit-Django)
 
 Copyright 2015 Audacious Software
 

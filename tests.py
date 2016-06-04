@@ -1,3 +1,8 @@
 from django.test import TestCase
 
-# Create your tests here.
+class TestBasicsTestCase(TestCase):
+    def setUp(self):
+        pass
+
+    def test_tests_working(self):
+        self.assertNotEqual('foo', 'bar')
