@@ -28,7 +28,6 @@ addons:
       - libproj0
       - proj-data
       - proj-bin
-      - gdal-bin
     
   postgresql: 9.5
   
