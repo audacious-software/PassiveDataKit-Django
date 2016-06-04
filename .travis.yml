@@ -54,7 +54,5 @@ script:
   - mv ../passive_data_kit pdk
   - cd pdk
   - cp passive_data_kit/travis_settings.py pdk/settings.py
-  - cat passive_data_kit/travis_settings.py
-  - cat pdk/settings.py
   - python manage.py migrate
   - python manage.py test
