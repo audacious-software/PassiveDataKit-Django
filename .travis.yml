@@ -16,13 +16,20 @@ service:
 addons:
   apt:
     sources:
-    - precise-pgdg-9.5
+      - precise-pgdg-9.5
     packages:
-    - postgresql-9.5
-    - postgresql-contrib-9.5
-    - postgis
-    - postgresql-9.5-postgis-2.2
-    - postgresql-9.5-postgis-scripts
+      - postgresql-9.5
+      - postgresql-contrib-9.5
+      - postgis
+      - postgresql-9.5-postgis-2.2
+      - postgresql-9.5-postgis-scripts
+      - libgeos-3.4.2
+      - libgeos-c1
+      - libproj0
+      - proj-data
+      - proj-bin
+      - libgdal1h
+    
   postgresql: 9.5
   
 before_install:
