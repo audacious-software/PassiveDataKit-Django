@@ -29,9 +29,9 @@ before_script:
   - sudo ps xau
   - sudo /etc/init.d/postgresql restart
   - sudo ps xau
-  - sudo -u postgres psql -c "CREATE DATABASE travisci;" -U postgres -h 127.0.0.1
-  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis" -d travisci  -h 127.0.0.1
-  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci  -h 127.0.0.1
+  - sudo -u postgres psql -c "CREATE DATABASE travisci;" -U postgres
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
 
 script:
   - django-admin.py startproject pdk
