@@ -5,8 +5,8 @@ language: python
 python:
   - 2.7
 
-# service:
-#  - postgresql
+service:
+  - postgresql
 
 addons:
   apt:
@@ -24,8 +24,8 @@ install:
   - pip install -r requirements.txt
 
 before_script:
-#   - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
-  - sudo /etc/init.d/postgresql restart
+  - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
+#  - sudo /etc/init.d/postgresql restart
   - psql -c "CREATE DATABASE travisci;" -U postgres
   - psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
