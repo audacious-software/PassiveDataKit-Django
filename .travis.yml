@@ -26,6 +26,8 @@ before_script:
 
 script:
   - django-admin.py startproject pdk
+  - cd pdk
+  - git clone https://github.com/audaciouscode/PassiveDataKit-Android.git
   - cp -R PassiveDataKit-Django pdk/passive_data_kit
   - python manage.py migrate
   - python manage.py test
