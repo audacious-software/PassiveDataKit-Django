@@ -51,6 +51,7 @@ script:
   - git clone https://github.com/audaciouscode/PassiveDataKit-Django.git
   - cp -R PassiveDataKit-Django passive_data_kit
   - cp passive_data_kit/travis_settings.py pdk/settings.py
+  - cat passive_data_kit/travis_settings.py
   - cat pdk/settings.py
   - python manage.py migrate
   - python manage.py test
