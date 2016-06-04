@@ -69,7 +69,8 @@ DATABASES = {
         'PORT':     '',
     }
 }
-elif 'test' in sys.argv:
+
+if 'test' in sys.argv:
     DATABASES['default'] = {'ENGINE': 'django.db.backends.sqlite3'}
 
 # Internationalization
