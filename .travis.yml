@@ -26,9 +26,9 @@ install:
 before_script:
   - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
 #  - sudo /etc/init.d/postgresql restart
-  - psql -c "CREATE DATABASE travisci;" -U postgres
-  - psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
-  - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
+  - sudo -u postgres psql -c "CREATE DATABASE travisci;" -U postgres
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
+  - sudo -u postgres psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
 
 script:
   - django-admin.py startproject pdk
