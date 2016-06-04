@@ -58,7 +58,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pdk.wsgi.application'
 
-
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.postgresql_psycopg2',
@@ -69,9 +68,6 @@ DATABASES = {
         'PORT':     '',
     }
 }
-
-if 'test' in sys.argv:
-    DATABASES['default'] = {'ENGINE': 'django.db.backends.sqlite3'}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
