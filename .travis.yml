@@ -23,7 +23,7 @@ addons:
       - postgis
       - postgresql-9.5-postgis-2.2
       - postgresql-9.5-postgis-scripts
-      - libgeos
+      - libgeos-3.2.2
       - libgeos-c1
       - libproj0
       - proj-data
