@@ -24,6 +24,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'passive_data_kit'
 )
 
@@ -60,7 +61,7 @@ WSGI_APPLICATION = 'pdk.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE':   'django.db.backends.postgresql_psycopg2',
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
         'NAME':     'travisci',
         'USER':     'postgres',
         'PASSWORD': '',
