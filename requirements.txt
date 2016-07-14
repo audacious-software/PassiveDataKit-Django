@@ -1,9 +1,10 @@
-Django==1.9.2
+Django==1.9.6
 argparse==1.2.1
 arrow==0.7.0
 lockfile==0.12.2
 psycopg2==2.6.1
-python-dateutil==2.4.2
-pytz==2016.1
+python-dateutil==2.5.3
+pytz==2016.4
 six==1.10.0
 wsgiref==0.1.2
+xkcdpass==1.6.4
