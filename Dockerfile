@@ -26,6 +26,7 @@ RUN pip install -r requirements.txt
 RUN django-admin startproject pdk
 ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
+ADD aptible_wsgi.py pdk/pdk/wsgi.py
 
 # WORKDIR /app/pdk
 # RUN set -a && . /app/.aptible.env && python manage.py migrate
