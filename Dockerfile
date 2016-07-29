@@ -1,7 +1,7 @@
 # Dockerfile
 FROM quay.io/aptible/ubuntu:14.04
 
-RUN set -a && . /app/.aptible.env && echo $DATABASE_URL
+RUN set -a && . .aptible.env && echo $DATABASE_URL
 
 RUN apt-install software-properties-common wget
 RUN add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
@@ -27,8 +27,8 @@ ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
 
 WORKDIR /app/pdk
-RUN set -a && . /app/.aptible.env && python manage.py migrate
-RUN set -a && . /app/.aptible.env && python manage.py collectstatic
+RUN set -a && . .aptible.env && python manage.py migrate
+RUN set -a && . .aptible.env && python manage.py collectstatic
 
 ENV PORT 3000
 EXPOSE 3000
