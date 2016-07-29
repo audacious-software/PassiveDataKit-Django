@@ -1,5 +1,5 @@
 """
-Settings.py for testing on Travis CI.
+Settings.py for deploying standalone site on Aptible.
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -61,8 +61,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pdk.wsgi.application'
 
-DATABASES = {}
-DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+DATABASES = {'default': dj_database_url.config()}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
