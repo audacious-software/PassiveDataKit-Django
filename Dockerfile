@@ -27,8 +27,8 @@ ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
 
 WORKDIR /app/pdk
-RUN python manage.py migrate
-RUN python manage.py collectstatic
+RUN set -a && python manage.py migrate
+RUN set -a && python manage.py collectstatic
 
 ENV PORT 3000
 EXPOSE 3000
