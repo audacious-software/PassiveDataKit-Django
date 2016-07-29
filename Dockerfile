@@ -1,7 +1,7 @@
 # Dockerfile
 FROM quay.io/aptible/ubuntu:14.04
 
-add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
+RUN add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
 
 # Basic dependencies
 RUN apt-install build-essential python-dev python-setuptools
