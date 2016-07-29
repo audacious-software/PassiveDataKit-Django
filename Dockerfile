@@ -2,7 +2,7 @@
 FROM quay.io/aptible/ubuntu:14.04
 
 ADD .aptible.env /app
-RUN set -a && . /app/.aptible.env && echo $DATABASE_URL
+RUN cat /app/.aptible.env
 
 RUN apt-install software-properties-common wget
 RUN add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
