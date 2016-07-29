@@ -1,6 +1,8 @@
 # Dockerfile
 FROM quay.io/aptible/ubuntu:14.04
 
+RUN echo $DATABASE_URL
+
 RUN apt-install software-properties-common wget
 RUN add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
@@ -23,8 +25,6 @@ RUN pip install -r requirements.txt
 RUN django-admin startproject pdk
 ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
-
-RUN echo $DATABASE_URL
 
 WORKDIR /app/pdk
 RUN python manage.py migrate
