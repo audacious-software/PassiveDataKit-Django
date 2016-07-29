@@ -1,7 +1,7 @@
 # Dockerfile
 FROM quay.io/aptible/ubuntu:14.04
 
-ADD .aptible.env /app
+ADD .aptible.env /app/
 RUN cat /app/.aptible.env
 
 RUN apt-install software-properties-common wget
