@@ -11,7 +11,7 @@ RUN apt-install build-essential python-dev python-setuptools
 RUN apt-install libxml2-dev libxslt1-dev python-dev
 
 # PostgreSQL dev headers and client (uncomment if you use PostgreSQL)
-RUN apt-install libpq-dev postgresql-client-9.5 postgresql-contrib-9.5
+RUN apt-install libpq-dev postgresql-client-9.5
 
 RUN easy_install pip
 
