@@ -27,9 +27,9 @@ RUN django-admin startproject pdk
 ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
 
-WORKDIR /app/pdk
-RUN set -a && . /app/.aptible.env && python manage.py migrate
-RUN set -a && . /app/.aptible.env && python manage.py collectstatic
+# WORKDIR /app/pdk
+# RUN set -a && . /app/.aptible.env && python manage.py migrate
+# RUN set -a && . /app/.aptible.env && python manage.py collectstatic
 
 ENV PORT 3000
 EXPOSE 3000
