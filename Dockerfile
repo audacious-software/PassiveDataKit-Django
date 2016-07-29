@@ -1,7 +1,7 @@
 # Dockerfile
 FROM quay.io/aptible/ubuntu:14.04
 
-RUN apt-install software-properties-common
+RUN apt-install software-properties-common wget
 RUN add-apt-repository "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 RUN sudo apt-get update
