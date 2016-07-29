@@ -25,6 +25,8 @@ RUN django-admin startproject pdk
 ADD . pdk/passive_data_kit
 ADD aptible_settings.py pdk/pdk/settings.py
 
+RUN echo $DATABASE_URL
+
 WORKDIR /app/pdk
 RUN python manage.py migrate
 RUN python manage.py collectstatic
