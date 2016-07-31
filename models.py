@@ -8,7 +8,6 @@ from django.contrib.gis.db import models
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 
-
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
         try:
