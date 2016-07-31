@@ -1,19 +1,21 @@
 """
-Settings.py for testing on Travis CI.
+Settings.py for deploying standalone site on Aptible.
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
 
+import dj_database_url
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'foobar'
 
-DEBUG = False
-ADMINS = [('Chris Karr', 'chris@audacious-software.com')]
+DEBUG = True
+ADMINS = []
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -37,6 +39,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 )
 
 ROOT_URLCONF = 'passive_data_kit.travis_urls'
@@ -59,16 +62,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pdk.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE':   'django.contrib.gis.db.backends.postgis',
-        'NAME':     'travisci',
-        'USER':     'postgres',
-        'PASSWORD': '',
-        'HOST':     'localhost',
-        'PORT':     '',
-    }
-}
+DATABASES = {'default': dj_database_url.config()}
+DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -87,6 +82,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
+STATIC_ROOT = 'staticfiles'
 STATIC_URL = '/static/'
-STATIC_ROOT = 'static'
-
+STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'

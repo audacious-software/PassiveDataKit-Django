@@ -1,6 +1,7 @@
+import calendar
 import codecs
-import json
 import csv
+import json
 
 from django.template.loader import render_to_string
 
@@ -34,7 +35,7 @@ def compile_report(generator, sources):
     with open(filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
     
-        writer.writerow(['Source', 'Generator', 'Generator Identifier', 'Created', 'Latitude', 'Longitude', 'Recorded', 'Properties'])
+        writer.writerow(['Source', 'Generator', 'Generator Identifier', 'Created Timestamp', 'Created Date', 'Latitude', 'Longitude', 'Recorded Timestamp', 'Recorded Date', 'Properties'])
     
         for source in sources:
             points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
@@ -51,6 +52,7 @@ def compile_report(generator, sources):
                     row.append(point.source)
                     row.append(point.generator)
                     row.append(point.generator_identifier)
+                    row.append(calendar.timegm(point.created.utctimetuple()))
                     row.append(point.created.isoformat())
             
                     if point.generated_at is not None:
@@ -60,6 +62,7 @@ def compile_report(generator, sources):
                         row.append('')
                         row.append('')
             
+                    row.append(calendar.timegm(point.recorded.utctimetuple()))
                     row.append(point.recorded.isoformat())
                     row.append(json.dumps(point.properties))
             

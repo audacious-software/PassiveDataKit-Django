@@ -8,3 +8,6 @@ pytz==2016.4
 six==1.10.0
 wsgiref==0.1.2
 xkcdpass==1.6.4
+gunicorn==19.6.0
+dj-database-url==0.4.1
+whitenoise==3.2

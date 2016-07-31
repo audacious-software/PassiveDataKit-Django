@@ -31,7 +31,10 @@ class Command(BaseCommand):
                 point = DataPoint(recorded=timezone.now())
                 point.source = bundle_point['passive-data-metadata']['source']
                 point.generator = bundle_point['passive-data-metadata']['generator']
-                point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+                
+                if 'generator-id' in bundle_point['passive-data-metadata']:
+                    point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+                
                 point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=timezone.get_default_timezone())
                 point.properties = bundle_point
                 point.save()

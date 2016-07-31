@@ -64,10 +64,10 @@ class Command(BaseCommand):
 
                                 output_file = pdk_api.compile_report(generator, sources)
                             except ImportError:
-#                                traceback.print_exc()
+                                traceback.print_exc()
                                 output_file = None
                             except AttributeError:
-#                                traceback.print_exc()
+                                traceback.print_exc()
                                 output_file = None                                
                                 
                     if output_file is not None:

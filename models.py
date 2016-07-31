@@ -22,7 +22,7 @@ def generator_label(identifier):
         except AttributeError:
             pass
             
-    return generator_identifier
+    return identifier
 
 
 class DataPoint(models.Model):
