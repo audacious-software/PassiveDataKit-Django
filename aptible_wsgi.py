@@ -1,5 +1,5 @@
 """
-WSGI config for royalty project.
+WSGI config for Passive Data Kit project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -9,11 +9,8 @@ https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
 
 import os
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdk.settings")
-
 from django.core.wsgi import get_wsgi_application
 from whitenoise.django import DjangoWhiteNoise
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "royalty.settings")
-
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pdk.settings")
 application = DjangoWhiteNoise(get_wsgi_application())
