@@ -211,9 +211,12 @@ def pdk_visualization_data(request, source_id, generator_id, page):
     
     if page == '0':
         filename = 'visualization.json'
-
-    with open(folder + '/' + filename) as data_file:    
-        return HttpResponse(data_file.read(), content_type='application/json')
+        
+    try:
+        with open(folder + '/' + filename) as data_file:    
+            return HttpResponse(data_file.read(), content_type='application/json')
+    except IOError:
+        pass
         
     return HttpResponseNotFound()
 
