@@ -29,7 +29,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         to_delete = []
         
-        matches = DataPoint.objects.order_by('source', 'generator_identifier', 'created').values('source', 'generator_identifier', 'created').annotate(Count('pk'))
+        start = timezone.now() - datetime.timedelta(hours=4)
+        
+        matches = DataPoint.objects.filter(recorded__gte=start).order_by('source', 'generator_identifier', 'created').values('source', 'generator_identifier', 'created').annotate(Count('pk'))
         
         dupes = []
         
