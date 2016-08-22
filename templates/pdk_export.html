@@ -3,98 +3,103 @@
 {% load passive_data_kit %}
 
 {% block sidebar %}
-	<ul class="nav nav-sidebar">
-		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
-		<li><label>TODO</label></li>
-		<li><a href="#generators">Generators</a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
-		<li><label>Actions</label></li>
-		<li><a href="#add_source">Add Data Source</a></li>
-	</ul>
+    <ul class="nav nav-sidebar">
+        <li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+    </ul>
+    <ul class="nav nav-sidebar">
+        <li><label>TODO</label></li>
+        <li><a href="#generators">Generators</a></li>
+    </ul>
+    <ul class="nav nav-sidebar">
+        <li><label>Actions</label></li>
+        <li><a href="#add_source">Add Data Source</a></li>
+    </ul>
 {% endblock %}
 
 {% block content %}
-	<div class="row">
-		<div class="col-md-12">
-			<h1 class="sub-header">Export Data</h1> 
-		</div>
-	</div>
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="sub-header">Export Data</h1> 
+        </div>
+    </div>
 
-	<div class="row">
-		<div class="col-md-12">
-			<p>
-				Please select the relevant users and data generators to export.
-				Passive Data Kit will compile the requested data and e-mail you a download link.
-			</p>
-		</div>
-	</div>
-	
-	{% if message != '' %}
-		<div class="row">
-			<div class="col-md-12">
-				{% if message_type == 'ok' %}
-					<div class="alert alert-info" role="alert">{{ message }}</div>
-				{% else %}
-					<div class="alert alert-danger" role="alert">{{ message }}</div>
-				{% endif %}
-			</div>
-		</div>
-	{% endif %}
+    <div class="row">
+        <div class="col-md-12">
+            <p>
+                Please select the relevant users and data generators to export.
+                Passive Data Kit will compile the requested data and e-mail you a download link.
+            </p>
+        </div>
+    </div>
+    
+    {% if message != '' %}
+        <div class="row">
+            <div class="col-md-12">
+                {% if message_type == 'ok' %}
+                    <div class="alert alert-info" role="alert">{{ message }}</div>
+                {% else %}
+                    <div class="alert alert-danger" role="alert">{{ message }}</div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 
-	<form action="{% url 'pdk_export' %}" method="POST">
-		<div class="row">
-			{% csrf_token %}
-			<div class="col-md-6">
-				<h3>Sources</h3>
-				
-				<p>
-					<input type="checkbox" id="sources_select_all"> Select All Sources
-				</p>
-				
-				<p>
-					{% for source in sources %}
-						<input type="checkbox" name="source_{{ source }}" class="source_checkbox"> {{ source }}<br/>
-					{% endfor %}
-				</p>
-			</div>
-			<div class="col-md-6">
-				<h3>Data Generators</h3>
-				<p>
-					<input type="checkbox" id="generators_select_all"> Select All Generators
-				</p>
-				
-				<p>
-					{% for generator in generators %}
-						<input type="checkbox" name="generator_{{ generator }}" class="generator_checkbox"> {{ generator }}<br/>
-					{% endfor %}
-				</p>
-			</div>
-		</div>
+    <form action="{% url 'pdk_export' %}" method="POST">
+        <div class="row">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <h3>Sources</h3>
+                
+                <p>
+                    <input type="checkbox" id="sources_select_all"> Select All Sources
+                </p>
+                
+                <p>
+                    {% for source in sources %}
+                        <input type="checkbox" name="source_{{ source }}" class="source_checkbox"> {{ source }}<br/>
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h3>Data Generators</h3>
+                <p>
+                    <input type="checkbox" id="generators_select_all"> Select All Generators
+                </p>
+                
+                <p>
+                    {% for generator in generators %}
+                        <input type="checkbox" name="generator_{{ generator }}" class="generator_checkbox"> {{ generator }}<br/>
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
 
-		<div class="row">
-			<div class="col-md-12">
-				  <button type="submit" class="btn btn-default">Export Data</button>
-			</div>
-		</div>
-	</form>
-	
-	<script>
-			window.setTimeout(function()
-			{
-				$('#sources_select_all').change(function() 
-				{
-					$(".source_checkbox").prop("checked", $(this).is(":checked"));
-				});
+        <div class="row">
+            <div class="col-md-6">
+            </div>
+            <div class="col-md-3">
+                  <input type="checkbox" name="export_raw_json" /> Export raw data as JSON
+            </div>
+            <div class="col-md-3">
+                  <button type="submit" class="btn btn-default pull-right">Export Data</button>
+            </div>
+        </div>
+    </form>
+    
+    <script>
+            window.setTimeout(function()
+            {
+                $('#sources_select_all').change(function() 
+                {
+                    $(".source_checkbox").prop("checked", $(this).is(":checked"));
+                });
 
-				$('#generators_select_all').change(function() 
-				{
-					$(".generator_checkbox").prop("checked", $(this).is(":checked"));
-				});
-			}, 500);
-	</script>
-		
-	<script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+                $('#generators_select_all').change(function() 
+                {
+                    $(".generator_checkbox").prop("checked", $(this).is(":checked"));
+                });
+            }, 500);
+    </script>
+        
+    <script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
 {% endblock %}

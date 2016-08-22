@@ -277,6 +277,9 @@ def pdk_export(request):
         
             params['sources'] = export_sources
             params['generators'] = export_generators
+            
+            if 'export_raw_json' in request.POST and request.POST['export_raw_json']:
+                params['raw_data'] = True
         
             job.parameters = params
         
