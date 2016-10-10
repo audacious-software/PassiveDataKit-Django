@@ -1,4 +1,4 @@
-Django==1.9.6
+Django==1.10.1
 argparse==1.2.1
 arrow==0.7.0
 lockfile==0.12.2
