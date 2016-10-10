@@ -218,9 +218,12 @@ def pdk_visualization_data(request, source_id, generator_id, page):
     
     if page == '0':
         filename = 'visualization.json'
-
-    with open(folder + '/' + filename) as data_file:    
-        return HttpResponse(data_file.read(), content_type='application/json')
+        
+    try:
+        with open(folder + '/' + filename) as data_file:    
+            return HttpResponse(data_file.read(), content_type='application/json')
+    except IOError:
+        pass
         
     return HttpResponseNotFound()
 
@@ -281,6 +284,9 @@ def pdk_export(request):
         
             params['sources'] = export_sources
             params['generators'] = export_generators
+            
+            if 'export_raw_json' in request.POST and request.POST['export_raw_json']:
+                params['raw_data'] = True
         
             job.parameters = params
         

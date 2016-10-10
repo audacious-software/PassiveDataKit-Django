@@ -49,33 +49,37 @@ class Command(BaseCommand):
                     
                     compiled.last_updated = tz.localize(datetime.datetime.min)
                     compiled.save()
-            
-                if last_updated == None:
-                    last_updated = compiled
-                elif last_updated.last_updated > compiled.last_updated:
-                    last_updated = compiled
-
-        points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
-
-        folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + last_updated.source + '/' + last_updated.generator_identifier
-
-        if os.path.exists(folder) is False:
-            os.makedirs(folder)
+                    
+                last_point = DataPoint.objects.filter(source=source, generator_identifier=identifier).order_by('-recorded').first()
+                
+                if last_point is not None and last_point.recorded > compiled.last_updated:
+                    if last_updated is None:
+                        last_updated = compiled
+                    elif last_updated.last_updated > compiled.last_updated:
+                        last_updated = compiled
         
-        output = {}
-        
-        for app in settings.INSTALLED_APPS:
-            try:
-                pdk_api = importlib.import_module(app + '.pdk_api')
+        if last_updated is not None:
+            points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
 
-                output = pdk_api.compile_visualization(last_updated.generator_identifier, points, folder)
-            except ImportError:
-                pass
-            except AttributeError:
-                pass
+            folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + last_updated.source + '/' + last_updated.generator_identifier
+
+            if os.path.exists(folder) is False:
+                os.makedirs(folder)
+        
+            output = {}
+        
+            for app in settings.INSTALLED_APPS:
+                try:
+                    pdk_api = importlib.import_module(app + '.pdk_api')
+
+                    output = pdk_api.compile_visualization(last_updated.generator_identifier, points, folder)
+                except ImportError:
+                    pass
+                except AttributeError:
+                    pass
             
-        last_updated.last_updated = timezone.now()
-        last_updated.save()
+            last_updated.last_updated = timezone.now()
+            last_updated.save()
 
                         
                 
