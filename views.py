@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.admin.views.decorators import staff_member_required
 
-from .models import DataPoint, DataBundle, DataSourceGroup, DataSource, ReportJob, generator_label
+from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, generator_label
 
 @csrf_exempt
 def add_data_point(request):
@@ -100,6 +100,13 @@ def add_data_bundle(request):
         except ValueError:
             response = { 'message': 'Unable to parse data bundle.' }
             response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
+        
+        for key, value in request.FILES.iteritems():
+            file = DataFile(data_bundle=bundle)
+            file.identifier = value.name
+            file.content_type = value.content_type
+            file.content_file.save(value.name, value)
+            file.save()
         
         return response
     elif request.method == 'OPTIONS':

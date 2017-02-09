@@ -36,7 +36,6 @@ class DataPoint(models.Model):
     recorded = models.DateTimeField(db_index=True)
     
     properties = JSONField()
-
     
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)
@@ -44,13 +43,19 @@ class DataBundle(models.Model):
     
     processed = models.BooleanField(default=False, db_index=True)
 
+class DataFile(models.Model):
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True)
+    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True)
+    
+    identifier = models.CharField(max_length=256, db_index=True)
+    content_type = models.CharField(max_length=256, db_index=True)
+    content_file = models.FileField(upload_to='data_files')
 
 class DataSourceGroup(models.Model):
     name = models.CharField(max_length=1024, db_index=True)        
 
     def __unicode__(self):
         return self.name
-
 
 class DataSource(models.Model):
     identifier = models.CharField(max_length=1024, db_index=True)
