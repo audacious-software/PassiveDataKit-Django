@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib.gis.geos import *
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
@@ -28,16 +29,20 @@ class Command(BaseCommand):
         
         for bundle in DataBundle.objects.filter(processed=False)[:options['bundle_count']]:
             for bundle_point in bundle.properties:
-                point = DataPoint(recorded=timezone.now())
-                point.source = bundle_point['passive-data-metadata']['source']
-                point.generator = bundle_point['passive-data-metadata']['generator']
+                if 'passive-data-metadata' in bundle_point:
+                    point = DataPoint(recorded=timezone.now())
+                    point.source = bundle_point['passive-data-metadata']['source']
+                    point.generator = bundle_point['passive-data-metadata']['generator']
                 
-                if 'generator-id' in bundle_point['passive-data-metadata']:
-                    point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+                    if 'generator-id' in bundle_point['passive-data-metadata']:
+                        point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+
+                    if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
+                        point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
                 
-                point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=timezone.get_default_timezone())
-                point.properties = bundle_point
-                point.save()
+                    point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=timezone.get_default_timezone())
+                    point.properties = bundle_point
+                    point.save()
                 
             bundle.processed = True
             bundle.save()

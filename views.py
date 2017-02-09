@@ -90,12 +90,16 @@ def add_data_bundle(request):
         response['Access-Control-Allow-Methods'] = 'CREATE, POST'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
-
-        points = json.loads(request.POST['payload'])
+        
+        try:
+            points = json.loads(request.POST['payload'])
                 
-        bundle = DataBundle(recorded=timezone.now())
-        bundle.properties = points
-        bundle.save()
+            bundle = DataBundle(recorded=timezone.now())
+            bundle.properties = points
+            bundle.save()
+        except ValueError:
+            response = { 'message': 'Unable to parse data bundle.' }
+            response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', status=201)
         
         return response
     elif request.method == 'OPTIONS':
