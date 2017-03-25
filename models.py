@@ -26,15 +26,9 @@ def generator_label(identifier):
             
     return identifier
 
-_CACHED_SUPPORTS_JSON_FIELD = None
 
 def install_supports_jsonfield():
-	if _CACHED_SUPPORTS_JSON_FIELD is not None:
-	    return _CACHED_SUPPORTS_JSON_FIELD
-	    
-	print(connection.backend_info)
-	
-	return False
+    return (connection.pg_version >= 90400)
 
 
 class DataPoint(models.Model):
@@ -47,11 +41,19 @@ class DataPoint(models.Model):
     
     recorded = models.DateTimeField(db_index=True)
     
-    properties = JSONField()
+    if install_supports_jsonfield():
+        properties = JSONField()
+    else: 
+        properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+    
     
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)
-    properties = JSONField()
+
+    if install_supports_jsonfield():
+        properties = JSONField()
+    else: 
+        properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
     
     processed = models.BooleanField(default=False, db_index=True)
 
@@ -139,7 +141,10 @@ class ReportJob(models.Model):
     started = models.DateTimeField(db_index=True, null=True, blank=True)
     completed = models.DateTimeField(db_index=True, null=True, blank=True)
 
-    parameters = JSONField()
+    if install_supports_jsonfield():
+        parameters = JSONField()
+    else: 
+        parameters = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
     
     report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
 
