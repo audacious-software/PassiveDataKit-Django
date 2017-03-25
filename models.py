@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 
 import importlib
+import psycopg2
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
+from django.db import connection
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 
@@ -23,6 +25,16 @@ def generator_label(identifier):
             pass
             
     return identifier
+
+_CACHED_SUPPORTS_JSON_FIELD = None
+
+def install_supports_jsonfield():
+	if _CACHED_SUPPORTS_JSON_FIELD is not None:
+	    return _CACHED_SUPPORTS_JSON_FIELD
+	    
+	print(connection.backend_info)
+	
+	return False
 
 
 class DataPoint(models.Model):
