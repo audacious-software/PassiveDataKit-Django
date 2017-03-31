@@ -16,32 +16,32 @@ class Migration(migrations.Migration):
     ]
     
     if install_supports_jsonfield():
-		operations = [
-			migrations.CreateModel(
-				name='DataPoint',
-				fields=[
-					('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-					('source', models.CharField(max_length=1024)),
-					('generator', models.CharField(max_length=1024)),
-					('created', models.DateTimeField()),
-					('generated_at', django.contrib.gis.db.models.fields.PointField(null=True, srid=4326)),
-					('recorded', models.DateTimeField()),
-					('properties', django.contrib.postgres.fields.jsonb.JSONField()),
-				],
-			),
-		]
-	else:
-		operations = [
-			migrations.CreateModel(
-				name='DataPoint',
-				fields=[
-					('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-					('source', models.CharField(max_length=1024)),
-					('generator', models.CharField(max_length=1024)),
-					('created', models.DateTimeField()),
-					('generated_at', django.contrib.gis.db.models.fields.PointField(null=True, srid=4326)),
-					('recorded', models.DateTimeField()),
-					('properties', models.TextField(max_length=(32 * 1024 * 1024 * 1024))),
-				],
-			),
-		]
+        operations = [
+            migrations.CreateModel(
+                name='DataPoint',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('source', models.CharField(max_length=1024)),
+                    ('generator', models.CharField(max_length=1024)),
+                    ('created', models.DateTimeField()),
+                    ('generated_at', django.contrib.gis.db.models.fields.PointField(null=True, srid=4326)),
+                    ('recorded', models.DateTimeField()),
+                    ('properties', django.contrib.postgres.fields.jsonb.JSONField()),
+                ],
+            ),
+        ]
+    else:
+        operations = [
+            migrations.CreateModel(
+                name='DataPoint',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('source', models.CharField(max_length=1024)),
+                    ('generator', models.CharField(max_length=1024)),
+                    ('created', models.DateTimeField()),
+                    ('generated_at', django.contrib.gis.db.models.fields.PointField(null=True, srid=4326)),
+                    ('recorded', models.DateTimeField()),
+                    ('properties', models.TextField(max_length=(32 * 1024 * 1024 * 1024))),
+                ],
+            ),
+        ]

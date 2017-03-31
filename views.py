@@ -122,6 +122,16 @@ def add_data_bundle(request):
 
 @staff_member_required
 def pdk_home(request):
+    for app in settings.INSTALLED_APPS:
+        try:
+            app_views = importlib.import_module(app + '.views')
+            
+            return app_views.custom_pdk_home(request)
+        except ImportError:
+            pass
+        except AttributeError:
+            pass
+
     c = RequestContext(request)
     
     if request.method == 'POST':
