@@ -1,11 +1,12 @@
 import datetime
+import json
 
 from django.contrib.gis.geos import *
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataBundle
+from ..decorators import handle_lock
+from ..models import DataPoint, DataBundle, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -28,6 +29,9 @@ class Command(BaseCommand):
         to_delete = []
         
         for bundle in DataBundle.objects.filter(processed=False)[:options['bundle_count']]:
+            if install_supports_jsonfield() is False:
+                bundle.properties = json.loads(bundle.properties)
+        
             for bundle_point in bundle.properties:
                 if 'passive-data-metadata' in bundle_point:
                     point = DataPoint(recorded=timezone.now())
@@ -41,7 +45,12 @@ class Command(BaseCommand):
                         point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
                 
                     point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=timezone.get_default_timezone())
-                    point.properties = bundle_point
+
+                    if install_supports_jsonfield():
+                        point.properties = bundle_point
+                    else:
+                        point.properties = json.dumps(bundle_point, indent=2)
+                    
                     point.save()
                 
             bundle.processed = True
