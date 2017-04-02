@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.admin.views.decorators import staff_member_required
 
-from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, generator_label
+from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, generator_label, install_supports_jsonfield
 
 @csrf_exempt
 def add_data_point(request):
@@ -31,7 +31,11 @@ def add_data_point(request):
         point.source = point['passive-data-metadata']['source']
         point.generator = point['passive-data-metadata']['generator']
         point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
-        point.properties = point
+        
+        if install_supports_jsonfield():
+            point.properties = point
+        else:
+            point.properties = json.dumps(point, indent=2)
         
         point.save()
 
@@ -49,7 +53,11 @@ def add_data_point(request):
         point.source = point['passive-data-metadata']['source']
         point.generator = point['passive-data-metadata']['generator']
         point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
-        point.properties = point
+
+        if install_supports_jsonfield():
+            point.properties = point
+        else:
+            point.properties = json.dumps(point, indent=2)
         
         point.save()
 
@@ -80,7 +88,12 @@ def add_data_bundle(request):
         points = json.loads(request.body)
                 
         bundle = DataBundle(recorded=timezone.now())
-        bundle.properties = points
+
+        if install_supports_jsonfield():
+            bundle.properties = points
+        else:
+            bundle.properties = json.dumps(points, indent=2)
+
         bundle.save()
         
         return response
@@ -95,7 +108,12 @@ def add_data_bundle(request):
             points = json.loads(request.POST['payload'])
                 
             bundle = DataBundle(recorded=timezone.now())
-            bundle.properties = points
+
+            if install_supports_jsonfield():
+                bundle.properties = points
+            else:
+                bundle.properties = json.dumps(points, indent=2)
+
             bundle.save()
         except ValueError:
             response = { 'message': 'Unable to parse data bundle.' }

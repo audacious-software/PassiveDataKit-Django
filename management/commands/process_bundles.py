@@ -5,8 +5,8 @@ from django.contrib.gis.geos import *
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from ..decorators import handle_lock
-from ..models import DataPoint, DataBundle, install_supports_jsonfield
+from ...decorators import handle_lock
+from ...models import DataPoint, DataBundle, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -50,6 +50,8 @@ class Command(BaseCommand):
                         point.properties = bundle_point
                     else:
                         point.properties = json.dumps(bundle_point, indent=2)
+                        
+                    point.fetch_secondary_identifier()
                     
                     point.save()
                 

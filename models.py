@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import json
+
 import importlib
 import psycopg2
 
@@ -35,6 +37,7 @@ class DataPoint(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
     generator = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
+    secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
     
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True)
@@ -45,7 +48,26 @@ class DataPoint(models.Model):
         properties = JSONField()
     else: 
         properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+        
+    def fetch_secondary_identifier(self):
+        if self.secondary_identifier is not None:
+            return self.secondary_identifier
+        else:
+            if self.generator_identifier == 'pdk-app-event':
+                props = self.fetch_properties()
+                
+                self.secondary_identifier = props['event_name']
+                self.save()
+                
+                return self.secondary_identifier
+                
+        return None
     
+    def fetch_properties(self):
+        if install_supports_jsonfield():
+            return self.properties
+        
+        return json.loads(self.properties)
     
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)
