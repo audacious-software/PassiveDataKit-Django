@@ -54,6 +54,9 @@ class Command(BaseCommand):
                     point.fetch_secondary_identifier()
                     
                     point.save()
+
+            if install_supports_jsonfield() is False:
+                bundle.properties = json.dumps(bundle.properties, indent=2)
                 
             bundle.processed = True
             bundle.save()
