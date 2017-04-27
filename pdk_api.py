@@ -2,6 +2,7 @@ import calendar
 import codecs
 import csv
 import json
+import tempdir
 
 from django.template.loader import render_to_string
 
@@ -30,7 +31,7 @@ from .models import DataPoint
 #    return None
 
 def compile_report(generator, sources):
-    filename = '/tmp/pdk_' + generator + '.txt'
+    filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'
     
     with open(filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')

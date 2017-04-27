@@ -4,6 +4,7 @@ import datetime
 import json
 import os
 import pytz
+import tempdir
 import traceback
 
 import importlib
@@ -56,7 +57,7 @@ class Command(BaseCommand):
             if ('raw_data' in report.parameters) and report.parameters['raw_data'] is True:
                 raw_json = True
             
-            filename = '/tmp/pdk_export_' + str(report.pk) + '.zip'
+            filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
 
             with ZipFile(filename, 'w') as export_file:
                 for generator in generators:

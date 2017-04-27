@@ -1,5 +1,6 @@
 import time
 import logging
+import tempfile
 
 from lockfile import FileLock, AlreadyLocked, LockTimeout
 
@@ -39,7 +40,7 @@ def handle_lock(handle):
         logging.debug("-" * 72)
         
         lock_name = self.__module__.split('.').pop()
-        lock = FileLock('/tmp/pdk_lock_' + lock_name)
+        lock = FileLock(tempfile.gettempdir() + '/pdk_lock_' + lock_name)
         
         logging.debug("%s - acquiring lock..." % lock_name)
         try:
