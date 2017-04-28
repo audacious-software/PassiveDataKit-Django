@@ -6,7 +6,6 @@ import os
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, FileResponse
 from django.shortcuts import render, render_to_response
-from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -150,7 +149,7 @@ def pdk_home(request):
         except AttributeError:
             pass
 
-    c = RequestContext(request)
+    c = {}
     
     if request.method == 'POST':
         if request.POST['operation'] == 'add_source':
@@ -186,7 +185,7 @@ def pdk_home(request):
 
 @staff_member_required
 def pdk_source(request, source_id):
-    c = RequestContext(request)
+    c = {}
     
     source_name = None
     source_group = None
@@ -203,7 +202,7 @@ def pdk_source(request, source_id):
 
 @staff_member_required
 def pdk_source_generator(request, source_id, generator_id):
-    c = RequestContext(request)
+    c = {}
     
     source_name = None
     source_group = None
@@ -274,7 +273,7 @@ def pdk_download_report(request, report_id):
     
 @staff_member_required
 def pdk_export(request):
-    c = RequestContext(request)
+    c = {}
     
     c['sources'] = DataPoint.objects.all().order_by('source').values_list('source', flat=True).distinct()
     c['generators'] = DataPoint.objects.all().order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
