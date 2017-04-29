@@ -1,3 +1,5 @@
+# pylint: disable=pointless-string-statement
+
 import time
 import logging
 import tempfile
@@ -23,7 +25,7 @@ def handle_lock(handle):
     Decorate the handle method with a file lock to ensure there is only ever
     one process running at any one time.
     """
-    
+
     def wrapper(self, *args, **options):
         start_time = time.time()
         verbosity = options.get('verbosity', 0)
@@ -35,14 +37,15 @@ def handle_lock(handle):
             level = logging.INFO
         else:
             level = logging.DEBUG
-        
+
         logging.basicConfig(level=level, format="%(message)s")
         logging.debug("-" * 72)
-        
+
         lock_name = self.__module__.split('.').pop()
-        lock = FileLock(tempfile.gettempdir() + '/pdk_lock_' + lock_name)
-        
-        logging.debug("%s - acquiring lock..." % lock_name)
+        lock = FileLock('%s/pdk_lock_%s' % (tempfile.gettempdir(), lock_name))
+
+        logging.debug("%s - acquiring lock...", lock_name)
+
         try:
             lock.acquire(LOCK_WAIT_TIMEOUT)
         except AlreadyLocked:
@@ -51,22 +54,23 @@ def handle_lock(handle):
         except LockTimeout:
             logging.debug("waiting for the lock timed out. quitting.")
             return
+
         logging.debug("acquired.")
-        
+
         try:
             handle(self, *args, **options)
-        except:
+        except: # pylint: disable=bare-except
             import traceback
             logging.error("Command Failed")
             logging.error('==' * 72)
             logging.error(traceback.format_exc())
             logging.error('==' * 72)
-        
+
         logging.debug("releasing lock...")
         lock.release()
         logging.debug("released.")
-        
-        logging.info("done in %.2f seconds" % (time.time() - start_time))
+
+        logging.info("done in %.2f seconds", (time.time() - start_time))
         return
-        
+
     return wrapper

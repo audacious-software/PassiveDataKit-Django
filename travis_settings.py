@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 """
 Settings.py for testing on Travis CI.
 """
