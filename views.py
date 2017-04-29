@@ -6,6 +6,7 @@ import json
 import os
 
 from django.conf import settings
+from django.core.management import call_command
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse
 from django.shortcuts import render_to_response
@@ -106,6 +107,8 @@ def add_data_bundle(request):
 
         bundle.save()
 
+        call_command('process_bundles')
+
         return response
     elif request.method == 'POST':
         response = HttpResponse(json.dumps(response, indent=2), \
@@ -140,6 +143,8 @@ def add_data_bundle(request):
             data_file.content_type = value.content_type
             data_file.content_file.save(value.name, value)
             data_file.save()
+
+        call_command('process_bundles')
 
         return response
     elif request.method == 'OPTIONS':

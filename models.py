@@ -12,6 +12,7 @@ from django.contrib.gis.db import models
 from django.db import connection
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
+from django.utils.text import slugify
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -29,6 +30,8 @@ def generator_label(identifier):
 
     return identifier
 
+def generator_slugify(str_obj):
+    return slugify(str_obj.replace('.', ' ')).replace('-', '_')
 
 def install_supports_jsonfield():
     return connection.pg_version >= 90400
@@ -54,13 +57,21 @@ class DataPoint(models.Model):
         if self.secondary_identifier is not None:
             return self.secondary_identifier
         else:
-            if self.generator_identifier == 'pdk-app-event':
-                props = self.fetch_properties()
+            for app in settings.INSTALLED_APPS:
+                generator_name = generator_slugify(self.generator_identifier)
 
-                self.secondary_identifier = props['event_name']
-                self.save()
+                try:
+                    generator = importlib.import_module(app + '.generators.' + generator_name)
 
-                return self.secondary_identifier
+                    identifier = generator.extract_secondary_identifier(self.fetch_properties())
+
+                    if identifier is not None:
+                        self.secondary_identifier = identifier
+                        self.save()
+
+                    return self.secondary_identifier
+                except ImportError:
+                    pass
 
         return None
 
