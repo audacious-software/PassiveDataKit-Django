@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 """
 WSGI config for Passive Data Kit project.
 

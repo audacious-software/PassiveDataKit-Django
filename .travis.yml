@@ -36,3 +36,6 @@ script:
   - cp passive_data_kit/travis_settings.py pdk/settings.py
   - python manage.py migrate
   - python manage.py test
+  - cp passive_data_kit/.pylintrc .
+  - pylint passive_data_kit
+  - bandit -r .

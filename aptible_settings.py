@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 """
 Settings.py for deploying standalone site on Aptible.
 """
