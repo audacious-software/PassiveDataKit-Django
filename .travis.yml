@@ -1,9 +1,6 @@
 sudo: required
 
 env:
-  global:
-    - PGPORT=5433
-    - PGHOST=localhost
 
 language: python
 
@@ -14,21 +11,6 @@ service:
   - postgresql
 
 addons:
-  apt:
-    sources:
-      - precise-pgdg-9.5
-    packages:
-      - postgresql-9.5
-      - postgresql-contrib-9.5
-      - postgis
-      - postgresql-9.5-postgis-2.2
-      - postgresql-9.5-postgis-scripts
-      - libgeos-3.2.2
-      - libgeos-c1
-      - libproj0
-      - proj-data
-      - proj-bin
-    
   postgresql: 9.5
   
 before_install:
@@ -38,10 +20,8 @@ install:
   - pip install -r requirements.txt
 
 before_script:
-  - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
-  - sudo /etc/init.d/postgresql restart
   - psql -U postgres -c "create extension postgis"
-  - psql -c "CREATE DATABASE travisci;" -U postgres
+  - psql -U postgres -c "CREATE DATABASE travisci;" 
   - psql -U postgres -c "CREATE EXTENSION postgis" -d travisci
   - psql -U postgres -c "CREATE EXTENSION postgis_topology" -d travisci
 
