@@ -25,7 +25,7 @@ class SourcesTableNode(template.Node):
 
         context['sources'] = query
 
-        return render_to_string('tag_sources_table.html', context)
+        return render_to_string('tag_sources_table.html', context.flatten())
 
 
 @register.tag(name="latest_point")
@@ -47,7 +47,7 @@ class LatestPointNode(template.Node):
 
         context['latest_point'] = source.latest_point()
 
-        return render_to_string('tag_latest_point.html', context)
+        return render_to_string('tag_latest_point.html', context.flatten())
 
 
 @register.tag(name="point_count")
@@ -119,7 +119,7 @@ class PointHzNode(template.Node):
         context['value'] = value
         context['tooltip'] = tooltip
 
-        return render_to_string('tag_point_hz.html', context)
+        return render_to_string('tag_point_hz.html', context.flatten())
 
 @register.tag(name="to_hz")
 def to_hz(parser, token): # pylint: disable=unused-argument
@@ -168,7 +168,7 @@ class ToHzNode(template.Node):
         context['value'] = value
         context['tooltip'] = tooltip
 
-        return render_to_string('tag_point_hz.html', context)
+        return render_to_string('tag_point_hz.html', context.flatten())
 
 @register.tag(name="date_ago")
 def date_ago(parser, token): # pylint: disable=unused-argument
@@ -209,7 +209,7 @@ class DateAgoNode(template.Node):
         context['ago'] = ago_str
         context['date'] = date_obj
 
-        return render_to_string('tag_date_ago.html', context)
+        return render_to_string('tag_date_ago.html', context.flatten())
 
 
 @register.tag(name="human_duration")
@@ -244,7 +244,7 @@ class HumanDurationNode(template.Node):
         context['human_duration'] = ago_str
         context['seconds'] = seconds_obj
 
-        return render_to_string('tag_human_duration.html', context)
+        return render_to_string('tag_human_duration.html', context.flatten())
 
 
 @register.tag(name="generators_table")
@@ -266,7 +266,7 @@ class GeneratorsTableNode(template.Node):
 
         context['source'] = source
 
-        return render_to_string('tag_generators_table.html', context)
+        return render_to_string('tag_generators_table.html', context.flatten())
 
 
 @register.tag(name="generator_label")
@@ -288,4 +288,4 @@ class GeneratorLabelNode(template.Node):
 
         context['source'] = source
 
-        return render_to_string('tag_generators_table.html', context)
+        return render_to_string('tag_generators_table.html', context.flatten())
