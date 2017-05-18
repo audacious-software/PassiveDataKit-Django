@@ -1,5 +1,7 @@
+# pylint: disable=line-too-long
 import calendar
 import csv
+import importlib
 import json
 import tempfile
 
@@ -28,6 +30,18 @@ from .models import DataPoint
 #    return None
 
 def compile_report(generator, sources):
+    try:
+        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+
+        output_file = generator_module.compile_report(generator, sources)
+
+        if output_file is not None:
+            return output_file
+    except ImportError:
+        pass
+    except AttributeError:
+        pass
+
     filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'
 
     with open(filename, 'w') as outfile:
@@ -53,8 +67,6 @@ def compile_report(generator, sources):
             count = points.count()
 
             while index < count:
-#                print(source + '/' + generator + ': ' + str(index) + ' / ' + str(count))
-#
                 for point in points[index:(index + 5000)]:
                     row = []
 

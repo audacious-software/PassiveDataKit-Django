@@ -185,5 +185,9 @@ class ReportJob(models.Model):
 @receiver(post_delete, sender=ReportJob)
 def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
     job = kwargs['instance']
-    storage, path = job.report.storage, job.report.path
-    storage.delete(path)
+
+    try:
+        storage, path = job.report.storage, job.report.path
+        storage.delete(path)
+    except ValueError:
+        pass

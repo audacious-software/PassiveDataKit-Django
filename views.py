@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.management import call_command
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -202,7 +202,7 @@ def pdk_home(request):
     context['groups'] = DataSourceGroup.objects.order_by('name')
     context['solo_sources'] = DataSource.objects.filter(group=None).order_by('name')
 
-    return render_to_response('pdk_home.html', context)
+    return render(request, 'pdk_home.html', context=context)
 
 @staff_member_required
 def pdk_source(request, source_id): # pylint: disable=unused-argument
@@ -216,7 +216,7 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
 
     context['source'] = source
 
-    return render_to_response('pdk_source.html', context)
+    return render(request, 'pdk_source.html', context=context)
 
 @staff_member_required
 def pdk_source_generator(request, source_id, generator_id): # pylint: disable=unused-argument
@@ -244,7 +244,7 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
         except AttributeError:
             pass
 
-    return render_to_response('pdk_source_generator.html', context)
+    return render(request, 'pdk_source_generator.html', context=context)
 
 @staff_member_required
 def unmatched_sources(request): # pylint: disable=unused-argument
@@ -287,7 +287,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
     return response
 
 @staff_member_required
-def pdk_export(request):
+def pdk_export(request): # pylint: disable=too-many-branches
     context = {}
 
     context['sources'] = DataPoint.objects.all().order_by('source')\
@@ -339,11 +339,14 @@ def pdk_export(request):
             if 'export_raw_json' in request.POST and request.POST['export_raw_json']:
                 params['raw_data'] = True
 
-            job.parameters = params
+            if install_supports_jsonfield():
+                job.parameters = params
+            else:
+                job.parameters = json.dumps(params, indent=2)
 
             job.save()
 
             context['message_type'] = 'ok'
             context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
 
-    return render_to_response('pdk_export.html', context)
+    return render(request, 'pdk_export.html', context=context)

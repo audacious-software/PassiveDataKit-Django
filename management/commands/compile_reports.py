@@ -6,6 +6,7 @@ import importlib
 import json
 import os
 import tempfile
+# import traceback
 
 from zipfile import ZipFile
 
@@ -16,8 +17,8 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, ReportJob
+from ...decorators import handle_lock
+from ...models import DataPoint, ReportJob, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Compiles data reports requested by end users.'
@@ -48,12 +49,19 @@ class Command(BaseCommand):
             report.started = timezone.now()
             report.save()
 
-            sources = report.parameters['sources']
-            generators = report.parameters['generators']
+            parameters = {}
+
+            if install_supports_jsonfield():
+                parameters = report.parameters
+            else:
+                parameters = json.loads(report.parameters)
+
+            sources = parameters['sources']
+            generators = parameters['generators']
 
             raw_json = False
 
-            if ('raw_data' in report.parameters) and report.parameters['raw_data'] is True:
+            if ('raw_data' in parameters) and parameters['raw_data'] is True:
                 raw_json = True
 
             filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
@@ -115,10 +123,10 @@ class Command(BaseCommand):
 
                                     output_file = pdk_api.compile_report(generator, sources)
                                 except ImportError:
-    #                                traceback.print_exc()
+#                                    traceback.print_exc()
                                     output_file = None
                                 except AttributeError:
-    #                                traceback.print_exc()
+#                                    traceback.print_exc()
                                     output_file = None
 
                         if output_file is not None:
@@ -142,7 +150,10 @@ class Command(BaseCommand):
                 'url': settings.SITE_URL
             })
 
-            host = settings.SITE_URL.split('/')[-2]
+            host = settings.SITE_URL.split('/')[-1]
+
+            if len(settings.SITE_URL.split('/')) > 2:
+                host = settings.SITE_URL.split('/')[-1]
 
             send_mail(subject, \
                       message, \
