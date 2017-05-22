@@ -1,4 +1,4 @@
-Django==1.11
+Django==1.11.1
 argparse==1.2.1
 arrow==0.10.0
 dj-database-url==0.4.2
@@ -12,3 +12,4 @@ whitenoise==3.3.0
 wsgiref==0.1.2
 pylint==1.7.1
 bandit==1.4.0
+requests==2.14.2

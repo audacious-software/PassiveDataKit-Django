@@ -42,7 +42,7 @@ def compile_report(generator, sources):
     except AttributeError:
         pass
 
-    filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'
+    filename = tempfile.gettempdir() + '/' + generator + '.txt'
 
     with open(filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')

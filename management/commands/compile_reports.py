@@ -122,6 +122,14 @@ class Command(BaseCommand):
                                     pdk_api = importlib.import_module(app + '.pdk_api')
 
                                     output_file = pdk_api.compile_report(generator, sources)
+
+                                    if output_file.lower().endswith('.zip'):
+                                        with ZipFile(output_file, 'r') as source_file:
+                                            for name in source_file.namelist():
+                                                export_file.writestr(name, source_file.open(name).read()) # pylint: disable=line-too-long
+
+                                        os.remove(output_file)
+                                        output_file = None
                                 except ImportError:
 #                                    traceback.print_exc()
                                     output_file = None
