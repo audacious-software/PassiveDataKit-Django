@@ -13,3 +13,4 @@ wsgiref==0.1.2
 pylint==1.7.1
 bandit==1.4.0
 requests==2.14.2
+requests-oauthlib==0.8.0
