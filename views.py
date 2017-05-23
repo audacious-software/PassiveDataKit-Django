@@ -8,7 +8,7 @@ import os
 from django.conf import settings
 from django.core.management import call_command
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
-                        FileResponse
+                        FileResponse, UnreadablePostError
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -135,7 +135,12 @@ def add_data_bundle(request):
             response = {'message': 'Unable to parse data bundle.'}
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
-                                    status=201)
+                                    status=400)
+        except UnreadablePostError:
+            response = {'message': 'Unable to parse data bundle.'}
+            response = HttpResponse(json.dumps(response, indent=2), \
+                                    content_type='application/json', \
+                                    status=400)
 
         for key, value in request.FILES.iteritems(): # pylint: disable=unused-variable
             data_file = DataFile(data_bundle=bundle)
