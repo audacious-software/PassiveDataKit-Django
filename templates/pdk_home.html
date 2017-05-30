@@ -4,7 +4,9 @@
 
 {% block sidebar %}
 	<ul class="nav nav-sidebar">
-		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+		<li>
+			<a href="#alerts">Alerts {% system_alerts_badge %}</a>
+		</li>
 	</ul>
 	<ul class="nav nav-sidebar">
 		<li><label>Groups</label></li>
@@ -28,7 +30,7 @@
 		</div>
 		
 		<div class="col-md-12">
-			<div class="alert alert-info" role="alert">Alerts will show up here once sanity checks are wired up...</div>
+			{% system_alerts_table %}
 		</div>
 	</div>
 	{% for group in groups %}

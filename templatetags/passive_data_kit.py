@@ -1,8 +1,12 @@
+# pylint: disable=no-member
+
 import arrow
 
 from django import template
 from django.template.loader import render_to_string
 from django.utils import timezone
+
+from ..models import DataSourceAlert
 
 register = template.Library()
 
@@ -289,3 +293,78 @@ class GeneratorLabelNode(template.Node):
         context['source'] = source
 
         return render_to_string('tag_generators_table.html', context.flatten())
+
+
+@register.tag(name="system_alerts_table")
+def system_alerts_table(parser, token): # pylint: disable=unused-argument
+    return SystemAlertsTableNode()
+
+class SystemAlertsTableNode(template.Node):
+    def __init__(self):
+        pass
+
+    def render(self, context):
+
+        context['alerts'] = DataSourceAlert.objects.filter(active=True)
+
+        return render_to_string('tag_system_alerts_table.html', context.flatten())
+
+@register.tag(name="system_alerts_badge")
+def system_alerts_badge(parser, token): # pylint: disable=unused-argument
+    return SystemAlertsCountBadge()
+
+class SystemAlertsCountBadge(template.Node):
+    def __init__(self):
+        pass
+
+    def render(self, context):
+        count = DataSourceAlert.objects.filter(active=True).count()
+
+        if count > 0:
+            return '<span class="badge pull-right">' + str(count) + '</span>'
+
+        return ''
+
+@register.tag(name="source_alerts_table")
+def source_alerts_table(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, source = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+                                           token.contents.split()[0])
+
+    return SourceAlertsTableNode(source)
+
+class SourceAlertsTableNode(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        context['alerts'] = DataSourceAlert.objects.filter(active=True, data_source=source)
+
+        return render_to_string('tag_source_alerts_table.html', context.flatten())
+
+@register.tag(name="source_alerts_badge")
+def source_alerts_badge(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, source = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+                                           token.contents.split()[0])
+    return SourceAlertsCountBadge(source)
+
+class SourceAlertsCountBadge(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        count = DataSourceAlert.objects.filter(active=True, data_source=source).count()
+
+        if count > 0:
+            return '<span class="badge pull-right">' + str(count) + '</span>'
+
+        return ''

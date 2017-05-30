@@ -1,0 +1,47 @@
+{% load passive_data_kit %}
+<table class="alerts_table table-striped" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
+    <thead>
+        <tr>
+            <th data-sortable="true"><span class="glyphicon glyphicon-alert" aria-hidden="true"></span></th>
+            <th data-sortable="true">Generator</th>
+            <th data-sortable="true" data-sort-order="desc">Created</th>
+            <th data-sortable="true" data-sort-order="desc">Updated</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for alert in alerts %}
+        	{% if alert.alert_level == 'warning' %}
+            	<tr class="warning">
+	                <td>
+	                	<span style="display: none;">3</span>
+	                	<span class="glyphicon glyphicon-alert" aria-hidden="true">
+	                </td>
+        	{% elif alert.alert_level == 'critical' %}
+            	<tr class="danger">
+	                <td>
+						<span style="display: none;">2</span>
+	                	<span class="glyphicon glyphicon-alert" aria-hidden="true">
+	                </td>
+	        {% else %}
+            	<tr>
+	                <td>
+	                	<span style="display: none;">1</span>
+		                <span class="glyphicon glyphicon-info-sign" aria-hidden="true">
+		            </td>
+	        {% endif %}
+                <td>
+                	<span style="display: none;">{{ alert.data_source.name }}</span>
+                	<a href="{% url 'pdk_source' alert.data_source.identifier %}">{{ alert.data_source.name }}</a>
+                </td>
+                <td>
+					{% date_ago alert.created %}
+				</td>
+                <td>
+                	{% date_ago alert.updated %}
+                </td>
+                <td>{{ alert.fetch_alert_details.message }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

@@ -161,6 +161,40 @@ class DataSource(models.Model):
 
         return generators
 
+ALERT_LEVEL_CHOICES = (
+    ('info', 'Informative'),
+    ('warning', 'Warning'),
+    ('critical', 'Critical'),
+)
+
+class DataSourceAlert(models.Model):
+    alert_name = models.CharField(max_length=1024)
+    alert_level = models.CharField(max_length=64, choices=ALERT_LEVEL_CHOICES, default='info')
+
+    if install_supports_jsonfield():
+        alert_details = JSONField()
+    else:
+        alert_details = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    data_source = models.ForeignKey(DataSource, related_name='alerts')
+    generator_identifier = models.CharField(max_length=1024, null=True, blank=True)
+
+    created = models.DateTimeField()
+    updated = models.DateTimeField(null=True, blank=True)
+
+    active = models.BooleanField(default=True)
+
+    def fetch_alert_details(self):
+        if install_supports_jsonfield():
+            return self.alert_details
+
+        return json.loads(self.alert_details)
+
+    def update_alert_details(self, details):
+        if install_supports_jsonfield():
+            self.alert_details = details
+        else:
+            self.alert_details = json.dumps(details, indent=2)
 
 class DataPointVisualizations(models.Model):
     source = models.CharField(max_length=1024, db_index=True)

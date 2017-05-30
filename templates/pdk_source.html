@@ -4,7 +4,7 @@
 
 {% block sidebar %}
 	<ul class="nav nav-sidebar">
-		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+		<li><a href="#alerts">Alerts {% source_alerts_badge source %}</a></li>
 	</ul>
 	<ul class="nav nav-sidebar">
 		<li><label>TODO</label></li>
@@ -29,7 +29,7 @@
 		</div>
 		
 		<div class="col-md-12">
-			<div class="alert alert-info" role="alert">Alerts will show up here once sanity checks are wired up...</div>
+			{% source_alerts_table source %}
 		</div>
 	</div>
 
@@ -44,3 +44,6 @@
 
 	<script data-main="{% static  'pdk/js/home.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
 {% endblock %}
+
+
+pdk_run_status_checks
