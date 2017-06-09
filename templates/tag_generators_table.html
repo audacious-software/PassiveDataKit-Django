@@ -12,7 +12,7 @@
 	<tbody>
 		{% for generator in source.generator_statistics %}
 			<tr>
-				<td><a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{{ generator.label }}</a></td>
+				<td><a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a></td>
 				<td>{{ generator.points_count }}</td>
 				<td>{{ generator.last_recorded }}</td>
 				<td>

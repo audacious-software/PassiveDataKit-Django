@@ -1,9 +1,12 @@
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long, no-member
+
 import calendar
 import csv
 import importlib
 import json
 import tempfile
+
+from django.template.loader import render_to_string
 
 from .models import DataPoint
 
@@ -18,16 +21,67 @@ from .models import DataPoint
 #    if identifier == 'web-historian':
 #
 
-# def viz_template(source, identifier):
-#    if identifier == 'web-historian':
-#        context = {
-#           'source': source,
-#           'identifier': identifier,
-#        }
-#
-#        return render_to_string('table_web_historian.html', context)
-#
-#    return None
+def visualization(source, generator):
+    try:
+        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+
+        output = generator_module.visualization(source, generator)
+
+        if output is not None:
+            return output
+    except ImportError:
+        pass
+    except AttributeError:
+        pass
+
+    context = {}
+    context['source'] = source
+    context['generator_identifier'] = generator
+
+    rows = []
+
+    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:1000]:
+        row = {}
+
+        row['created'] = point.created
+        row['value'] = '-'
+
+        rows.append(row)
+
+    context['table_rows'] = rows
+
+    return render_to_string('pdk_generic_viz_template.html', context)
+
+def data_table(source, generator):
+    try:
+        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+
+        output = generator_module.data_table(source, generator)
+
+        if output is not None:
+            return output
+    except ImportError:
+        pass
+    except AttributeError:
+        pass
+
+    context = {}
+    context['source'] = source
+    context['generator_identifier'] = generator
+
+    rows = []
+
+    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:1000]:
+        row = {}
+
+        row['created'] = point.created
+        row['value'] = '-'
+
+        rows.append(row)
+
+    context['table_rows'] = rows
+
+    return render_to_string('pdk_generic_viz_template.html', context)
 
 def compile_report(generator, sources):
     try:

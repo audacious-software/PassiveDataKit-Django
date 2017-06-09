@@ -1,4 +1,6 @@
-# pylint: disable=no-member
+# pylint: disable=line-too-long, no-member
+
+import importlib
 
 import arrow
 
@@ -368,3 +370,33 @@ class SourceAlertsCountBadge(template.Node):
             return '<span class="badge pull-right">' + str(count) + '</span>'
 
         return ''
+
+@register.tag(name="generator_name")
+def generator_name(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, generator = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+                                           token.contents.split()[0])
+    return GeneratorName(generator)
+
+class GeneratorName(template.Node):
+    def __init__(self, generator):
+        self.generator = template.Variable(generator)
+
+    def render(self, context):
+        generator = self.generator.resolve(context)
+
+        try:
+            generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+
+            output = generator_module.generator_name(generator)
+
+            if output is not None:
+                return output
+        except ImportError:
+            pass
+        except AttributeError:
+            pass
+
+        return generator

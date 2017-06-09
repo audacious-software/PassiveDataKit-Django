@@ -1,7 +1,8 @@
 //Load common code that includes config, then load the app logic for this page.
 requirejs(['./common'], function (common) {
-    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table", "moment"], function (bootstrap, bs_typeahead, bs_table, moment)
+    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table", "moment", "rickshaw", "jquery"], function (bootstrap, bs_typeahead, bs_table, moment, rickshaw, jquery)
     {
+    	window.$ = jquery;
     	window.moment = moment;
     	
 		$.ajaxSetup({ 
@@ -60,5 +61,13 @@ requirejs(['./common'], function (common) {
 						
 			return false;
 		});
+		
+		if (window.showVisualization != undefined) {
+			window.showVisualization();
+		}
+
+		if (window.showValues != undefined) {
+			window.showValues();
+		}
 	}); 
 });

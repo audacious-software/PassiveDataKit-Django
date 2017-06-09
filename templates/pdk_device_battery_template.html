@@ -1,0 +1,59 @@
+<div id="chart_container">
+	<div id="battery-level-chart" style="display: inline-block; height: 240px; background-color: #000000;"></div>
+	<div id="y_axis" style="display: inline-block; width: 30px; height: 240px; float: left;"></div>
+</div>
+
+<script>
+	window.showVisualization = function() {
+		$("#battery-level-chart").width($("#chart_container").width() - 35);
+
+		var points = [];
+		
+		{% for value in values %}
+			points.push({ x: {{ value.ts }}, y: {{ value.value }} });
+		{% endfor %}
+		
+		var graph = new Rickshaw.Graph({
+			element: document.querySelector("#battery-level-chart"), 
+			renderer: 'multi',
+			interpolation: 'linear',
+			series: [{
+				color: '#1B5E20',
+				renderer: 'area',
+				data: points
+			}, {
+				color: '#66BB6A',
+				renderer: 'line',
+				data: points
+			}, {
+				color: '#000000',
+				renderer: 'line',
+				data: [
+					{ x: {{ start }}, y: -1 },
+					{ x: {{ end }}, y: -1 }
+				]
+			}],
+			min: 0,
+			max: 105
+		});
+
+		var y_ticks = new Rickshaw.Graph.Axis.Y( {
+			graph: graph,
+			orientation: 'left',
+			tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+			element: document.getElementById('y_axis')
+		} );
+
+		var xAxis = new Rickshaw.Graph.Axis.Time({
+		  graph: graph,
+		  timeFixture: new Rickshaw.Fixtures.Time.Local()
+		})
+
+		xAxis.render();
+
+		graph.render();
+		
+		$(".x_tick .title").css("color", "white");
+		$(".x_tick .title").css("font-weight", "bold");
+	};
+</script>

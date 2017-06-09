@@ -1,0 +1,31 @@
+<table id="light_values_table" class="table-striped" data-toggle="table" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true">Created</th>
+            <th data-sortable="true">Min. Level</th>
+            <th data-sortable="true">Max. Level</th>
+            <th data-sortable="true">Duration</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for value in values %}
+			<tr>
+				<td>
+					<span style="display: none;">
+						{{ value.created.isoformat }}
+					</span>
+					{{ value.created }}
+				</td>
+				<td>{{ value.min_value }}</td>
+				<td>{{ value.max_value }}</td>
+				<td>{{ value.duration }}</td>
+			</tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#light_values_table").show();
+	};
+</script>

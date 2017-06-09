@@ -47,15 +47,13 @@ class Command(BaseCommand):
 
             for dupe_obj in dupe_objs[1:]:
                 if dupe_objs[0].properties == dupe_obj.properties:
-                    print str(dupe)
-
                     to_delete.append(dupe_obj.pk)
 
-                    if len(to_delete) % 500 == 0:
-                        print 'TO DELETE: ' + str(len(to_delete))
+#                    if len(to_delete) % 500 == 0:
+#                        print 'TO DELETE: ' + str(len(to_delete))
 
         for dp_id in to_delete:
             DataPoint.objects.get(pk=dp_id).delete()
 
-        if to_delete:
-            print 'Deleted duplicates: ' + str(len(to_delete))
+#        if to_delete:
+#            print 'Deleted duplicates: ' + str(len(to_delete))

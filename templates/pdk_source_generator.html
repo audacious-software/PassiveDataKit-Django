@@ -17,24 +17,43 @@
 {% endblock %}
 
 {% block content %}
+	<script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+
 	<div class="row">
 		<div class="col-md-12">
-			<h1 class="sub-header">{{ source.name }}: {{ generator_label }}</h1> 
+			<h1 class="sub-header">{{ source.name }}: {% generator_name generator_label %}</h1> 
 		</div>
 	</div>
 
-	{% if viz_template %}
-		{{ viz_template }}
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header">History</h1> 
+		</div>
+	</div>
+
+	{% if visualization %}
+		{{ visualization }}
 	{% else %}
 		<div class="row">
-			<div class="col-md-12">
-				<h3 class="sub-header"><a name="generators"></a>Generators</h3> 
-			</div>
 			<div class="col-md-12">
 				<div class="alert alert-info" role="alert">No visualization template available for {{ generator }}&#8230;</div>
 			</div>
 		</div>
 	{% endif %}
-	
-	<script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header" style="margin-top: 1em;">Logged Values</h1> 
+		</div>
+	</div>
+
+	{% if data_table %}
+		{{ data_table }}
+	{% else %}
+		<div class="row">
+			<div class="col-md-12">
+				<div class="alert alert-info" role="alert">No data table available for {{ generator }}&#8230;</div>
+			</div>
+		</div>
+	{% endif %}
 {% endblock %}

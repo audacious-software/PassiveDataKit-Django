@@ -1,0 +1,39 @@
+<table id="battery_values_table" class="table-striped" data-toggle="table" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true">Created</th>
+            <th data-sortable="true">Level</th>
+            <th data-sortable="true">Status</th>
+            <th data-sortable="true">Temperature</th>
+            <th data-sortable="true">Plugged</th>
+            <th data-sortable="true">Health</th>
+            <th data-sortable="true">Voltage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+        	{% with props=row.fetch_properties %}
+				<tr>
+					<td>
+						<span style="display: none;">
+							{{ row.created.isoformat }}
+						</span>
+						{{ row.created }}
+					</td>
+					<td>{{ props.level }}</td>
+					<td>{{ props.status }}</td>
+					<td>{{ props.temperature }}</td>
+					<td>{{ props.plugged }}</td>
+					<td>{{ props.health }}</td>
+					<td>{{ props.voltage }}</td>
+				</tr>
+			{% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#battery_values_table").show();
+	};
+</script>

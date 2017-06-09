@@ -19,6 +19,16 @@ requirejs.config({
         },
         "bootstrap-table": {
             deps: ['bootstrap'],
+        },
+        "rickshaw": {
+            deps: ['d3-layout', 'jquery'],
+            exports: "Rickshaw"
+        },
+        "d3-layout": {
+            deps: ['d3', 'jquery']
+        },
+        "d3": {
+            exports: "d3"
         }
     }
 });

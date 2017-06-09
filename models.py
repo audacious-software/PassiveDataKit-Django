@@ -72,6 +72,8 @@ class DataPoint(models.Model):
                     return self.secondary_identifier
                 except ImportError:
                     pass
+                except AttributeError:
+                    pass
 
         return None
 

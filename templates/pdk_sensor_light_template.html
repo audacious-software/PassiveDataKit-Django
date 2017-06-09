@@ -1,0 +1,104 @@
+<div id="chart_container">
+    <div id="light-level-chart" style="display: inline-block; height: 240px; background-color: #000000;"></div>
+    <div id="y_axis" style="display: inline-block; width: 30px; height: 240px; float: left;"></div>
+</div>
+
+<script>
+    window.showVisualization = function() {
+        $("#light-level-chart").width($("#chart_container").width() - 35);
+
+        var min_points = [];
+        var max_points = [];
+        
+        var max_point = null;
+        
+        {% for value in values %}
+            min_points.push({ x: {{ value.timestamp }}, y: {{ value.min_value }} });
+            max_points.push({ x: {{ value.timestamp }}, y: {{ value.max_value }} });
+        {% endfor %}
+        
+        for (var i = 0; i < max_points.length; i++) {
+//        	if (max_points[i]['y'] > 100) {
+//        		max_points[i]['y'] = 100;
+//        	}
+
+        	if (min_points[i]['y'] < 0.1) {
+        		min_points[i]['y'] = 0.1;
+        	}
+        	
+            var point = max_points[i]['y'];
+
+            if (max_point == null || point > max_point) {
+                max_point = point;
+            }
+        }
+        
+        console.log("MAX: " + max_point);
+        
+        var scale = d3.scale.log().base(10).domain([0.1, max_point]);
+
+//		var scale = d3.scale.linear().domain([0, max_point]).range(logScale.range());
+
+        var graph = new Rickshaw.Graph({
+            element: document.querySelector("#light-level-chart"), 
+            renderer: 'multi',
+            interpolation: 'linear',
+            series: [{
+//                scale: scale,
+                color: '#000000',
+                renderer: 'area',
+                data: min_points,
+				name: 'Minimum Level'
+            }, {
+//                scale: scale,
+                color: '#FFEB3B',
+                renderer: 'area',
+                data: max_points,
+				name: 'Maximum Level'
+//            }, {
+//                scale: scale,
+//                color: '#FFEB3B',
+//                renderer: 'line',
+//                data: max_points
+//            }, {
+//                scale: scale,
+//                color: '#FFEB3B',
+//                renderer: 'line',
+//                data: min_points
+            }, {
+                scale: scale,
+                color: '#000000',
+                renderer: 'line',
+                data: [
+                    { x: {{ start }}, y: -1 },
+                    { x: {{ end }}, y: -1 }
+                ]
+            }]
+        });
+
+        var y_ticks = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            orientation: 'left',
+//            scale: scale,
+            grid: false,
+            element: document.getElementById('y_axis')
+        });
+
+        var xAxis = new Rickshaw.Graph.Axis.Time({
+          graph: graph,
+          timeFixture: new Rickshaw.Fixtures.Time.Local()
+        })
+
+        xAxis.render();
+
+        graph.render();
+
+		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+			graph: graph
+		} );
+        
+        $(".x_tick .title").css("color", "white");
+        $(".x_tick .title").css("opacity", "1.0");
+        $(".x_tick .title").css("font-weight", "bold");
+    };
+</script>
