@@ -4,15 +4,16 @@
 
 {% block sidebar %}
 	<ul class="nav nav-sidebar">
-		<li><a href="#alerts">Alerts <span class="badge pull-right">?</span></a></li>
+		<li><label><a href="{% url 'pdk_source' source.identifier %}">{{ source.name }}</a></label></li>
 	</ul>
 	<ul class="nav nav-sidebar">
-		<li><label>TODO</label></li>
-		<li><a href="#generators">Generators</a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
-		<li><label>Actions</label></li>
-		<li><a href="#add_source">Add Data Source</a></li>
+		<li><label>Generators</label></li>
+
+		{% for generator in source.generator_statistics %}
+			<li>
+				<a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a>
+			</li>
+		{% endfor %}
 	</ul>
 {% endblock %}
 

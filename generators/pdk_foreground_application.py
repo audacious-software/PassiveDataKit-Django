@@ -1,7 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
 import datetime
-import time
 
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -9,53 +8,103 @@ from django.utils import timezone
 from ..models import DataPoint
 
 def extract_secondary_identifier(properties):
-    if 'status' in properties:
-        return properties['status']
+    if 'application' in properties:
+        return properties['application']
 
     return None
 
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Device Battery Status'
+    return 'Foreground Application'
 
-def visualization(source, generator):
+# def visualization(source, generator):
+#    context = {}
+#    context['source'] = source
+#    context['generator_identifier'] = generator
+#
+#    values = []
+#
+#    end = timezone.now()
+#    start = end - datetime.timedelta(days=1)
+#
+#    last_value = -1
+#
+#    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
+#        properties = point.fetch_properties()
+#
+#        if last_value != properties['level']:
+#            value = {}
+#
+#            value['ts'] = properties['passive-data-metadata']['timestamp']
+#            value['value'] = properties['level']
+#
+#            last_value = properties['level']
+#
+#            values.append(value)
+#
+#    context['values'] = values
+#
+#    context['start'] = time.mktime(start.timetuple())
+#    context['end'] = time.mktime(end.timetuple())
+#
+#    return render_to_string('pdk_device_battery_template.html', context)
+
+def data_table(source, generator): # pylint: disable=too-many-locals
     context = {}
     context['source'] = source
     context['generator_identifier'] = generator
 
-    values = []
-
     end = timezone.now()
     start = end - datetime.timedelta(days=1)
+
+    values = []
+
+    last_active = None
+    last_application = None
+    last_start = None
+    cumulative_duration = 0
 
     for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
         properties = point.fetch_properties()
 
-        value = {}
+        active = None
 
-        value['ts'] = properties['passive-data-metadata']['timestamp']
-        value['value'] = properties['level']
+        if 'screen_active' in properties:
+            active = properties['screen_active']
 
-        values.append(value)
+        application = None
+
+        if 'application' in properties:
+            application = properties['application']
+
+        update = False
+
+        if active != last_active:
+            update = True
+
+        if application != last_application:
+            update = True
+
+        if update:
+            if last_start != None:
+                value = {
+                    'screen_active': last_active,
+                    'application': last_application,
+                    'start': last_start,
+                    'duration': datetime.timedelta(seconds=(cumulative_duration / 1000))
+                }
+
+                values.append(value)
+
+            last_active = active
+            last_application = application
+            last_start = point.created
+            cumulative_duration = 0
+        else:
+            cumulative_duration += properties['duration']
 
     context['values'] = values
 
-    context['start'] = time.mktime(start.timetuple())
-    context['end'] = time.mktime(end.timetuple())
-
-    return render_to_string('pdk_device_battery_template.html', context)
-
-def data_table(source, generator):
-    context = {}
-    context['source'] = source
-    context['generator_identifier'] = generator
-
-    end = timezone.now()
-    start = end - datetime.timedelta(days=1)
-
-    context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created')
-
-    return render_to_string('pdk_device_battery_table_template.html', context)
-
+    return render_to_string('pdk_foreground_application_table_template.html', context)
 
 # def compile_report(generator, sources): # pylint: disable=too-many-locals
 #    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'

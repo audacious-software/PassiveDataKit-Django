@@ -1,0 +1,35 @@
+<table id="location_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Latitude</th>
+            <th data-sortable="true">Longitude</th>
+            <th data-sortable="true">Accuracy</th>
+            <th data-sortable="true">Provider</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+        	{% with props=row.fetch_properties %}
+				<tr>
+					<td>
+						<span style="display: none;">
+							{{ row.created.isoformat }}
+						</span>
+						{{ row.created }}
+					</td>
+					<td>{{ props.latitude }}</td>
+					<td>{{ props.longitude }}</td>
+					<td>{{ props.accuracy }}</td>
+					<td>{{ props.provider }}</td>
+				</tr>
+			{% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#location_values_table").show();
+	};
+</script>

@@ -1,0 +1,31 @@
+<table id="foregound_applications_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Start</th>
+            <th data-sortable="true">Application</th>
+            <th data-sortable="true">Screen Active</th>
+            <th data-sortable="true">Duration</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for value in values %}
+			<tr>
+				<td>
+					<span style="display: none;">
+						{{ value.start.isoformat }}
+					</span>
+					{{ value.start }}
+				</td>
+				<td>{{ value.application }}</td>
+				<td>{{ value.screen_active }}</td>
+				<td>{{ value.duration }}</td>
+			</tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#foregound_applications_values_table").show();
+	};
+</script>
