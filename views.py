@@ -83,7 +83,7 @@ def add_data_point(request):
 
 
 @csrf_exempt
-def add_data_bundle(request):
+def add_data_bundle(request): # pylint: disable=too-many-statements
     response = {'message': 'Data bundle added successfully, and ready for processing.'}
 
     if request.method == 'CREATE':
@@ -96,7 +96,13 @@ def add_data_bundle(request):
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
-        points = json.loads(request.body)
+        try:
+            points = json.loads(request.body)
+        except UnreadablePostError:
+            response = {'message': 'Unable to parse data bundle.'}
+            response = HttpResponse(json.dumps(response, indent=2), \
+                                    content_type='application/json', \
+                                    status=400)
 
         bundle = DataBundle(recorded=timezone.now())
 
@@ -110,6 +116,7 @@ def add_data_bundle(request):
         call_command('process_bundles')
 
         return response
+
     elif request.method == 'POST':
         response = HttpResponse(json.dumps(response, indent=2), \
                                 content_type='application/json', \
