@@ -1,12 +1,21 @@
 import calendar
 import csv
+import datetime
 import tempfile
 
 from zipfile import ZipFile
 
 import arrow
 
+from django.template.loader import render_to_string
+from django.utils import timezone
+
 from ..models import DataPoint
+
+SECONDARY_IDENTIFIER_ACTIVITY = 'activity-measures'
+SECONDARY_IDENTIFIER_INTRADAY = 'intraday-activity'
+SECONDARY_IDENTIFIER_SLEEP = 'sleep-measures'
+SECONDARY_IDENTIFIER_BODY = 'body'
 
 SECONDARY_FIELDS = {
     'intraday-activity': [
@@ -46,6 +55,9 @@ SECONDARY_FIELDS = {
         'measurement_device',
     ]
 }
+
+def generator_name(identifier): # pylint: disable=unused-argument
+    return 'Withings Device'
 
 def extract_secondary_identifier(properties):
     if 'datastream' in properties:
@@ -105,3 +117,19 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
             export_file.write(secondary_filename, secondary_filename.split('/')[-1])
 
     return filename
+    
+def data_table(source, generator):
+    context = {}
+    context['source'] = source
+    context['generator_identifier'] = generator
+
+    end = timezone.now()
+    start = end - datetime.timedelta(days=7)
+
+    context['activity_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_ACTIVITY, created__gt=start, created__lte=end).order_by('created')
+    context['intraday_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_INTRADAY, created__gt=start, created__lte=end).order_by('created')
+    context['sleep_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_SLEEP, created__lte=end).order_by('created') # created__gt=start, 
+    context['body_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_BODY, created__lte=end).order_by('created')
+
+    return render_to_string('pdk_wearable_withings_device_table_template.html', context)
+

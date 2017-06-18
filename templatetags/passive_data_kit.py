@@ -400,3 +400,7 @@ class GeneratorName(template.Node):
             pass
 
         return generator
+
+@register.filter("to_datetime")
+def to_datetime(value):
+	return arrow.get(value).datetime

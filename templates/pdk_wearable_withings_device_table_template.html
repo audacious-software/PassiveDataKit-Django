@@ -1,0 +1,162 @@
+{% load mathfilters %}
+{% load passive_data_kit %}
+<div id="withings_tabs" style="display: none;">
+	<!-- Nav tabs -->
+	<ul class="nav nav-tabs" role="tablist">
+	<li role="presentation" class="active"><a href="#activity" aria-controls="activity" role="tab" data-toggle="tab">Activity Measures</a></li>
+	<li role="presentation"><a href="#intraday" aria-controls="intraday" role="tab" data-toggle="tab">Intraday Activity</a></li>
+	<li role="presentation"><a href="#sleep" aria-controls="sleep" role="tab" data-toggle="tab">Sleep Measures</a></li>
+	<li role="presentation"><a href="#body" aria-controls="body" role="tab" data-toggle="tab">Body Measures</a></li>
+	</ul>
+
+	<!-- Tab panes -->
+	<div class="tab-content">
+		<div role="tabpanel" class="tab-pane active" id="activity">
+			<table id="activity_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10;">
+				<thead>
+					<tr>
+						<th data-sortable="true" data-field="created">Created</th>
+						<th data-sortable="true">Distance</th>
+						<th data-sortable="true">Steps</th>
+						<th data-sortable="true">Intense Duration</th>
+						<th data-sortable="true">Moderate Duration</th>
+						<th data-sortable="true">Soft Duration</th>
+						<th data-sortable="true">Active Calories</th>
+						<th data-sortable="true">Total Calories</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in activity_values %}
+						{% with props=row.fetch_properties %}
+							<tr>
+								<td>
+									<span style="display: none;">
+										{{ row.created.isoformat }}
+									</span>
+									{{ row.created }}
+								</td>
+								<td>{{ props.distance }}m</td>
+								<td>{{ props.steps }}</td>
+								
+								<td>{{ props.intense_activity_duration }}</td>
+								<td>{{ props.moderate_activity_duration }}</td>
+								<td>{{ props.soft_activity_duration }}</td>
+
+								<td>{{ props.active_calories }}</td>
+								<td>{{ props.total_calories }}</td>
+							</tr>
+						{% endwith %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div role="tabpanel" class="tab-pane" id="intraday">
+			<table id="intraday_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10;">
+				<thead>
+					<tr>
+						<th data-sortable="true" data-field="created">Created</th>
+						<th data-sortable="true">Distance</th>
+						<th data-sortable="true">Steps</th>
+						<th data-sortable="true">Activity Duration</th>
+						<th data-sortable="true">Elevation Climbed</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in intraday_values %}
+						{% with props=row.fetch_properties %}
+							<tr>
+								<td>
+									{% with start_date=props.activity_start|to_datetime %}
+										<span style="display: none;">
+											{{ start_date.isoformat }}
+										</span>
+
+										{{ start_date }}
+									{% endwith %}
+								</td>
+								<td>{{ props.distance }}</td>
+								<td>{{ props.steps }}</td>
+								<td>{{ props.activity_duration }}</td>
+								<td>{{ props.elevation_climbed }}</td>
+							</tr>
+						{% endwith %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div role="tabpanel" class="tab-pane" id="sleep">
+			<table id="sleep_measures_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10;">
+				<thead>
+					<tr>
+						<th data-sortable="true" data-field="created">Created</th>
+						<th data-sortable="true">State</th>
+						<th data-sortable="true">Duration (Seconds)</th>
+						<th data-sortable="true">Measurement Device</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in sleep_values %}
+						{% with props=row.fetch_properties %}
+							<tr>
+								<td>
+									{% with start_date=props.start_date|to_datetime %}
+										<span style="display: none;">
+											{{ start_date.isoformat }}
+										</span>
+
+										{{ start_date }} -- {{ row.pk }}
+									{% endwith %}
+								</td>
+								<td>{{ props.state }}</td>
+								<td>{{ props.end_date|sub:props.start_date }}</td>
+
+								<td>{{ props.measurement_device }}</td>
+							</tr>
+						{% endwith %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div role="tabpanel" class="tab-pane" id="body">
+
+			<table id="body_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10;">
+				<thead>
+					<tr>
+						<th data-sortable="true" data-field="created">Created</th>
+						<th data-sortable="true">Type</th>
+						<th data-sortable="true">Category</th>
+						<th data-sortable="true">Value</th>
+						<th data-sortable="true">Status</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for row in body_values %}
+						{% with props=row.fetch_properties %}
+							<tr>
+								<td>
+									{% with start_date=props.measure_date|to_datetime %}
+										<span style="display: none;">
+											{{ start_date.isoformat }}
+										</span>
+
+										{{ start_date }}
+									{% endwith %}
+								</td>
+								<td>{{ props.measure_type }}</td>
+								<td>{{ props.measure_category }}</td>
+								<td>{{ props.measure_value }}</td>
+								<td>{{ props.measure_status }}</td>
+							</tr>
+						{% endwith %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+
+<script>
+	window.showValues = function() {
+		$("#withings_tabs").show();
+	};
+</script>
