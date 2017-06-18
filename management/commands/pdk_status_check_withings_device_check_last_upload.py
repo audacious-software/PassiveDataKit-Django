@@ -17,7 +17,7 @@ class Command(BaseCommand):
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
         now = timezone.now()
-        
+
         for source in DataSource.objects.all():
             last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
@@ -26,19 +26,19 @@ class Command(BaseCommand):
             alert_name = None
             alert_details = {}
             alert_level = 'info'
-            
-            delta = now - last_upload.created
-            
-            if last_upload is not None:
-                if delta.days >= CRITICAL_DAYS:
-                    alert_name = 'Withings upload is critically overdue'
-                    alert_details['message'] = 'Latest Withings upload was ' + str(delta.days) + ' days ago.'
-                    alert_level = 'critical'
 
-                elif delta.days >= WARNING_DAYS:
+            delta = now - last_upload.created
+
+            if last_upload is not None:
+                if delta.days >= WARNING_DAYS:
                     alert_name = 'Withings upload is overdue'
                     alert_details['message'] = 'Latest Withings upload was 1 day ago.'
                     alert_level = 'warning'
+
+                elif delta.days >= CRITICAL_DAYS:
+                    alert_name = 'Withings upload is critically overdue'
+                    alert_details['message'] = 'Latest Withings upload was ' + str(delta.days) + ' days ago.'
+                    alert_level = 'critical'
 
                 if alert_name is not None:
                     if last_alert is None or last_alert.alert_name != alert_name or last_alert.alert_level != alert_level:

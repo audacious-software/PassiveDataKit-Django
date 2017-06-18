@@ -6,6 +6,7 @@ import importlib
 import json
 import tempfile
 
+from django.conf import settings
 from django.template.loader import render_to_string
 
 from .models import DataPoint
@@ -53,17 +54,18 @@ def visualization(source, generator):
     return render_to_string('pdk_generic_viz_template.html', context)
 
 def data_table(source, generator):
-    try:
-        generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+    for app in settings.INSTALLED_APPS:
+        try:
+            generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package=app)
 
-        output = generator_module.data_table(source, generator)
+            output = generator_module.data_table(source, generator)
 
-        if output is not None:
-            return output
-    except ImportError:
-        pass
-    except AttributeError:
-        pass
+            if output is not None:
+                return output
+        except ImportError:
+            pass
+        except AttributeError:
+            pass
 
     context = {}
     context['source'] = source

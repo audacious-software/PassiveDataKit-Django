@@ -1,10 +1,14 @@
 # pylint: disable=line-too-long, no-member
 
+import datetime
 import importlib
+
+import traceback
 
 import arrow
 
 from django import template
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -387,20 +391,42 @@ class GeneratorName(template.Node):
     def render(self, context):
         generator = self.generator.resolve(context)
 
-        try:
-            generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
+        for app in settings.INSTALLED_APPS:
+            try:
+                generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package=app)
 
-            output = generator_module.generator_name(generator)
+                output = generator_module.generator_name(generator)
 
-            if output is not None:
-                return output
-        except ImportError:
-            pass
-        except AttributeError:
-            pass
+                if output is not None:
+                    return output
+            except ImportError:
+                traceback.print_exc()
+            except AttributeError:
+                traceback.print_exc()
 
         return generator
 
 @register.filter("to_datetime")
 def to_datetime(value):
-	return arrow.get(value).datetime
+    return arrow.get(value).datetime
+
+@register.tag(name="hour_minute_to_time")
+def hour_minute_to_time(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, hour, minute = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+                                           token.contents.split()[0])
+
+    return HourMinuteTimeNode(hour, minute)
+
+class HourMinuteTimeNode(template.Node):
+    def __init__(self, hour, minute):
+        self.hour = template.Variable(hour)
+        self.minute = template.Variable(minute)
+
+    def render(self, context):
+        hour = int(self.hour.resolve(context))
+        minute = int(self.minute.resolve(context))
+
+        return datetime.time(hour, minute, 0, 0)

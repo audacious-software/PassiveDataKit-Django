@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long, no-member
+
 import calendar
 import csv
 import datetime
@@ -117,7 +119,7 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
             export_file.write(secondary_filename, secondary_filename.split('/')[-1])
 
     return filename
-    
+
 def data_table(source, generator):
     context = {}
     context['source'] = source
@@ -128,8 +130,7 @@ def data_table(source, generator):
 
     context['activity_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_ACTIVITY, created__gt=start, created__lte=end).order_by('created')
     context['intraday_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_INTRADAY, created__gt=start, created__lte=end).order_by('created')
-    context['sleep_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_SLEEP, created__lte=end).order_by('created') # created__gt=start, 
+    context['sleep_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_SLEEP, created__lte=end).order_by('created') # created__gt=start,
     context['body_values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, secondary_identifier=SECONDARY_IDENTIFIER_BODY, created__lte=end).order_by('created')
 
     return render_to_string('pdk_wearable_withings_device_table_template.html', context)
-
