@@ -39,12 +39,12 @@ class Command(BaseCommand):
 
         start = options['start']
         if start is None:
-            start = timezone.now().strftime('%Y-%m-%d')
+            start = (timezone.now() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
         end = options['end']
 
         if end is None:
-            end = (timezone.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            end = timezone.now().strftime('%Y-%m-%d')
 
         start_date = arrow.get(start).replace(hour=0, minute=0, second=0).to(settings.TIME_ZONE)
         end_date = arrow.get(end).replace(hour=0, minute=0, second=0).to(settings.TIME_ZONE)
