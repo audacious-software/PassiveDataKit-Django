@@ -7,8 +7,7 @@ import json
 import os
 import tempfile
 # import traceback
-
-from zipfile import ZipFile
+import zipfile
 
 from django.conf import settings
 from django.core.files import File
@@ -66,7 +65,7 @@ class Command(BaseCommand):
 
             filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
 
-            with ZipFile(filename, 'w') as export_file:
+            with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as export_file:
                 for generator in generators: # pylint: disable=too-many-nested-blocks
                     if raw_json:
                         for source in sources:
@@ -124,11 +123,12 @@ class Command(BaseCommand):
                                     output_file = pdk_api.compile_report(generator, sources)
 
                                     if output_file.lower().endswith('.zip'):
-                                        with ZipFile(output_file, 'r') as source_file:
+                                        with zipfile.ZipFile(output_file, 'r') as source_file:
                                             for name in source_file.namelist():
                                                 export_file.writestr(name, source_file.open(name).read()) # pylint: disable=line-too-long
 
                                         os.remove(output_file)
+
                                         output_file = None
                                 except ImportError:
 #                                    traceback.print_exc()
@@ -147,6 +147,8 @@ class Command(BaseCommand):
             report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
             report.completed = timezone.now()
             report.save()
+
+            os.remove(filename)
 
             subject = render_to_string('pdk_report_subject.txt', {
                 'report': report,

@@ -66,9 +66,9 @@ def fetch_values(source, generator, start, end):
 
 
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Light Sensor'
+    return 'Accelerometer Sensor'
 
-def visualization(source, generator):
+def visualization_todo(source, generator):
     context = {}
     context['source'] = source
     context['generator_identifier'] = generator
@@ -81,9 +81,12 @@ def visualization(source, generator):
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
 
-    return render_to_string('pdk_sensor_light_template.html', context)
+    render_to_string('pdk_sensor_light_template.html', context)
 
-def data_table(source, generator):
+def visualization(source, generator): # pylint: disable=unused-argument
+    return 'TODO'
+
+def data_table_todo(source, generator):
     context = {}
     context['source'] = source
     context['generator_identifier'] = generator
@@ -94,6 +97,9 @@ def data_table(source, generator):
     context['values'] = fetch_values(source, generator, start, end)
 
     return render_to_string('pdk_sensor_light_table_template.html', context)
+
+def data_table(source, generator): # pylint: disable=unused-argument
+    return 'TODO'
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
@@ -115,7 +121,9 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                     'Recorded Date',
                     'Raw Timestamp',
                     'Normalized Timestamp',
-                    'Light Level',
+                    'X',
+                    'Y',
+                    'Z',
                     'Accuracy'
                 ]
 
@@ -142,7 +150,9 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
 
                             row.append(properties['sensor_data']['raw_timestamp'][i])
                             row.append(properties['sensor_data']['observed'][i])
-                            row.append(properties['sensor_data']['light_level'][i])
+                            row.append(properties['sensor_data']['x'][i])
+                            row.append(properties['sensor_data']['y'][i])
+                            row.append(properties['sensor_data']['z'][i])
                             row.append(properties['sensor_data']['accuracy'][i])
 
                             writer.writerow(row)

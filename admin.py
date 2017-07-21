@@ -30,10 +30,26 @@ class DataSourceAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'identifier', 'group')
     list_filter = ('group',)
 
+
+def reset_report_jobs(modeladmin, request, queryset): # pylint: disable=unused-argument
+    for job in queryset:
+        job.started = None
+        job.completed = None
+
+        if job.report is not None:
+            job.report.delete()
+            job.report = None
+
+        job.save()
+
+reset_report_jobs.description = 'Reset report jobs'
+
 @admin.register(ReportJob)
 class ReportJobAdmin(admin.OSMGeoAdmin):
     list_display = ('requester', 'requested', 'started', 'completed')
     list_filter = ('requested', 'started', 'completed',)
+
+    actions = [reset_report_jobs]
 
 @admin.register(DataSourceAlert)
 class DataSourceAlertAdmin(admin.OSMGeoAdmin):

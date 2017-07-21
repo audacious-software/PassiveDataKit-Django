@@ -3,6 +3,7 @@
 import calendar
 import csv
 import datetime
+import os
 import tempfile
 
 from zipfile import ZipFile
@@ -117,6 +118,8 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                         index += 5000
 
             export_file.write(secondary_filename, secondary_filename.split('/')[-1])
+
+            os.remove(secondary_filename)
 
     return filename
 
