@@ -14,12 +14,12 @@
 			<tr>
 				<td><a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a></td>
 				<td>{{ generator.points_count }}</td>
-				<td>{{ generator.last_recorded }}</td>
+				<td>{{ generator.last_recorded|to_datetime }}</td>
 				<td>
-					{% if generator.first_created.date == generator.last_created.date %}				
-						{{ generator.first_created.date }}
+					{% if generator.first_created == generator.last_created %}				
+						{{ generator.first_created|to_datetime }}
 					{% else %}
-						{{ generator.first_created.date }} - {{ generator.last_created.date }}
+						{{ generator.first_created|to_datetime }} - {{ generator.last_created|to_datetime }}
 					{% endif %}
 				</td>
 				<td>{% to_hz generator.frequency %}</td>

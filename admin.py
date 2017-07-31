@@ -14,7 +14,11 @@ class DataPointAdmin(admin.OSMGeoAdmin):
 
     list_display = ('source', 'generator_identifier', 'secondary_identifier', 'created', \
                     'recorded',)
-    list_filter = ('created', 'recorded', 'generator_identifier', 'secondary_identifier',)
+    list_filter = (
+        'created',
+        'recorded',
+        'generator_identifier',
+        )
 
 @admin.register(DataBundle)
 class DataBundleAdmin(admin.OSMGeoAdmin):

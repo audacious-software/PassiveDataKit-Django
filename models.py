@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import calendar
 import json
 
 import importlib
@@ -12,7 +13,10 @@ from django.contrib.gis.db import models
 from django.db import connection
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
+from django.utils import timezone
 from django.utils.text import slugify
+
+DB_SUPPORTS_JSON = None
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -34,10 +38,34 @@ def generator_slugify(str_obj):
     return slugify(str_obj.replace('.', ' ')).replace('-', '_')
 
 def install_supports_jsonfield():
-    return connection.pg_version >= 90400
+    global DB_SUPPORTS_JSON # pylint: disable=global-statement
 
+    if True and DB_SUPPORTS_JSON is None:
+        DB_SUPPORTS_JSON = connection.pg_version >= 90400
+
+    return DB_SUPPORTS_JSON
 
 class DataPoint(models.Model):
+    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+        index_together = [
+            ['source', 'created'],
+            ['source', 'generator_identifier'],
+            ['source', 'generator_identifier', 'created'],
+            ['source', 'generator_identifier', 'recorded'],
+            ['source', 'generator_identifier', 'created', 'recorded'],
+            ['source', 'generator_identifier', 'secondary_identifier'],
+            ['source', 'generator_identifier', 'secondary_identifier', 'created'],
+            ['source', 'generator_identifier', 'secondary_identifier', 'recorded'],
+            ['source', 'generator_identifier', 'secondary_identifier', 'created', 'recorded'],
+            ['generator_identifier', 'created'],
+            ['generator_identifier', 'recorded'],
+            ['generator_identifier', 'created', 'recorded'],
+            ['generator_identifier', 'secondary_identifier'],
+            ['generator_identifier', 'secondary_identifier', 'created'],
+            ['generator_identifier', 'secondary_identifier', 'recorded'],
+            ['generator_identifier', 'secondary_identifier', 'created', 'recorded'],
+        ]
+
     source = models.CharField(max_length=1024, db_index=True)
     generator = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
@@ -113,29 +141,50 @@ class DataSource(models.Model):
 
     group = models.ForeignKey(DataSourceGroup, related_name='sources', null=True, on_delete=models.SET_NULL)
 
+    if install_supports_jsonfield():
+        performance_metadata = JSONField(null=True, blank=True)
+    else:
+        performance_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024), null=True, blank=True)
+
+    performance_metadata_updated = models.DateTimeField(db_index=True, null=True, blank=True)
+
     def __unicode__(self):
         return self.name + ' (' + self.identifier + ')'
 
-    def latest_point(self):
-        return DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
+    def fetch_performance_metadata(self):
+        if self.performance_metadata is not None:
+            if install_supports_jsonfield():
+                return self.performance_metadata
 
-    def point_count(self):
-        return DataPoint.objects.filter(source=self.identifier).count()
+            return json.loads(self.performance_metadata)
 
-    def point_frequency(self):
-        count = self.point_count()
+        return {}
 
-        if count > 0:
-            first = DataPoint.objects.filter(source=self.identifier).order_by('created').first()
-            last = DataPoint.objects.filter(source=self.identifier).order_by('created').last()
+    def update_performance_metadata(self):
+        metadata = self.fetch_performance_metadata()
 
-            seconds = (last.created - first.created).total_seconds()
+        # Update latest_point
 
-            return count / seconds
+        latest_point = DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
 
-        return 0
+        if latest_point is not None:
+            metadata['latest_point'] = latest_point.pk
 
-    def generator_statistics(self):
+        # Update point_count
+
+        metadata['point_count'] = DataPoint.objects.filter(source=self.identifier).count()
+
+        # Update point_frequency
+
+        if metadata['point_count'] > 1:
+            earliest_point = DataPoint.objects.filter(source=self.identifier).order_by('created').first()
+
+            seconds = (latest_point.created - earliest_point.created).total_seconds()
+
+            metadata['point_frequency'] = metadata['point_count'] / seconds
+        else:
+            metadata['point_frequency'] = 0
+
         generators = []
 
         identifiers = DataPoint.objects.filter(source=self.identifier).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
@@ -153,15 +202,59 @@ class DataSource(models.Model):
             last_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).order_by('-created').first()
             last_recorded = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).order_by('-recorded').first()
 
-            generator['last_recorded'] = last_recorded.recorded
-            generator['first_created'] = first_point.created
-            generator['last_created'] = last_point.created
+            generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
+            generator['first_created'] = calendar.timegm(first_point.created.timetuple())
+            generator['last_created'] = calendar.timegm(last_point.created.timetuple())
 
-            generator['frequency'] = float(generator['points_count']) / (last_point.created - first_point.created).total_seconds()
+            if generator['points_count'] > 1:
+                generator['frequency'] = float(generator['points_count']) / (last_point.created - first_point.created).total_seconds()
+            else:
+                generator['frequency'] = 0
 
             generators.append(generator)
 
-        return generators
+        metadata['generator_statistics'] = generators
+
+        if install_supports_jsonfield():
+            self.performance_metadata = metadata
+        else:
+            self.performance_metadata = json.dumps(metadata, indent=2)
+
+        self.performance_metadata_updated = timezone.now()
+
+        self.save()
+
+    def latest_point(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'latest_point' in metadata:
+            return DataPoint.objects.get(pk=metadata['latest_point'])
+
+        return None
+
+    def point_count(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'point_count' in metadata:
+            return metadata['point_count']
+
+        return None
+
+    def point_frequency(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'point_frequency' in metadata:
+            return metadata['point_frequency']
+
+        return None
+
+    def generator_statistics(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'generator_statistics' in metadata:
+            return metadata['generator_statistics']
+
+        return []
 
 ALERT_LEVEL_CHOICES = (
     ('info', 'Informative'),
@@ -171,7 +264,7 @@ ALERT_LEVEL_CHOICES = (
 
 class DataSourceAlert(models.Model):
     alert_name = models.CharField(max_length=1024)
-    alert_level = models.CharField(max_length=64, choices=ALERT_LEVEL_CHOICES, default='info')
+    alert_level = models.CharField(max_length=64, choices=ALERT_LEVEL_CHOICES, default='info', db_index=True)
 
     if install_supports_jsonfield():
         alert_details = JSONField()
@@ -181,10 +274,10 @@ class DataSourceAlert(models.Model):
     data_source = models.ForeignKey(DataSource, related_name='alerts')
     generator_identifier = models.CharField(max_length=1024, null=True, blank=True)
 
-    created = models.DateTimeField()
-    updated = models.DateTimeField(null=True, blank=True)
+    created = models.DateTimeField(db_index=True)
+    updated = models.DateTimeField(null=True, blank=True, db_index=True)
 
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True, db_index=True)
 
     def fetch_alert_details(self):
         if install_supports_jsonfield():

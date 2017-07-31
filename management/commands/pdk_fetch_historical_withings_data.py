@@ -54,27 +54,28 @@ class Command(BaseCommand):
         for source in sources:
             data_point = DataPoint.objects.filter(source=source, generator_identifier='pdk-withings-device').order_by('-created').first()
 
-            properties = data_point.fetch_properties()
+            if data_point is not None:
+                properties = data_point.fetch_properties()
 
-            if 'oauth_user_token' in properties and 'oauth_user_secret' in properties and 'oauth_user_id' in properties:
-                index_date = start_date
+                if 'oauth_user_token' in properties and 'oauth_user_secret' in properties and 'oauth_user_id' in properties:
+                    index_date = start_date
 
-                while index_date < end_date:
-                    next_day = index_date.replace(days=+1)
+                    while index_date < end_date:
+                        next_day = index_date.replace(days=+1)
 
-#                    print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+    #                    print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
-                    fetch_intraday(source, properties, index_date, next_day)
+                        fetch_intraday(source, properties, index_date, next_day)
 
-                    time.sleep(1)
+                        time.sleep(1)
 
-#                    print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+    #                    print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
-                    fetch_sleep_measures(source, properties, index_date, next_day)
+                        fetch_sleep_measures(source, properties, index_date, next_day)
 
-                    time.sleep(1)
+                        time.sleep(1)
 
-                    index_date = next_day
+                        index_date = next_day
 
 
 def fetch_intraday(user_id, properties, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches

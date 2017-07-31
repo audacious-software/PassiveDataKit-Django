@@ -104,7 +104,7 @@ def data_table(source, generator): # pylint: disable=unused-argument
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
 
-    with ZipFile(filename, 'w') as export_file:
+    with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
             identifier = slugify(generator + '__' + source)
 

@@ -27,9 +27,9 @@ class Command(BaseCommand):
             alert_details = {}
             alert_level = 'info'
 
-            delta = now - last_upload.created
-
             if last_upload is not None:
+                delta = now - last_upload.created
+
                 if delta.days >= WARNING_DAYS:
                     alert_name = 'Withings upload is overdue'
                     alert_details['message'] = 'Latest Withings upload was 1 day ago.'

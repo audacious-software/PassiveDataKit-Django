@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
             filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
 
-            with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as export_file:
+            with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as export_file: # pylint: disable=line-too-long
                 for generator in generators: # pylint: disable=too-many-nested-blocks
                     if raw_json:
                         for source in sources:

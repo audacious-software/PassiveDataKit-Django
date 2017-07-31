@@ -23,7 +23,7 @@ class Command(BaseCommand):
         parser.add_argument('--count',
                             type=int,
                             dest='bundle_count',
-                            default=100,
+                            default=10,
                             help='Number of bundles to process in a single run')
 
     @handle_lock
