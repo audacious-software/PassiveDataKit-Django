@@ -19,6 +19,7 @@ before_install:
   
 install:
   - pip install -r requirements.txt
+  - pip install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
 
 before_script:
   - psql -U postgres -c "create extension postgis"
