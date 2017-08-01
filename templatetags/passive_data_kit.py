@@ -99,6 +99,9 @@ class PointHzNode(template.Node):
 
         frequency = source.point_frequency()
 
+        if frequency is None:
+            frequency = 0
+
         value = "{:10.3f}".format(frequency) + " Hz"
 
         if frequency < 1.0:

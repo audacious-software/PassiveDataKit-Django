@@ -41,7 +41,10 @@ def install_supports_jsonfield():
     global DB_SUPPORTS_JSON # pylint: disable=global-statement
 
     if True and DB_SUPPORTS_JSON is None:
-        DB_SUPPORTS_JSON = connection.pg_version >= 90400
+        try:
+            DB_SUPPORTS_JSON = connection.pg_version >= 90400
+        except AttributeError:
+            DB_SUPPORTS_JSON = False
 
     return DB_SUPPORTS_JSON
 

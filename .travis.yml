@@ -12,6 +12,9 @@ service:
 
 addons:
   postgresql: 9.5
+  apt:
+    packages:
+    - libsqlite3-mod-spatialite
   
 before_install:
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
