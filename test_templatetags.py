@@ -1,3 +1,5 @@
+# pylint: disable=no-member, line-too-long
+
 from django.template.loader import render_to_string
 from django.test import TestCase
 
@@ -9,7 +11,7 @@ class PointsHzTestCase(TestCase):
 
     def test_tests_working(self):
         context = {
-            'source': DataSource.objects.get(identifier='points-hz-test') 
+            'source': DataSource.objects.get(identifier='points-hz-test')
         }
 
         result = render_to_string('tests/point_hz_test.txt', context)
