@@ -21,6 +21,7 @@ pbr==3.0.0
 psycopg2==2.7.1
 pylint==1.7.1
 pyparsing==2.2.0
+pysqlite==2.8.3
 python-dateutil==2.6.0
 pytz==2017.2
 PyYAML==3.12
@@ -31,3 +32,4 @@ six==1.10.0
 smmap2==2.0.1
 stevedore==1.21.0
 whitenoise==3.3.0
+wrapt==1.10.10
