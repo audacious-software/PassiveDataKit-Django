@@ -7,9 +7,6 @@ language: python
 python:
   - 2.7
 
-service:
-  - postgresql
-
 addons:
   apt:
     packages:
@@ -17,11 +14,10 @@ addons:
   
 before_install:
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
-  - sudo /etc/init.d/postgresql stop
   - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
   - sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main 9.5" >> /etc/apt/sources.list.d/postgresql.list'
   - sudo apt-get update
-  - sudo apt-get install postgresql-9.5 postgresql-9.5-postgis
+  - sudo apt-get install postgresql-9.5 postgresql-9.5-postgis-2.3
   
 install:
   - pip install -r requirements.txt
