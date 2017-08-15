@@ -208,9 +208,11 @@ class DataSource(models.Model):
             generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
             generator['first_created'] = calendar.timegm(first_point.created.timetuple())
             generator['last_created'] = calendar.timegm(last_point.created.timetuple())
+            
+            duration = (last_point.created - first_point.created).total_seconds()
 
-            if generator['points_count'] > 1:
-                generator['frequency'] = float(generator['points_count']) / (last_point.created - first_point.created).total_seconds()
+            if generator['points_count'] > 1 and duration > 0:
+                generator['frequency'] = float(generator['points_count']) / duration
             else:
                 generator['frequency'] = 0
 

@@ -113,7 +113,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
 
         bundle.save()
 
-        call_command('pdk_process_bundles')
+        # call_command('pdk_process_bundles')
 
         return response
 
@@ -156,7 +156,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
             data_file.content_file.save(value.name, value)
             data_file.save()
 
-        call_command('pdk_process_bundles')
+        # call_command('pdk_process_bundles')
 
         return response
     elif request.method == 'OPTIONS':
