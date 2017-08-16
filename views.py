@@ -6,7 +6,6 @@ import json
 import os
 
 from django.conf import settings
-from django.core.management import call_command
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse, UnreadablePostError
 from django.shortcuts import render
@@ -113,8 +112,6 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
 
         bundle.save()
 
-        # call_command('pdk_process_bundles')
-
         return response
 
     elif request.method == 'POST':
@@ -155,8 +152,6 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
             data_file.content_type = value.content_type
             data_file.content_file.save(value.name, value)
             data_file.save()
-
-        # call_command('pdk_process_bundles')
 
         return response
     elif request.method == 'OPTIONS':

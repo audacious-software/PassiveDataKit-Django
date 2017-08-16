@@ -30,7 +30,7 @@ class Command(BaseCommand):
     @handle_lock
     def handle(self, *args, **options):
         to_delete = []
-        
+
         supports_json = install_supports_jsonfield()
         default_tz = timezone.get_default_timezone()
 
@@ -70,4 +70,4 @@ class Command(BaseCommand):
         for bundle in to_delete:
             bundle.delete()
 
-        logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())            
+        logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
