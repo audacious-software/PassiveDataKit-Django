@@ -12,8 +12,14 @@ class DataPointVisualizationsAdmin(admin.OSMGeoAdmin):
 class DataPointAdmin(admin.OSMGeoAdmin):
     openlayers_url = 'https://openlayers.org/api/2.13.1/OpenLayers.js'
 
-    list_display = ('source', 'generator_identifier', 'secondary_identifier', 'created', \
-                    'recorded',)
+    list_display = (
+        'source', 
+        'generator_identifier', 
+        'secondary_identifier', 
+        'created',
+        'recorded',
+    )
+    
     list_filter = (
         'created',
         'recorded',
