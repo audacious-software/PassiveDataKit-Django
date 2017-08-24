@@ -6,17 +6,22 @@ import calendar
 import json
 
 import importlib
+from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+
+import django
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 from django.db import connection
+from django.db.models import QuerySet, Manager
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from django.utils.text import slugify
 
 DB_SUPPORTS_JSON = None
+TOTAL_DATA_POINT_COUNT = 'Total Data Point Count'
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -48,6 +53,33 @@ def install_supports_jsonfield():
 
     return DB_SUPPORTS_JSON
 
+class DataPointQuerySet(QuerySet):
+    def count(self):
+        postgres_engines = ("postgis", "postgresql", "django_postgrespool")
+        engine = settings.DATABASES[self.db]["ENGINE"].split(".")[-1]
+
+        is_postgres = engine.startswith(postgres_engines)
+
+        # In Django 1.9 the query.having property was removed and the
+        # query.where property will be truthy if either where or having
+        # clauses are present. In earlier versions these were two separate
+        # properties query.where and query.having
+
+        if LooseVersion(django.get_version()) >= LooseVersion('1.9'):
+            is_filtered = self.query.where
+        else:
+            is_filtered = self.query.where or self.query.having
+
+        if not is_postgres or is_filtered:
+            return super(DataPointQuerySet, self).count()
+
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT).first()
+
+        if data_point_count is None:
+            return super(DataPointQuerySet, self).count()
+
+        return int(data_point_count.value)
+
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
@@ -68,6 +100,8 @@ class DataPoint(models.Model):
             ['generator_identifier', 'secondary_identifier', 'recorded'],
             ['generator_identifier', 'secondary_identifier', 'created', 'recorded'],
         ]
+
+    objects = Manager.from_queryset(DataPointQuerySet)()
 
     source = models.CharField(max_length=1024, db_index=True)
     generator = models.CharField(max_length=1024, db_index=True)
@@ -113,6 +147,10 @@ class DataPoint(models.Model):
             return self.properties
 
         return json.loads(self.properties)
+
+class DataServerMetadatum(models.Model):
+    key = models.CharField(max_length=1024, db_index=True)
+    value = models.CharField(max_length=1024)
 
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)

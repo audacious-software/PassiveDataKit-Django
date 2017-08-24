@@ -9,7 +9,9 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from ...decorators import handle_lock
-from ...models import DataPoint, DataBundle, install_supports_jsonfield
+from ...models import DataServerMetadatum, DataPoint, DataBundle, install_supports_jsonfield
+
+TOTAL_DATA_POINT_COUNT = 'Total Data Point Count'
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -33,6 +35,8 @@ class Command(BaseCommand):
 
         supports_json = install_supports_jsonfield()
         default_tz = timezone.get_default_timezone()
+
+        new_point_count = 0
 
         for bundle in DataBundle.objects.filter(processed=False).order_by('-recorded')[:options['bundle_count']]:
             if supports_json is False:
@@ -61,6 +65,8 @@ class Command(BaseCommand):
 
                     point.save()
 
+                    new_point_count += 1
+
             bundle.processed = True
             bundle.save()
 
@@ -69,5 +75,22 @@ class Command(BaseCommand):
 
         for bundle in to_delete:
             bundle.delete()
+
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT).first()
+
+        if data_point_count is None:
+            count = DataPoint.objects.all().count()
+
+            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT)
+
+            data_point_count.value = str(count)
+            data_point_count.save()
+        else:
+            count = int(data_point_count.value)
+
+            count += new_point_count
+
+            data_point_count.value = str(count)
+            data_point_count.save()
 
         logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())

@@ -1,7 +1,8 @@
 from django.contrib.gis import admin
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
-                    DataPointVisualizations, ReportJob, DataSourceAlert
+                    DataPointVisualizations, ReportJob, DataSourceAlert, \
+                    DataServerMetadatum
 
 @admin.register(DataPointVisualizations)
 class DataPointVisualizationsAdmin(admin.OSMGeoAdmin):
@@ -61,9 +62,22 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
 
     actions = [reset_report_jobs]
 
+@admin.register(DataServerMetadatum)
+class DataServerMetadatumAdmin(admin.OSMGeoAdmin):
+    list_display = ('key', 'value',)
+    search_fields = ['key', 'value']
+
+
 @admin.register(DataSourceAlert)
 class DataSourceAlertAdmin(admin.OSMGeoAdmin):
-    list_display = ('alert_name', 'data_source', 'generator_identifier', 'active', 'alert_level', \
-                    'created', 'updated',)
-    list_filter = ('active', 'alert_level', 'created', 'alert_name', 'generator_identifier', \
-                   'data_source',)
+    list_display = (
+        'created',
+        'updated',
+        'data_source',
+        'generator_identifier',
+        'alert_name',
+        'alert_level',
+        'active'
+    )
+
+    list_filter = ('active', 'created', 'updated', 'alert_level', 'generator_identifier',)

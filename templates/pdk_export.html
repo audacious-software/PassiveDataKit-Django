@@ -87,8 +87,8 @@
     </form>
     
     <script>
-            window.setTimeout(function()
-            {
+    	var init = function() {
+    		if (window.jQuery) {
                 $('#sources_select_all').change(function() 
                 {
                     $(".source_checkbox").prop("checked", $(this).is(":checked"));
@@ -98,7 +98,12 @@
                 {
                     $(".generator_checkbox").prop("checked", $(this).is(":checked"));
                 });
-            }, 500);
+    		} else {
+				window.setTimeout(init, 100);
+    		}
+    	};
+    	
+    	init();
     </script>
         
     <script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
