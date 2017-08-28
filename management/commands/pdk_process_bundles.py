@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 bundle.properties = json.loads(bundle.properties)
 
             for bundle_point in bundle.properties:
-                if 'passive-data-metadata' in bundle_point:
+                if 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata']:
                     point = DataPoint(recorded=timezone.now())
                     point.source = bundle_point['passive-data-metadata']['source']
                     point.generator = bundle_point['passive-data-metadata']['generator']
