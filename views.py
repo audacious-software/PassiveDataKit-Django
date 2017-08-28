@@ -95,6 +95,8 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
+        points = None
+
         try:
             points = json.loads(request.body)
         except UnreadablePostError:
@@ -102,6 +104,8 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            return response
 
         bundle = DataBundle(recorded=timezone.now())
 

@@ -64,7 +64,7 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataServerMetadatum)
 class DataServerMetadatumAdmin(admin.OSMGeoAdmin):
-    list_display = ('key', 'value',)
+    list_display = ('key', 'formatted_value',)
     search_fields = ['key', 'value']
 
 
