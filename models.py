@@ -14,14 +14,16 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 from django.db import connection
-from django.db.models import QuerySet, Manager
+from django.db.models import QuerySet
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from django.utils.text import slugify
 
 DB_SUPPORTS_JSON = None
-TOTAL_DATA_POINT_COUNT = 'Total Data Point Count'
+TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
+SOURCES_DATUM = 'Data Point Sources'
+SOURCE_GENERATORS_DATUM = 'Data Point Source Generator Identifiers'
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -73,12 +75,63 @@ class DataPointQuerySet(QuerySet):
         if not is_postgres or is_filtered:
             return super(DataPointQuerySet, self).count()
 
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT).first()
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
             return super(DataPointQuerySet, self).count()
 
         return int(data_point_count.value)
+
+class DataPointManager(models.Manager):
+    def get_queryset(self):
+        return DataPointQuerySet(self.model, using=self._db)
+
+    def sources(self): # pylint: disable=no-self-use
+        sources_datum = DataServerMetadatum.objects.filter(key=SOURCES_DATUM).first()
+
+        if sources_datum is not None:
+            return json.loads(sources_datum.value)
+
+        sources = DataPoint.objects.order_by().values_list('source').distinct()
+
+        source_ids = []
+
+        for source in sources:
+            source_ids.append(source[0])
+
+        sources_datum = DataServerMetadatum(key=SOURCES_DATUM)
+
+        sources_datum.value = json.dumps(source_ids, indent=2)
+
+        sources_datum.save()
+
+        return sources
+
+    def generator_identifiers_for_source(self, source): # pylint: disable=invalid-name, no-self-use
+        key = SOURCE_GENERATORS_DATUM + ': ' + source
+        sources_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+        identifiers = {}
+
+        if sources_datum is not None:
+            identifiers = json.loads(sources_datum.value)
+
+            return identifiers
+        else:
+            sources_datum = DataServerMetadatum(key=key)
+
+        source_identifiers = DataPoint.objects.filter(source=source).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
+
+        new_identifiers = []
+
+        for identifier in source_identifiers:
+            new_identifiers.append(identifier)
+
+        sources_datum.value = json.dumps(new_identifiers, indent=2)
+
+        sources_datum.save()
+
+        return source_identifiers
 
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
@@ -101,7 +154,7 @@ class DataPoint(models.Model):
             ['generator_identifier', 'secondary_identifier', 'created', 'recorded'],
         ]
 
-    objects = Manager.from_queryset(DataPointQuerySet)()
+    objects = DataPointManager()
 
     source = models.CharField(max_length=1024, db_index=True)
     generator = models.CharField(max_length=1024, db_index=True)
@@ -148,9 +201,13 @@ class DataPoint(models.Model):
 
         return json.loads(self.properties)
 
+
 class DataServerMetadatum(models.Model):
     key = models.CharField(max_length=1024, db_index=True)
-    value = models.CharField(max_length=1024)
+    value = models.TextField(max_length=1048576)
+
+    def formatted_value(self): # pylint: disable=no-self-use
+        return 'TODO'
 
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)

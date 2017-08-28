@@ -17,27 +17,25 @@ class Command(BaseCommand):
     help = 'Compiles support files and other resources used for data inspection and visualization.'
 
     def add_arguments(self, parser):
-        pass
-#        parser.add_argument('--delete',
-#            action='store_true',
-#            dest='delete',
-#            default=False,
-#            help='Delete data bundles after processing')
-#
-#        parser.add_argument('--count',
-#            type=int,
-#            dest='bundle_count',
-#            default=100,
-#            help='Number of bundles to process in a single run')
+        parser.add_argument('--source',
+                            type=str,
+                            dest='source',
+                            default='all',
+                            help='Specific source to regenerate')
 
     @handle_lock
-    def handle(self, *args, **options):
+    def handle(self, *args, **options): # pylint: disable=too-many-branches
         last_updated = None
 
-        sources = DataPoint.objects.all().order_by('source').values_list('source', flat=True).distinct()
+        sources = []
+
+        if options['source'] != 'all':
+            sources = [options['source']]
+        else:
+            sources = sorted(DataPoint.objects.sources())
 
         for source in sources:
-            identifiers = DataPoint.objects.filter(source=source).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
+            identifiers = DataPoint.objects.generator_identifiers_for_source(source)
 
             for identifier in identifiers:
                 compiled = DataPointVisualizations.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()

@@ -9,9 +9,8 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from ...decorators import handle_lock
-from ...models import DataServerMetadatum, DataPoint, DataBundle, install_supports_jsonfield
-
-TOTAL_DATA_POINT_COUNT = 'Total Data Point Count'
+from ...models import DataServerMetadatum, DataPoint, DataBundle, install_supports_jsonfield, \
+                      TOTAL_DATA_POINT_COUNT_DATUM, SOURCES_DATUM, SOURCE_GENERATORS_DATUM
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -30,13 +29,16 @@ class Command(BaseCommand):
                             help='Number of bundles to process in a single run')
 
     @handle_lock
-    def handle(self, *args, **options):
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         to_delete = []
 
         supports_json = install_supports_jsonfield()
         default_tz = timezone.get_default_timezone()
 
         new_point_count = 0
+
+        seen_sources = []
+        source_identifiers = {}
 
         for bundle in DataBundle.objects.filter(processed=False).order_by('-recorded')[:options['bundle_count']]:
             if supports_json is False:
@@ -65,6 +67,12 @@ class Command(BaseCommand):
 
                     point.save()
 
+                    if (point.source in seen_sources) is False:
+                        seen_sources.append(point.source)
+
+                    if point.source in source_identifiers:
+                        source_identifiers = source_identifiers[point.source]
+
                     new_point_count += 1
 
             bundle.processed = True
@@ -76,12 +84,12 @@ class Command(BaseCommand):
         for bundle in to_delete:
             bundle.delete()
 
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT).first()
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
             count = DataPoint.objects.all().count()
 
-            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT)
+            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
 
             data_point_count.value = str(count)
             data_point_count.save()
@@ -92,5 +100,49 @@ class Command(BaseCommand):
 
             data_point_count.value = str(count)
             data_point_count.save()
+
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+
+        sources = DataServerMetadatum.objects.filter(key=SOURCES_DATUM).first()
+
+        if sources is not None:
+            updated = False
+
+            source_list = json.loads(sources.value)
+
+            for seen_source in seen_sources:
+                if (seen_source in source_list) is False:
+                    source_list.append(seen_source)
+
+                    updated = True
+
+            if updated:
+                sources.value = json.dumps(source_list, indent=2)
+                sources.save()
+        else:
+            DataPoint.objects.sources()
+
+        for source, identifiers in source_identifiers.iteritems():
+            datum_key = SOURCE_GENERATORS_DATUM + ': ' + source
+            source_id_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
+
+            source_ids = []
+
+            if source_id_datum is not None:
+                source_ids = json.loads(source_id_datum.value)
+            else:
+                source_id_datum = DataServerMetadatum(key=datum_key)
+
+            updated = False
+
+            for identifier in identifiers:
+                if (identifier in source_ids) is False:
+                    source_ids.append(identifier)
+
+                    updated = True
+
+            if updated:
+                source_id_datum.value = json.dumps(source_ids, indent=2)
+                source_id_datum.save()
 
         logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
