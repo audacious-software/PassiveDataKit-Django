@@ -4,7 +4,14 @@
 
 {% block sidebar %}
 	<ul class="nav nav-sidebar">
-		<li><label><a href="{% url 'pdk_source' source.identifier %}">{{ source.name }}</a></label></li>
+		<li>
+			<label>
+				<a href="{% url 'pdk_source' source.identifier %}">
+					<span class="glyphicon glyphicon-chevron-left"></span>
+					{{ source.name }}
+				</a>
+			</label>
+		</li>
 	</ul>
 	<ul class="nav nav-sidebar">
 		<li><label>Generators</label></li>

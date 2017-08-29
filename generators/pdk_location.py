@@ -26,7 +26,7 @@ def visualization(source, generator):
     values = []
 
     end = timezone.now()
-    start = end - datetime.timedelta(days=1)
+    start = end - datetime.timedelta(days=7)
 
     min_latitude = 90
     max_latitude = -90

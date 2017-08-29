@@ -23,64 +23,78 @@ class Command(BaseCommand):
                             default='all',
                             help='Specific source to regenerate')
 
+        parser.add_argument('--repeat',
+                            type=int,
+                            dest='repeat',
+                            default=10,
+                            help='Number of times to repeat in a single run')
+
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches
-        last_updated = None
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals
+        repeat = options['repeat']
 
-        sources = []
+        while repeat > 0:
+            last_updated = None
 
-        if options['source'] != 'all':
-            sources = [options['source']]
-        else:
-            sources = sorted(DataPoint.objects.sources())
+            sources = []
 
-        for source in sources:
-            identifier_list = ['pdk-data-frequency']
-
-            for identifier in DataPoint.objects.generator_identifiers_for_source(source):
-                identifier_list.append(identifier)
-
-            for identifier in identifier_list:
-                compiled = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
-
-                if compiled is None:
-                    compiled = DataPointVisualization(source=source, generator_identifier=identifier)
-
-                    compiled.last_updated = pytz.timezone('UTC').localize(datetime.datetime.min)
-                    compiled.save()
-
-                last_point = None
-
-                last_point = DataPoint.objects.latest_point(source, identifier)
-
-                if last_point is not None and last_point.recorded > compiled.last_updated:
-                    if last_updated is None:
-                        last_updated = compiled
-                    elif last_updated.last_updated > compiled.last_updated:
-                        last_updated = compiled
-
-        if last_updated is not None:
-            points = None
-
-            if last_updated.generator_identifier == 'pdk-data-frequency':
-                points = DataPoint.objects.filter(source=last_updated.source)
+            if options['source'] != 'all':
+                sources = [options['source']]
             else:
-                points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
+                sources = sorted(DataPoint.objects.sources())
 
-            folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + last_updated.source + '/' + last_updated.generator_identifier
+            update_delta = 0
 
-            if os.path.exists(folder) is False:
-                os.makedirs(folder)
+            for source in sources:
+                identifier_list = ['pdk-data-frequency']
 
-            for app in settings.INSTALLED_APPS:
-                try:
-                    pdk_api = importlib.import_module(app + '.pdk_api')
+                for identifier in DataPoint.objects.generator_identifiers_for_source(source):
+                    identifier_list.append(identifier)
 
-                    pdk_api.compile_visualization(last_updated.generator_identifier, points, folder)
-                except ImportError:
-                    pass
-                except AttributeError:
-                    pass
+                for identifier in identifier_list:
+                    compiled = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
 
-            last_updated.last_updated = timezone.now()
-            last_updated.save()
+                    if compiled is None:
+                        compiled = DataPointVisualization(source=source, generator_identifier=identifier)
+
+                        compiled.last_updated = pytz.timezone('UTC').localize(datetime.datetime.min)
+                        compiled.save()
+
+                    last_point = DataPoint.objects.latest_point(source, identifier)
+
+                    if last_point is not None:
+                        this_delta = (last_point.recorded - compiled.last_updated).total_seconds()
+
+                        if this_delta > update_delta:
+                            last_updated = compiled
+                            update_delta = this_delta
+
+            if last_updated is not None:
+                points = None
+
+                if last_updated.generator_identifier == 'pdk-data-frequency':
+                    points = DataPoint.objects.filter(source=last_updated.source)
+                else:
+                    points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
+
+                folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + last_updated.source + '/' + last_updated.generator_identifier
+
+                if os.path.exists(folder) is False:
+                    os.makedirs(folder)
+
+                for app in settings.INSTALLED_APPS:
+                    try:
+                        pdk_api = importlib.import_module(app + '.pdk_api')
+
+                        pdk_api.compile_visualization(last_updated.generator_identifier, points, folder)
+                    except ImportError:
+                        pass
+                    except AttributeError:
+                        pass
+
+                last_updated.last_updated = timezone.now()
+                last_updated.save()
+            else:
+                repeat = 0
+
+            repeat -= 1

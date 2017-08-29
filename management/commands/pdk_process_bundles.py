@@ -75,8 +75,10 @@ class Command(BaseCommand):
                     if point.source in source_identifiers:
                         source_identifiers = source_identifiers[point.source]
 
-                    if (point.generator_identifier in latest_points) is False or latest_points[point.generator_identifier].created < point.created:
-                        latest_points[point.generator_identifier] = point
+                    latest_key = point.source + '--' + point.generator_identifier
+
+                    if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+                        latest_points[latest_key] = point
 
                     new_point_count += 1
 
@@ -150,8 +152,8 @@ class Command(BaseCommand):
                 source_id_datum.value = json.dumps(source_ids, indent=2)
                 source_id_datum.save()
 
-            for identifier, point in latest_points.iteritems():
-                DataPoint.objects.set_latest_point(point.source, identifier, point)
-                DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
+        for identifier, point in latest_points.iteritems():
+            DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
+            DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
         logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())

@@ -1,0 +1,158 @@
+{% extends "pdk_base.html" %}
+{% load static from staticfiles %}
+{% load passive_data_kit %}
+
+{% block sidebar %}
+	<ul class="nav nav-sidebar">
+		<li><label>Total Bundles</label></li>
+		<li><a>{{ last_bundle_count }}</a></li>
+
+		<li style="margin-top: 2em;"><label>Total Points</label></li>
+		<li><a>{{ last_point_count }}</a></li>
+	</ul>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="sub-header">System Health</h1> 
+        </div>
+    </div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header"><a name="data_collection"></a>Data Point Bundle Uploads</h3> 
+		</div>
+		<div class="col-md-12">
+			<div id="pdk-data-bundle-chart" style="border: #EDEEED solid 1px;"></div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="sub-header" style="margin-top: 2em;"><a name="data_collection"></a>Data Points Added</h3> 
+		</div>
+		<div class="col-md-12">
+			<div id="pdk-data-point-chart" style="border: #EDEEED solid 1px;"></div>
+		</div>
+	</div>
+    
+    <script>
+    	var setUpBundles = function() {
+    		var bundleAdds = [];
+    		var bundlePendings = [];
+    		
+    		{% for snapshot in bundle_snapshots %}
+    			bundleAdds.push({
+    				"x": {{ snapshot.time }},
+    				"y": {{ snapshot.added }}
+    			});
+
+    			bundlePendings.push({
+    				"x": {{ snapshot.time }},
+    				"y": {{ snapshot.unprocessed }}
+    			});
+    		{% endfor %}
+
+			var graph = new Rickshaw.Graph( {
+				element: document.querySelector("#pdk-data-bundle-chart"), 
+				height: 200, 
+				renderer: 'line',
+				series: [{
+					name: 'Bundles Added',
+					data: bundleAdds,
+					color: "#1B5E20"
+				},{
+					name: 'Pending Bundles',
+					data: bundlePendings,
+					color: "#B71C1C"
+				}]
+			});
+
+			var ticksTreatment = 'glow';
+
+			var yTicks = new Rickshaw.Graph.Axis.Y( {
+				graph: graph,
+				ticksTreatment: ticksTreatment,
+				tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+			});
+
+			graph.render();
+
+			var xAxis = new Rickshaw.Graph.Axis.Time( {
+				graph: graph,
+				ticksTreatment: ticksTreatment,
+				timeFixture: new Rickshaw.Fixtures.Time.Local()
+			});
+		
+			xAxis.render();
+
+			var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+				graph: graph,
+				formatter: function(series, x, y) {
+					var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+					var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+					var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+					return content;
+				}
+			});
+    	}
+
+    	var setUpPoints = function() {
+    		var pointAdds = [];
+    		
+    		{% for snapshot in point_snapshots %}
+    			pointAdds.push({
+    				"x": {{ snapshot.time }},
+    				"y": {{ snapshot.added }}
+    			});
+    		{% endfor %}
+
+			var graph = new Rickshaw.Graph( {
+				element: document.querySelector("#pdk-data-point-chart"), 
+				height: 200, 
+				renderer: 'line',
+				series: [{
+					name: 'Points Added',
+					data: pointAdds,
+					color: "#1B5E20"
+				}]
+			});
+
+			var ticksTreatment = 'glow';
+
+			var yTicks = new Rickshaw.Graph.Axis.Y( {
+				graph: graph,
+				ticksTreatment: ticksTreatment,
+				tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+			});
+
+			graph.render();
+
+			var xAxis = new Rickshaw.Graph.Axis.Time( {
+				graph: graph,
+				ticksTreatment: ticksTreatment,
+				timeFixture: new Rickshaw.Fixtures.Time.Local()
+			});
+		
+			xAxis.render();
+
+			var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+				graph: graph,
+				formatter: function(series, x, y) {
+					var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+					var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+					var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+					return content;
+				}
+			});
+    	}
+    	
+    	window.showVisualization = function() {
+    		setUpBundles();
+    		setUpPoints();
+    	};
+    </script>
+        
+    <script data-main="{% static  'pdk/js/system-health.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+{% endblock %}

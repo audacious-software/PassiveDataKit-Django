@@ -15,7 +15,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
-                    generator_label, install_supports_jsonfield
+                    generator_label, install_supports_jsonfield, DataSourceAlert, \
+                    DataServerMetadatum
 
 @csrf_exempt
 def add_data_point(request):
@@ -227,6 +228,8 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
 
     context['source'] = source
 
+    context['alerts'] = DataSourceAlert.objects.filter(active=True, data_source=source)
+
     return render(request, 'pdk_source.html', context=context)
 
 @staff_member_required
@@ -369,3 +372,36 @@ def pdk_export(request): # pylint: disable=too-many-branches
             context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
 
     return render(request, 'pdk_export.html', context=context)
+
+@staff_member_required
+def pdk_system_health(request):
+    datum = DataServerMetadatum.objects.filter(key='Server Health').first()
+
+    return render(request, 'pdk_system_health.html', context=json.loads(datum.value))
+
+@staff_member_required
+def pdk_profile(request):
+    context = {}
+    context['user'] = request.user
+
+    if request.method == 'POST':
+        current_password = request.POST['current_password']
+
+        if request.user.check_password(current_password):
+            new_password = request.POST['new_password']
+            confirm_password = request.POST['confirm_password']
+
+            if new_password == confirm_password:
+                request.user.set_password(new_password)
+                request.user.save()
+
+                context['message'] = 'Password updated successfully.'
+                context['message_class'] = 'success'
+            else:
+                context['message'] = 'Provided passwords do not match. Please try again.'
+                context['message_class'] = 'danger'
+        else:
+            context['message'] = 'Current password is incorrect. Please try again.'
+            context['message_class'] = 'danger'
+
+    return render(request, 'pdk_user_profile.html', context=context)

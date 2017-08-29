@@ -1,29 +1,32 @@
 {% load passive_data_kit %}
 <table class="group_table" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
-	<thead>
-		<tr>
-			<th data-sortable="true">Generator</th>
-			<th data-sortable="true">#</th>
-			<th data-sortable="true">Last Recorded</th>
-			<th data-sortable="true">Date Range</th>
-			<th data-sortable="true">Frequency</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for generator in source.generator_statistics %}
-			<tr>
-				<td><a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a></td>
-				<td>{{ generator.points_count }}</td>
-				<td>{{ generator.last_recorded|to_datetime }}</td>
-				<td>
-					{% if generator.first_created == generator.last_created %}				
-						{{ generator.first_created|to_datetime }}
-					{% else %}
-						{{ generator.first_created|to_datetime }} - {{ generator.last_created|to_datetime }}
-					{% endif %}
-				</td>
-				<td>{% to_hz generator.frequency %}</td>
-			</tr>
-		{% endfor %}
-	</tbody>
+    <thead>
+        <tr>
+            <th data-sortable="true">Generator</th>
+            <th data-sortable="true">#</th>
+            <th data-sortable="true">Last Recorded</th>
+            <th data-sortable="true">Date Range</th>
+            <th data-sortable="true">Frequency</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for generator in source.generator_statistics %}
+            <tr>
+                <td><a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a></td>
+                <td>{{ generator.points_count }}</td>
+                <td>
+                    <span style="display: none;">{{ generator.last_recorded }}</span>
+                    {{ generator.last_recorded|to_datetime }}
+                </td>
+                <td>
+                    {% if generator.first_created == generator.last_created %}              
+                        {{ generator.first_created|to_datetime }}
+                    {% else %}
+                        {{ generator.first_created|to_datetime }} - {{ generator.last_created|to_datetime }}
+                    {% endif %}
+                </td>
+                <td>{% to_hz generator.frequency %}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
 </table>

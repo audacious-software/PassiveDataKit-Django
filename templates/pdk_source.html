@@ -3,16 +3,20 @@
 {% load passive_data_kit %}
 
 {% block sidebar %}
+	{% if alerts.count > 0 %}
+		<ul class="nav nav-sidebar">
+			<li><a href="#alerts">Alerts {% source_alerts_badge source %}</a></li>
+		</ul>
+	{% endif %}
+	
 	<ul class="nav nav-sidebar">
-		<li><a href="#alerts">Alerts {% source_alerts_badge source %}</a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
-		<li><label>TODO</label></li>
-		<li><a href="#generators">Generators</a></li>
-	</ul>
-	<ul class="nav nav-sidebar">
-		<li><label>Actions</label></li>
-		<li><a href="#add_source">Add Data Source</a></li>
+		<li><label>Generators</label></li>
+
+		{% for generator in source.generator_statistics %}
+			<li>
+				<a href="{% url 'pdk_source_generator' generator.source generator.identifier %}">{% generator_name generator.label %}</a>
+			</li>
+		{% endfor %}
 	</ul>
 {% endblock %}
 
@@ -23,15 +27,17 @@
 		</div>
 	</div>
 
-	<div class="row">
-		<div class="col-md-12">
-			<h3 class="sub-header"><a name="alerts"></a>Alerts</h3> 
-		</div>
+	{% if alerts.count > 0 %}
+		<div class="row">
+			<div class="col-md-12">
+				<h3 class="sub-header"><a name="alerts"></a>Alerts</h3> 
+			</div>
 		
-		<div class="col-md-12">
-			{% source_alerts_table source %}
+			<div class="col-md-12">
+				{% source_alerts_table source %}
+			</div>
 		</div>
-	</div>
+	{% endif %}
 
 	<div class="row">
 		<div class="col-md-12">

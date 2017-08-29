@@ -31,10 +31,10 @@
 				<div id="navbar" class="navbar-collapse collapse">
 					<ul class="nav navbar-nav navbar-right">
 						<li><a href="{% url 'pdk_home' %}">Home</a></li>
-						<li><a href="#">System Health</a></li>
-						<li><a href="#">Profile</a></li>
+						<li><a href="{% url 'pdk_system_health' %}">System Health</a></li>
+						<li><a href="{% url 'pdk_profile' %}">Profile</a></li>
 						<li><a href="{% url 'pdk_export' %}">Export</a></li>
-						<li><a href="#">Log Out</a></li>
+						<li><a href="{% url 'pdk_logout' %}">Log Out</a></li>
 					</ul>
 				</div>
 			</div>

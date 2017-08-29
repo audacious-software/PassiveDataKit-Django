@@ -70,6 +70,6 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
         context['data'] = data
 
-        return render_to_string('pdk_data_frequency_viz_template.html', context)
+        return render_to_string('pdk_data_frequency_template.html', context)
 
     return None

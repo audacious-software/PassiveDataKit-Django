@@ -1,8 +1,10 @@
 # pylint: disable=line-too-long, no-member
 
 import datetime
+import json
 import time
 
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -17,17 +19,25 @@ def extract_secondary_identifier(properties):
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Device Battery Status'
 
-def visualization(source, generator):
+def visualization(source, generator): # pylint: disable=unused-argument
+    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/battery-level.json'
+
+    with open(filename) as infile:
+        data = json.load(infile)
+
+        return render_to_string('pdk_device_battery_template.html', data)
+
+    return None
+
+def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
     context = {}
-    context['source'] = source
-    context['generator_identifier'] = generator
 
     values = []
 
     end = timezone.now()
     start = end - datetime.timedelta(days=1)
 
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
+    for point in points.order_by('created'):
         properties = point.fetch_properties()
 
         value = {}
@@ -42,7 +52,8 @@ def visualization(source, generator):
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
 
-    return render_to_string('pdk_device_battery_template.html', context)
+    with open(folder + '/battery-level.json', 'w') as outfile:
+        json.dump(context, outfile, indent=2)
 
 def data_table(source, generator):
     context = {}

@@ -162,7 +162,11 @@ class DataPointManager(models.Manager):
         if latest_point is None or latest_point.created < new_point.created:
             key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
 
-            latest_point_datum = DataServerMetadatum(key=key)
+            latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+            if latest_point_datum is None:
+                latest_point_datum = DataServerMetadatum(key=key)
+
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 

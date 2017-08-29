@@ -1,11 +1,12 @@
 # pylint: disable=line-too-long
 
 from django.conf.urls import url
-
+from django.contrib.auth.views import logout
 from django.conf import settings
 
 from .views import add_data_point, add_data_bundle, pdk_home, unmatched_sources, pdk_source, \
-                   pdk_source_generator, pdk_visualization_data, pdk_export, pdk_download_report
+                   pdk_source_generator, pdk_visualization_data, pdk_export, pdk_download_report, \
+                   pdk_system_health, pdk_profile
 
 urlpatterns = [
     url(r'^add-point.json$', add_data_point, name='pdk_add_data_point'),
@@ -20,7 +21,10 @@ try:
         urlpatterns.append(url(r'^source/(?P<source_id>.+)/(?P<generator_id>.+)$', pdk_source_generator, name='pdk_source_generator'))
         urlpatterns.append(url(r'^source/(?P<source_id>.+)$', pdk_source, name='pdk_source'))
         urlpatterns.append(url(r'^export$', pdk_export, name='pdk_export'))
+        urlpatterns.append(url(r'^system-health$', pdk_system_health, name='pdk_system_health'))
+        urlpatterns.append(url(r'^profile$', pdk_profile, name='pdk_profile'))
         urlpatterns.append(url(r'^unmatched-sources.json$', unmatched_sources, name='pdk_unmatched_sources'))
+        urlpatterns.append(url(r'^logout$', logout, name='pdk_logout'))
         urlpatterns.append(url(r'^$', pdk_home, name='pdk_home'))
 except AttributeError:
     pass

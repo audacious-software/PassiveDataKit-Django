@@ -1,12 +1,9 @@
 <div id="chart_container">
-	<div id="battery-level-chart" style="display: inline-block; height: 240px; background-color: #000000;"></div>
-	<div id="y_axis" style="display: inline-block; width: 30px; height: 240px; float: left;"></div>
+	<div id="battery-level-chart" style="display: inline-block; height: 240px; background-color: #000000; width: 100%;"></div>
 </div>
 
 <script>
 	window.showVisualization = function() {
-		$("#battery-level-chart").width($("#chart_container").width() - 35);
-
 		var points = [];
 		
 		{% for value in values %}
@@ -37,23 +34,31 @@
 			max: 105
 		});
 
-		var y_ticks = new Rickshaw.Graph.Axis.Y( {
+		var yTicks = new Rickshaw.Graph.Axis.Y( {
 			graph: graph,
-			orientation: 'left',
-			tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-			element: document.getElementById('y_axis')
-		} );
-
-		var xAxis = new Rickshaw.Graph.Axis.Time({
-		  graph: graph,
-		  timeFixture: new Rickshaw.Fixtures.Time.Local()
-		})
-
-		xAxis.render();
+			tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+		});
 
 		graph.render();
+
+		var xAxis = new Rickshaw.Graph.Axis.Time( {
+			graph: graph,
+			timeFixture: new Rickshaw.Fixtures.Time.Local()
+		});
 		
+		xAxis.render();
+
+		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+			graph: graph,
+			formatter: function(series, x, y) {
+				var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+				var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+				var content = swatch + "Battery Level: " + parseInt(y) + '<br>' + date;
+				return content;
+			}
+		});
+				
 		$(".x_tick .title").css("color", "white");
-		$(".x_tick .title").css("font-weight", "bold");
+		$(".y_ticks text").css("fill", "white");
 	};
 </script>
