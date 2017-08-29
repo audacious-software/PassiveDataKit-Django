@@ -148,3 +148,13 @@ def compile_report(generator, sources):
                 index += 5000
 
     return filename
+
+def compile_visualization(identifier, points, folder):
+    try:
+        generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
+
+        generator_module.compile_visualization(identifier, points, folder)
+    except ImportError:
+        pass
+    except AttributeError:
+        pass

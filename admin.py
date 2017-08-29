@@ -1,13 +1,25 @@
+import datetime
+
 from django.contrib.gis import admin
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
-                    DataPointVisualizations, ReportJob, DataSourceAlert, \
+                    DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum
 
-@admin.register(DataPointVisualizations)
-class DataPointVisualizationsAdmin(admin.OSMGeoAdmin):
+def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
+    for visualization in queryset:
+        visualization.last_updated = datetime.datetime.min
+
+        visualization.save()
+
+reset_visualizations.description = 'Reset visualizations'
+
+@admin.register(DataPointVisualization)
+class DataPointVisualizationAdmin(admin.OSMGeoAdmin):
     list_display = ('source', 'generator_identifier', 'last_updated',)
     list_filter = ('source', 'generator_identifier', 'last_updated',)
+
+    actions = [reset_visualizations]
 
 @admin.register(DataPoint)
 class DataPointAdmin(admin.OSMGeoAdmin):

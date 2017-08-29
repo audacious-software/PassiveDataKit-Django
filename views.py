@@ -311,9 +311,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 def pdk_export(request): # pylint: disable=too-many-branches
     context = {}
 
-    context['sources'] = DataPoint.objects.all().order_by('source')\
-                                                .values_list('source', flat=True)\
-                                                .distinct()
+    context['sources'] = DataPoint.objects.sources()
 
     context['generators'] = DataPoint.objects.all().order_by('generator_identifier')\
                                                    .values_list('generator_identifier', flat=True)\

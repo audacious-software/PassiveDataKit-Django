@@ -24,6 +24,7 @@ DB_SUPPORTS_JSON = None
 TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
 SOURCES_DATUM = 'Data Point Sources'
 SOURCE_GENERATORS_DATUM = 'Data Point Source Generator Identifiers'
+LATEST_POINT_DATUM = 'Latest Data Point'
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -132,6 +133,39 @@ class DataPointManager(models.Manager):
         sources_datum.save()
 
         return source_identifiers
+
+    def latest_point(self, source, identifier): # pylint: disable=no-self-use
+        key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
+
+        latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+        latest = None
+
+        if latest_point_datum is not None:
+            latest = DataPoint.objects.get(pk=int(latest_point_datum.value))
+        else:
+            if identifier == 'pdk-data-frequency':
+                latest = DataPoint.objects.filter(source=source).order_by('-recorded').first()
+            else:
+                latest = DataPoint.objects.filter(source=source, generator_identifier=identifier).order_by('-recorded').first()
+
+            if latest is not None:
+                latest_point_datum = DataServerMetadatum(key=key)
+                latest_point_datum.value = str(latest.pk)
+                latest_point_datum.save()
+
+        return latest
+
+    def set_latest_point(self, source, identifier, new_point):
+        latest_point = self.latest_point(source, identifier)
+
+        if latest_point is None or latest_point.created < new_point.created:
+            key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
+
+            latest_point_datum = DataServerMetadatum(key=key)
+            latest_point_datum.value = str(new_point.pk)
+            latest_point_datum.save()
+
 
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
@@ -391,7 +425,7 @@ class DataSourceAlert(models.Model):
         else:
             self.alert_details = json.dumps(details, indent=2)
 
-class DataPointVisualizations(models.Model):
+class DataPointVisualization(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True)
     last_updated = models.DateTimeField(db_index=True)

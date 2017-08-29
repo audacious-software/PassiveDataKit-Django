@@ -3,8 +3,6 @@
 import datetime
 import importlib
 
-import traceback
-
 import arrow
 
 from django import template
@@ -403,9 +401,11 @@ class GeneratorName(template.Node):
                 if output is not None:
                     return output
             except ImportError:
-                traceback.print_exc()
+                pass
+#                traceback.print_exc()
             except AttributeError:
-                traceback.print_exc()
+                pass
+#                traceback.print_exc()
 
         return generator
 
@@ -433,3 +433,42 @@ class HourMinuteTimeNode(template.Node):
         minute = int(self.minute.resolve(context))
 
         return datetime.time(hour, minute, 0, 0)
+
+
+@register.tag(name="points_visualization")
+def points_visualization(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, source, generator = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires 2 arguments" % \
+                                           token.contents.split()[0])
+
+    return PointsVisualizationNode(source, generator)
+
+class PointsVisualizationNode(template.Node):
+    def __init__(self, source, generator):
+        self.source = template.Variable(source)
+        self.generator = template.Variable(generator)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+        generator = self.generator.resolve(context)
+
+        visualization_html = None
+
+        for app in settings.INSTALLED_APPS:
+            if visualization_html is None:
+                try:
+                    pdk_api = importlib.import_module(app + '.pdk_api')
+
+                    visualization_html = pdk_api.visualization(source, generator)
+                except ImportError:
+                    pass
+                except AttributeError:
+                    pass
+
+        return visualization_html
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)

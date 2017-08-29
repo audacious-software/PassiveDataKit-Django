@@ -1,0 +1,55 @@
+{% load passive_data_kit %}
+
+<div id="pdk-data-frequency-chart" style="border: #EDEEED solid 1px;"></div>
+
+<script>
+	window.showVisualization = function() {
+		var data = [];
+	
+		{% for key in data.keys %}
+			data.push({
+				'x': {{ key }},
+				'y': {{ data|get_item:key }}
+			});
+		{% endfor %}
+
+		var graph = new Rickshaw.Graph( {
+			element: document.querySelector("#pdk-data-frequency-chart"), 
+			height: 200, 
+			renderer: 'line',
+			series: [{
+				name: 'Data Points',
+				color: 'steelblue',
+				data: data
+			}]
+		});
+
+		var ticksTreatment = 'glow';
+
+		var yTicks = new Rickshaw.Graph.Axis.Y( {
+			graph: graph,
+			ticksTreatment: ticksTreatment,
+			tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+		});
+
+		graph.render();
+
+		var xAxis = new Rickshaw.Graph.Axis.Time( {
+			graph: graph,
+			ticksTreatment: ticksTreatment,
+			timeFixture: new Rickshaw.Fixtures.Time.Local()
+		});
+		
+		xAxis.render();
+
+		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+			graph: graph,
+			formatter: function(series, x, y) {
+				var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+				var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+				var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+				return content;
+			}
+		});
+	}
+</script>

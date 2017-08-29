@@ -35,6 +35,15 @@
 
 	<div class="row">
 		<div class="col-md-12">
+			<h3 class="sub-header"><a name="data_collection"></a>Data Collection</h3> 
+		</div>
+		<div class="col-md-12">
+			{% points_visualization source 'pdk-data-frequency' %}
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
 			<h3 class="sub-header"><a name="generators"></a>Generators</h3> 
 		</div>
 		<div class="col-md-12">
@@ -42,8 +51,5 @@
 		</div>
 	</div>
 
-	<script data-main="{% static  'pdk/js/home.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+	<script data-main="{% static  'pdk/js/source.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
 {% endblock %}
-
-
-pdk_run_status_checks

@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataPointVisualizations
+from passive_data_kit.models import DataPoint, DataPointVisualization
 
 class Command(BaseCommand):
     help = 'Compiles support files and other resources used for data inspection and visualization.'
@@ -35,18 +35,23 @@ class Command(BaseCommand):
             sources = sorted(DataPoint.objects.sources())
 
         for source in sources:
-            identifiers = DataPoint.objects.generator_identifiers_for_source(source)
+            identifier_list = ['pdk-data-frequency']
 
-            for identifier in identifiers:
-                compiled = DataPointVisualizations.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
+            for identifier in DataPoint.objects.generator_identifiers_for_source(source):
+                identifier_list.append(identifier)
+
+            for identifier in identifier_list:
+                compiled = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
 
                 if compiled is None:
-                    compiled = DataPointVisualizations(source=source, generator_identifier=identifier)
+                    compiled = DataPointVisualization(source=source, generator_identifier=identifier)
 
                     compiled.last_updated = pytz.timezone('UTC').localize(datetime.datetime.min)
                     compiled.save()
 
-                last_point = DataPoint.objects.filter(source=source, generator_identifier=identifier).order_by('-recorded').first()
+                last_point = None
+
+                last_point = DataPoint.objects.latest_point(source, identifier)
 
                 if last_point is not None and last_point.recorded > compiled.last_updated:
                     if last_updated is None:
@@ -55,7 +60,12 @@ class Command(BaseCommand):
                         last_updated = compiled
 
         if last_updated is not None:
-            points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
+            points = None
+
+            if last_updated.generator_identifier == 'pdk-data-frequency':
+                points = DataPoint.objects.filter(source=last_updated.source)
+            else:
+                points = DataPoint.objects.filter(source=last_updated.source, generator_identifier=last_updated.generator_identifier)
 
             folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + last_updated.source + '/' + last_updated.generator_identifier
 

@@ -40,6 +40,8 @@ class Command(BaseCommand):
         seen_sources = []
         source_identifiers = {}
 
+        latest_points = {}
+
         for bundle in DataBundle.objects.filter(processed=False).order_by('-recorded')[:options['bundle_count']]:
             if supports_json is False:
                 bundle.properties = json.loads(bundle.properties)
@@ -72,6 +74,9 @@ class Command(BaseCommand):
 
                     if point.source in source_identifiers:
                         source_identifiers = source_identifiers[point.source]
+
+                    if (point.generator_identifier in latest_points) is False or latest_points[point.generator_identifier].created < point.created:
+                        latest_points[point.generator_identifier] = point
 
                     new_point_count += 1
 
@@ -144,5 +149,9 @@ class Command(BaseCommand):
             if updated:
                 source_id_datum.value = json.dumps(source_ids, indent=2)
                 source_id_datum.save()
+
+            for identifier, point in latest_points.iteritems():
+                DataPoint.objects.set_latest_point(point.source, identifier, point)
+                DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
         logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
