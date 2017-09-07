@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, line-too-long
 
 import datetime
 import importlib
@@ -17,6 +17,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
                     generator_label, install_supports_jsonfield, DataSourceAlert, \
                     DataServerMetadatum
+
 
 @csrf_exempt
 def add_data_point(request):
@@ -170,6 +171,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
 
     return HttpResponseNotAllowed(['CREATE', 'POST'])
 
+
 @staff_member_required
 def pdk_home(request):
     for app in settings.INSTALLED_APPS:
@@ -216,6 +218,7 @@ def pdk_home(request):
 
     return render(request, 'pdk_home.html', context=context)
 
+
 @staff_member_required
 def pdk_source(request, source_id): # pylint: disable=unused-argument
     context = {}
@@ -231,6 +234,7 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
     context['alerts'] = DataSourceAlert.objects.filter(active=True, data_source=source)
 
     return render(request, 'pdk_source.html', context=context)
+
 
 @staff_member_required
 def pdk_source_generator(request, source_id, generator_id): # pylint: disable=unused-argument
@@ -270,6 +274,7 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
 
     return render(request, 'pdk_source_generator.html', context=context)
 
+
 @staff_member_required
 def unmatched_sources(request): # pylint: disable=unused-argument
     sources = []
@@ -297,6 +302,7 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
 
     return HttpResponseNotFound()
 
+
 @staff_member_required
 def pdk_download_report(request, report_id): # pylint: disable=unused-argument
     job = ReportJob.objects.get(pk=int(report_id))
@@ -310,15 +316,13 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
     return response
 
+
 @staff_member_required
 def pdk_export(request): # pylint: disable=too-many-branches
     context = {}
 
-    context['sources'] = DataPoint.objects.sources()
-
-    context['generators'] = DataPoint.objects.all().order_by('generator_identifier')\
-                                                   .values_list('generator_identifier', flat=True)\
-                                                   .distinct()
+    context['sources'] = sorted(DataPoint.objects.sources())
+    context['generators'] = sorted(DataPoint.objects.generator_identifiers())
 
     context['message'] = ''
     context['message_type'] = 'ok'
@@ -351,33 +355,26 @@ def pdk_export(request): # pylint: disable=too-many-branches
 
             context['message'] = 'Please select one or more generators to export data.'
         else:
-            job = ReportJob(requester=request.user, requested=timezone.now())
+            export_raw = ('export_raw_json' in request.POST and request.POST['export_raw_json'])
 
-            params = {}
-
-            params['sources'] = export_sources
-            params['generators'] = export_generators
-
-            if 'export_raw_json' in request.POST and request.POST['export_raw_json']:
-                params['raw_data'] = True
-
-            if install_supports_jsonfield():
-                job.parameters = params
-            else:
-                job.parameters = json.dumps(params, indent=2)
-
-            job.save()
+            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw)
 
             context['message_type'] = 'ok'
-            context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
+
+            if created == 1:
+                context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
+            else:
+                context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.' # pylint: disable=line-too-long
 
     return render(request, 'pdk_export.html', context=context)
+
 
 @staff_member_required
 def pdk_system_health(request):
     datum = DataServerMetadatum.objects.filter(key='Server Health').first()
 
     return render(request, 'pdk_system_health.html', context=json.loads(datum.value))
+
 
 @staff_member_required
 def pdk_profile(request):

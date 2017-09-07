@@ -1,4 +1,4 @@
-Your exported data report is now available.
+Your exported data report is now available ({{ report.sequence_index }} of {{ report.sequence_count }}). 
 
 Please download it from:
 

@@ -1,1 +1,1 @@
-[PDK] Your Report is Ready
+[PDK] Your Report is Ready ({{ report.sequence_index }} of {{ report.sequence_count }})

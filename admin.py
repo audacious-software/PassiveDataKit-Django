@@ -4,7 +4,7 @@ from django.contrib.gis import admin
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
-                    DataServerMetadatum
+                    DataServerMetadatum, ReportJobBatchRequest
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -69,10 +69,25 @@ reset_report_jobs.description = 'Reset report jobs'
 
 @admin.register(ReportJob)
 class ReportJobAdmin(admin.OSMGeoAdmin):
-    list_display = ('requester', 'requested', 'started', 'completed')
+    list_display = (
+        'requester',
+        'requested',
+        'sequence_index',
+        'sequence_count',
+        'started',
+        'completed'
+    )
+
     list_filter = ('requested', 'started', 'completed',)
 
     actions = [reset_report_jobs]
+
+
+@admin.register(ReportJobBatchRequest)
+class ReportJobBatchRequestAdmin(admin.OSMGeoAdmin):
+    list_display = ('requester', 'requested', 'started', 'completed')
+    list_filter = ('requested', 'started', 'completed', 'requester')
+
 
 @admin.register(DataServerMetadatum)
 class DataServerMetadatumAdmin(admin.OSMGeoAdmin):

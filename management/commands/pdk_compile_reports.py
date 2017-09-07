@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from ...decorators import handle_lock
-from ...models import DataPoint, ReportJob, install_supports_jsonfield
+from ...models import DataPoint, ReportJob, ReportJobBatchRequest, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Compiles data reports requested by end users.'
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         os.umask(000)
 
         report = ReportJob.objects.filter(started=None, completed=None)\
-                                  .order_by('requested')\
+                                  .order_by('requested', 'pk')\
                                   .first()
 
         if report is not None:
@@ -160,13 +160,24 @@ class Command(BaseCommand):
                 'url': settings.SITE_URL
             })
 
-            host = settings.SITE_URL.split('/')[-1]
+            tokens = settings.SITE_URL.split('/')
+            host = ''
 
-            if len(settings.SITE_URL.split('/')) > 2:
-                host = settings.SITE_URL.split('/')[-1]
+            while tokens and tokens[-1] == '':
+                tokens.pop()
+
+            if tokens:
+                host = tokens[-1]
 
             send_mail(subject, \
                       message, \
                       'Petey Kay <noreply@' + host + '>', \
                       [report.requester.email], \
                       fail_silently=False)
+        else:
+            request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
+                          .order_by('requested', 'pk')\
+                          .first()
+
+            if request is not None:
+                request.process()

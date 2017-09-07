@@ -38,6 +38,7 @@ class Command(BaseCommand):
         new_point_count = 0
 
         seen_sources = []
+        seen_generators = []
         source_identifiers = {}
 
         latest_points = {}
@@ -79,6 +80,9 @@ class Command(BaseCommand):
 
                     if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
                         latest_points[latest_key] = point
+
+                    if (point.generator_identifier in seen_generators) is False:
+                        seen_sources.append(point.generator_identifier)
 
                     new_point_count += 1
 
@@ -151,6 +155,28 @@ class Command(BaseCommand):
             if updated:
                 source_id_datum.value = json.dumps(source_ids, indent=2)
                 source_id_datum.save()
+
+        datum_key = SOURCE_GENERATORS_DATUM
+        generators_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
+
+        generator_ids = []
+
+        if generators_datum is not None:
+            generator_ids = json.loads(generators_datum.value)
+        else:
+            generators_datum = DataServerMetadatum(key=datum_key)
+
+        updated = False
+
+        for identifier in seen_generators:
+            if (identifier in generator_ids) is False:
+                generator_ids.append(identifier)
+
+                updated = True
+
+        if updated:
+            generators_datum.value = json.dumps(generator_ids, indent=2)
+            generators_datum.save()
 
         for identifier, point in latest_points.iteritems():
             DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)

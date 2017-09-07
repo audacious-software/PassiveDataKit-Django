@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 from django.db import connection
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
@@ -25,6 +25,14 @@ TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
 SOURCES_DATUM = 'Data Point Sources'
 SOURCE_GENERATORS_DATUM = 'Data Point Source Generator Identifiers'
 LATEST_POINT_DATUM = 'Latest Data Point'
+GENERATORS_DATUM = 'Data Point Generators'
+
+ALERT_LEVEL_CHOICES = (
+    ('info', 'Informative'),
+    ('warning', 'Warning'),
+    ('critical', 'Critical'),
+)
+
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -42,8 +50,10 @@ def generator_label(identifier):
 
     return identifier
 
+
 def generator_slugify(str_obj):
     return slugify(str_obj.replace('.', ' ')).replace('-', '_')
+
 
 def install_supports_jsonfield():
     global DB_SUPPORTS_JSON # pylint: disable=global-statement
@@ -55,6 +65,7 @@ def install_supports_jsonfield():
             DB_SUPPORTS_JSON = False
 
     return DB_SUPPORTS_JSON
+
 
 class DataPointQuerySet(QuerySet):
     def count(self):
@@ -82,6 +93,7 @@ class DataPointQuerySet(QuerySet):
             return super(DataPointQuerySet, self).count()
 
         return int(data_point_count.value)
+
 
 class DataPointManager(models.Manager):
     def get_queryset(self):
@@ -133,6 +145,32 @@ class DataPointManager(models.Manager):
         sources_datum.save()
 
         return source_identifiers
+
+    def generator_identifiers(self): # pylint: disable=invalid-name, no-self-use
+        key = GENERATORS_DATUM
+        generators_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+        identifiers = {}
+
+        if generators_datum is not None:
+            identifiers = json.loads(generators_datum.value)
+
+            return identifiers
+        else:
+            generators_datum = DataServerMetadatum(key=key)
+
+        generator_identifiers = DataPoint.objects.all().order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
+
+        new_identifiers = []
+
+        for identifier in generator_identifiers:
+            new_identifiers.append(identifier)
+
+        generators_datum.value = json.dumps(new_identifiers, indent=2)
+
+        generators_datum.save()
+
+        return generator_identifiers
 
     def latest_point(self, source, identifier): # pylint: disable=no-self-use
         key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
@@ -247,6 +285,7 @@ class DataServerMetadatum(models.Model):
     def formatted_value(self): # pylint: disable=no-self-use
         return 'TODO'
 
+
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)
 
@@ -257,6 +296,7 @@ class DataBundle(models.Model):
 
     processed = models.BooleanField(default=False, db_index=True)
 
+
 class DataFile(models.Model):
     data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True)
     data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True)
@@ -265,11 +305,13 @@ class DataFile(models.Model):
     content_type = models.CharField(max_length=256, db_index=True)
     content_file = models.FileField(upload_to='data_files')
 
+
 class DataSourceGroup(models.Model):
     name = models.CharField(max_length=1024, db_index=True)
 
     def __unicode__(self):
         return self.name
+
 
 class DataSource(models.Model):
     identifier = models.CharField(max_length=1024, db_index=True)
@@ -394,11 +436,6 @@ class DataSource(models.Model):
 
         return []
 
-ALERT_LEVEL_CHOICES = (
-    ('info', 'Informative'),
-    ('warning', 'Warning'),
-    ('critical', 'Critical'),
-)
 
 class DataSourceAlert(models.Model):
     alert_name = models.CharField(max_length=1024)
@@ -429,13 +466,61 @@ class DataSourceAlert(models.Model):
         else:
             self.alert_details = json.dumps(details, indent=2)
 
+
 class DataPointVisualization(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
     generator_identifier = models.CharField(max_length=1024, db_index=True)
     last_updated = models.DateTimeField(db_index=True)
 
 
+class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
+    def create_jobs(self, user, sources, generators, export_raw=False): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use
+        batch_request = ReportJobBatchRequest(requester=user, requested=timezone.now())
+
+        params = {}
+
+        params['sources'] = sources
+        params['generators'] = generators
+        params['export_raw'] = export_raw
+
+        if install_supports_jsonfield():
+            batch_request.parameters = params
+        else:
+            batch_request.parameters = json.dumps(params, indent=2)
+
+        batch_request.save()
+
 class ReportJob(models.Model):
+    objects = ReportJobManager()
+
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+
+    requested = models.DateTimeField(db_index=True)
+    started = models.DateTimeField(db_index=True, null=True, blank=True)
+    completed = models.DateTimeField(db_index=True, null=True, blank=True)
+
+    sequence_index = models.IntegerField(default=1)
+    sequence_count = models.IntegerField(default=1)
+
+    if install_supports_jsonfield():
+        parameters = JSONField()
+    else:
+        parameters = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
+
+
+@receiver(post_delete, sender=ReportJob)
+def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
+    job = kwargs['instance']
+
+    try:
+        storage, path = job.report.storage, job.report.path
+        storage.delete(path)
+    except ValueError:
+        pass
+
+class ReportJobBatchRequest(models.Model):
     requester = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     requested = models.DateTimeField(db_index=True)
@@ -447,14 +532,105 @@ class ReportJob(models.Model):
     else:
         parameters = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
+    def process(self): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        self.started = timezone.now()
+        self.save()
 
-@receiver(post_delete, sender=ReportJob)
-def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
-    job = kwargs['instance']
+        target_size = 5000000
 
-    try:
-        storage, path = job.report.storage, job.report.path
-        storage.delete(path)
-    except ValueError:
-        pass
+        try:
+            target_size = settings.PDK_TARGET_SIZE
+        except AttributeError:
+            pass
+
+        params = None
+
+        if install_supports_jsonfield():
+            params = self.parameters
+        else:
+            params = json.loads(self.parameters)
+
+        generator_query = None
+
+        for generator in params['generators']:
+            if generator_query is None:
+                generator_query = Q(generator_identifier=generator)
+            else:
+                generator_query = generator_query | Q(generator_identifier=generator)
+
+        requested = timezone.now()
+
+        source_query = None
+        report_size = 0
+        report_sources = []
+
+        pending_jobs = []
+
+        sources = sorted(params['sources'], reverse=True)
+
+        while sources:
+            source = sources.pop()
+
+            if source_query is None:
+                source_query = Q(source=source)
+            else:
+                source_query = source_query | Q(source=source)
+
+            query_size = DataPoint.objects.filter(generator_query, source_query).count()
+
+            if report_size == 0 or (report_size + query_size) < target_size:
+                report_sources.append(source)
+
+                report_size += query_size
+            else:
+                job = ReportJob(requester=self.requester, requested=requested)
+
+                job_params = {}
+
+                job_params['sources'] = report_sources
+                job_params['generators'] = params['generators']
+                job_params['raw_data'] = params['export_raw']
+
+                if install_supports_jsonfield():
+                    job.parameters = job_params
+                else:
+                    job.parameters = json.dumps(job_params, indent=2)
+
+                pending_jobs.append(job)
+
+                source_query = None
+                report_size = 0
+                report_sources = []
+
+
+        if report_sources and source_query is not None:
+            job = ReportJob(requester=self.requester, requested=requested)
+
+            job_params = {}
+
+            job_params['sources'] = report_sources
+            job_params['generators'] = params['generators']
+            job_params['raw_data'] = params['export_raw']
+
+            if install_supports_jsonfield():
+                job.parameters = job_params
+            else:
+                job.parameters = json.dumps(job_params, indent=2)
+
+            pending_jobs.append(job)
+
+            source_query = None
+            report_size = 0
+            report_sources = []
+
+        index = 1
+
+        for job in pending_jobs:
+            job.sequence_index = index
+            job.sequence_count = len(pending_jobs)
+            job.save()
+
+            index += 1
+
+        self.completed = timezone.now()
+        self.save()

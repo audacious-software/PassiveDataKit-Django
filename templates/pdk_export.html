@@ -54,11 +54,14 @@
                     <input type="checkbox" id="sources_select_all"> Select All Sources
                 </p>
                 
-                <p>
+                <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
                     {% for source in sources %}
-                        <input type="checkbox" name="source_{{ source }}" class="source_checkbox"> {{ source }}<br/>
+                        <p style="padding-bottom: 0.25em; margin: 0px;">
+                        	<input type="checkbox" name="source_{{ source }}" id="source_{{ source }}" class="source_checkbox" /> 
+                        	<label for="source_{{ source }}" style="font-weight: normal;">{{ source }}</label>
+                        </p>
                     {% endfor %}
-                </p>
+                </div>
             </div>
             <div class="col-md-6">
                 <h3>Data Generators</h3>
@@ -66,11 +69,14 @@
                     <input type="checkbox" id="generators_select_all"> Select All Generators
                 </p>
                 
-                <p>
+                <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
                     {% for generator in generators %}
-                        <input type="checkbox" name="generator_{{ generator }}" class="generator_checkbox"> {{ generator }}<br/>
+                        <p style="padding-bottom: 0.25em; margin: 0px;">
+                        	<input type="checkbox" name="generator_{{ generator }}" id="generator_{{ generator }}" class="generator_checkbox" /> 
+                        	<label for="generator_{{ generator }}" style="font-weight: normal;">{{ generator }}</label>
+                        </p>
                     {% endfor %}
-                </p>
+                </div>
             </div>
         </div>
 
