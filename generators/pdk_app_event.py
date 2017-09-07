@@ -58,7 +58,7 @@ def compile_report(generator, sources):
                         properties = json.loads(point.properties)
 
                     row.append(properties['event_name'])
-                    
+
                     if 'event_details' in properties:
                         row.append(json.dumps(properties['event_details']))
 
