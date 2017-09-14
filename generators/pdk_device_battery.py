@@ -20,7 +20,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
     return 'Device Battery Status'
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/battery-level.json'
+    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-device-battery/battery-level.json'
 
     with open(filename) as infile:
         data = json.load(infile)
@@ -37,7 +37,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     end = timezone.now()
     start = end - datetime.timedelta(days=1)
 
-    for point in points.order_by('created'):
+    for point in points.filter(created__gte=start).order_by('created'):
         properties = point.fetch_properties()
 
         value = {}
