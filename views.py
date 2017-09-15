@@ -253,14 +253,15 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
     context['visualization'] = None
 
     for app in settings.INSTALLED_APPS:
-        try:
-            pdk_api = importlib.import_module(app + '.pdk_api')
+        if context['visualization'] is None:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
 
-            context['visualization'] = pdk_api.visualization(source, generator_id)
-        except ImportError:
-            pass
-        except AttributeError:
-            pass
+                context['visualization'] = pdk_api.visualization(source, generator_id)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
 
     for app in settings.INSTALLED_APPS:
         try:

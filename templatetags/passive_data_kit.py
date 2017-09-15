@@ -411,7 +411,11 @@ class GeneratorName(template.Node):
 
 @register.filter("to_datetime")
 def to_datetime(value):
+    if value is None or value == '':
+        return None
+
     return arrow.get(value).datetime
+
 
 @register.tag(name="hour_minute_to_time")
 def hour_minute_to_time(parser, token): # pylint: disable=unused-argument

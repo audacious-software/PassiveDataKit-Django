@@ -91,6 +91,8 @@ class Command(BaseCommand):
                         pass
                     except AttributeError:
                         pass
+                    except NotImplementedError:
+                        pass
 
                 last_updated.last_updated = timezone.now()
                 last_updated.save()

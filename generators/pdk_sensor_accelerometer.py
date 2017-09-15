@@ -3,6 +3,7 @@
 import calendar
 import csv
 import datetime
+import json
 import os
 import tempfile
 import time
@@ -10,7 +11,9 @@ import time
 from zipfile import ZipFile
 
 import arrow
+import numpy
 
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
@@ -19,87 +22,63 @@ from ..models import DataPoint
 
 WINDOW_SIZE = 300
 
-def fetch_values(source, generator, start, end):
-    values = []
-
-    index = start
-    current_value = None
-
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
-        if (point.created - index).total_seconds() > WINDOW_SIZE:
-            if current_value is not None and current_value['min_value'] != -1: # pylint: disable=unsubscriptable-object
-                values.append(current_value)
-
-            current_value = None
-            index = index + datetime.timedelta(seconds=WINDOW_SIZE)
-
-        if current_value is None:
-            current_value = {
-                'min_value': -1,
-                'max_value': -1,
-                'timestamp': time.mktime(index.timetuple()),
-                'created': index,
-                'duration': WINDOW_SIZE
-            }
-
-        properties = point.fetch_properties()
-
-        for level in properties['sensor_data']['light_level']:
-            if current_value['min_value'] == -1 or level < current_value['min_value']:
-                current_value['min_value'] = level
-
-            if current_value['max_value'] == -1 or level > current_value['max_value']:
-                current_value['max_value'] = level
-
-#        duration = properties['sensor_data']['observed'][-1] - properties['sensor_data']['observed'][0]
-#        timestamp = properties['sensor_data']['observed'][0] + (duration / 2)
-#
-#        value['min_value'] = min_value
-#        value['max_value'] = max_value
-#        value['duration'] = duration / (1000 * 1000 * 1000)
-#        value['timestamp'] = timestamp / (1000 * 1000 * 1000)
-#        value['created'] = point.created
-#
-#        values.append(value)
-
-    return values
-
-
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Accelerometer Sensor'
 
-def visualization_todo(source, generator):
+def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
     context = {}
-    context['source'] = source
-    context['generator_identifier'] = generator
+
+    values = []
 
     end = timezone.now()
-    start = end - datetime.timedelta(days=1)
+    start = end - datetime.timedelta(days=2)
 
-    context['values'] = fetch_values(source, generator, start, end)
+    for point in points.filter(created__gte=start).order_by('created'):
+        properties = point.fetch_properties()
+
+        if 'sensor_data' in properties:
+            value = {}
+
+            value['ts'] = properties['passive-data-metadata']['timestamp']
+            value['x_mean'] = numpy.mean(properties['sensor_data']['x'])
+            value['y_mean'] = numpy.mean(properties['sensor_data']['y'])
+            value['z_mean'] = numpy.mean(properties['sensor_data']['z'])
+
+            value['x_std'] = numpy.std(properties['sensor_data']['x'])
+            value['y_std'] = numpy.std(properties['sensor_data']['y'])
+            value['z_std'] = numpy.std(properties['sensor_data']['z'])
+
+            values.append(value)
+
+    context['values'] = values
 
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
 
-    render_to_string('pdk_sensor_light_template.html', context)
+    with open(folder + '/accelerometer.json', 'w') as outfile:
+        json.dump(context, outfile, indent=2)
+
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    return 'TODO'
+    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-sensor-accelerometer/accelerometer.json'
 
-def data_table_todo(source, generator):
-    context = {}
-    context['source'] = source
-    context['generator_identifier'] = generator
+    with open(filename) as infile:
+        data = json.load(infile)
 
-    end = timezone.now()
-    start = end - datetime.timedelta(days=1)
+        return render_to_string('pdk_sensor_accelerometer_template.html', data)
 
-    context['values'] = fetch_values(source, generator, start, end)
+    return None
 
-    return render_to_string('pdk_sensor_light_table_template.html', context)
 
 def data_table(source, generator): # pylint: disable=unused-argument
-    return 'TODO'
+    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-sensor-accelerometer/accelerometer.json'
+
+    with open(filename) as infile:
+        data = json.load(infile)
+
+        return render_to_string('pdk_sensor_accelerometer_table_template.html', data)
+
+    return None
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'

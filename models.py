@@ -436,6 +436,19 @@ class DataSource(models.Model):
 
         return []
 
+    def latest_user_agent(self):
+        latest_point = self.latest_point()
+
+        properties = latest_point.fetch_properties()
+
+        if 'passive-data-metadata' in properties:
+            if 'generator' in properties['passive-data-metadata']:
+                tokens = properties['passive-data-metadata']['generator'].split(':')
+
+                return tokens[-1].strip()
+
+        return None
+
 
 class DataSourceAlert(models.Model):
     alert_name = models.CharField(max_length=1024)

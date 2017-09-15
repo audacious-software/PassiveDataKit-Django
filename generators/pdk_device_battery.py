@@ -60,10 +60,14 @@ def data_table(source, generator):
     context['source'] = source
     context['generator_identifier'] = generator
 
-    end = timezone.now()
-    start = end - datetime.timedelta(days=1)
+    point_count = 1000
 
-    context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created')
+    try:
+        point_count = settings.PDK_LOGGED_VALUES_COUNT
+    except AttributeError:
+        pass
+
+    context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:point_count]
 
     return render_to_string('pdk_device_battery_table_template.html', context)
 

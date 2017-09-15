@@ -1,6 +1,5 @@
 <div id="chart_container">
     <div id="light-level-chart" style="display: inline-block; height: 240px; background-color: #000000;"></div>
-    <div id="y_axis" style="display: inline-block; width: 50px; height: 240px; float: left;"></div>
 </div>
 
 <script>
@@ -61,10 +60,7 @@
 
         var y_ticks = new Rickshaw.Graph.Axis.Y.Scaled( {
             graph: graph,
-            orientation: 'left',
             scale: scale,
-            grid: false,
-            element: document.getElementById('y_axis'),
             tickValues: [0.1, 1, 10, 100, 1000, 10000, 100000]
         });
 
@@ -81,8 +77,10 @@
 			graph: graph
 		} );
         
-        $(".x_tick .title").css("color", "white");
-        $(".x_tick .title").css("opacity", "1.0");
-        $(".x_tick .title").css("font-weight", "bold");
+		$(".x_tick .title").css("color", "white");
+		$(".y_ticks text").css("fill", "white");
+
+		$(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+		$("path.path").css("stroke-width", "1");
     };
 </script>
