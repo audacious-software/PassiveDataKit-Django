@@ -438,14 +438,15 @@ class DataSource(models.Model):
 
     def latest_user_agent(self):
         latest_point = self.latest_point()
+        
+        if latest_point is not None:
+			properties = latest_point.fetch_properties()
 
-        properties = latest_point.fetch_properties()
+			if 'passive-data-metadata' in properties:
+				if 'generator' in properties['passive-data-metadata']:
+					tokens = properties['passive-data-metadata']['generator'].split(':')
 
-        if 'passive-data-metadata' in properties:
-            if 'generator' in properties['passive-data-metadata']:
-                tokens = properties['passive-data-metadata']['generator'].split(':')
-
-                return tokens[-1].strip()
+					return tokens[-1].strip()
 
         return None
 
