@@ -1,0 +1,110 @@
+<div id="chart_container">
+	<div id="screen-chart-one" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-two" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-three" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-four" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-five" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-six" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+	<div id="screen-chart-seven" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+</div>
+
+<script>
+	var plotDay = function(daySelector, day) {
+		var data = [];
+		
+		for (var i = 0; i < day['points'].length; i++) {
+			if (day['points'][i]['value'] == 'off') {
+				data.push({ 'x': day['points'][i]['timestamp'], 'y': 0, 'state': 'off' });
+			} else if (day['points'][i]['value'] == 'on') {
+				data.push({ 'x': day['points'][i]['timestamp'], 'y': 1, 'state': 'on' });
+			} else if (day['points'][i]['value'] == 'doze') {
+				data.push({ 'x': day['points'][i]['timestamp'], 'y': 0.5, 'state': 'doze' });
+			} 
+		}
+		
+		var graph = new Rickshaw.Graph({
+			element: document.querySelector(daySelector), 
+			renderer: 'multi',
+			interpolation: 'step-after',
+			series: [{
+				name: 'Screen State',
+				color: '#1B5E20',
+				renderer: 'area',
+				data: data
+			}, {
+				name: 'Min/Max',
+				color: '#000000',
+				renderer: 'line',
+				data: [{
+					'x': day['start'],
+					'y': 0
+				}, {
+					'x': day['end'],
+					'y': 0
+				}]
+			}]
+		});
+
+		var yTicks = new Rickshaw.Graph.Axis.Y( {
+			graph: graph
+		});
+
+		graph.render();
+
+		var xAxis = new Rickshaw.Graph.Axis.Time( {
+			graph: graph,
+			timeFixture: new Rickshaw.Fixtures.Time.Local()
+		});
+		
+		xAxis.render();
+
+		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+			graph: graph,
+			formatter: function(series, x, y) {
+			    if (series.name == "Screen State") {
+					var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+					var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+					var content = swatch + series.name + ": "
+					
+					if (y == 0) {
+						content += "Off";
+					} else if (y == 1) {
+						content += "On";
+					} else if (y == 0.5) {
+						content += "Doze";
+					}
+						
+					content += '<br>' + date;
+					return content;
+				}
+				
+				return null;
+			},
+			xFormatter: function(x) {
+				return "";
+			}
+		});
+	};
+	
+	window.showVisualization = function() {
+		var days = {{ days|safe }};
+		
+		plotDay("#screen-chart-one", days[0]);
+		plotDay("#screen-chart-two", days[1]);
+		plotDay("#screen-chart-three", days[2]);
+		plotDay("#screen-chart-four", days[3]);
+		plotDay("#screen-chart-five", days[4]);
+		plotDay("#screen-chart-six", days[5]);
+		plotDay("#screen-chart-seven", days[6]);
+				
+		$(".x_tick .title").css("color", "white");
+		$(".y_ticks text").css("fill", "white");
+
+		$(".x_tick").css("border-left-color", "rgba(128, 128, 128, 1.0)");
+
+		$(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+		$("path.path").css("stroke-width", "1");
+
+		$(".rickshaw_graph .detail .x_label").css("opacity", "0.0");
+	};
+</script>

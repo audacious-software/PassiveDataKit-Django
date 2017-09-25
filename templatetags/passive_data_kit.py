@@ -476,3 +476,14 @@ class PointsVisualizationNode(template.Node):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
+
+@register.filter("to_gb")
+def to_gb(value):
+    value = (value / (1024.0 * 1024.0 * 1024.0))
+
+    if value > 1:
+        return '%.3f GB' %  value
+
+    value = value * 1024
+
+    return '%.3f MB' %  value

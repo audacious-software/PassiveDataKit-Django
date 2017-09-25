@@ -1,0 +1,29 @@
+<table id="screen_state_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Screen State</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+        	{% with props=row.fetch_properties %}
+				<tr>
+					<td>
+						<span style="display: none;">
+							{{ row.created.isoformat }}
+						</span>
+						{{ row.created }}
+					</td>
+					<td>{{ props.state }}</td>
+				</tr>
+			{% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#screen_state_values_table").show();
+	};
+</script>

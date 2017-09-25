@@ -20,8 +20,6 @@ from django.utils.text import slugify
 
 from ..models import DataPoint
 
-WINDOW_SIZE = 300
-
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Accelerometer Sensor'
 
@@ -33,22 +31,27 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     end = timezone.now()
     start = end - datetime.timedelta(days=2)
 
-    for point in points.filter(created__gte=start).order_by('created'):
+    for point in points.order_by('-created')[:1000]:
         properties = point.fetch_properties()
 
         if 'sensor_data' in properties:
-            value = {}
+            try:
+                value = {}
 
-            value['ts'] = properties['passive-data-metadata']['timestamp']
-            value['x_mean'] = numpy.mean(properties['sensor_data']['x'])
-            value['y_mean'] = numpy.mean(properties['sensor_data']['y'])
-            value['z_mean'] = numpy.mean(properties['sensor_data']['z'])
+                value['ts'] = properties['passive-data-metadata']['timestamp']
+                value['x_mean'] = numpy.mean(properties['sensor_data']['x'])
+                value['y_mean'] = numpy.mean(properties['sensor_data']['y'])
+                value['z_mean'] = numpy.mean(properties['sensor_data']['z'])
 
-            value['x_std'] = numpy.std(properties['sensor_data']['x'])
-            value['y_std'] = numpy.std(properties['sensor_data']['y'])
-            value['z_std'] = numpy.std(properties['sensor_data']['z'])
+                value['x_std'] = numpy.std(properties['sensor_data']['x'])
+                value['y_std'] = numpy.std(properties['sensor_data']['y'])
+                value['z_std'] = numpy.std(properties['sensor_data']['z'])
 
-            values.append(value)
+                values.insert(0, value)
+            except KeyError:
+                pass
+            except TypeError:
+                pass
 
     context['values'] = values
 
@@ -65,7 +68,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
     with open(filename) as infile:
         data = json.load(infile)
 
-        return render_to_string('pdk_sensor_accelerometer_template.html', data)
+        return render_to_string('generators/pdk_sensor_accelerometer_template.html', data)
 
     return None
 
@@ -76,7 +79,7 @@ def data_table(source, generator): # pylint: disable=unused-argument
     with open(filename) as infile:
         data = json.load(infile)
 
-        return render_to_string('pdk_sensor_accelerometer_table_template.html', data)
+        return render_to_string('generators/pdk_sensor_accelerometer_table_template.html', data)
 
     return None
 
