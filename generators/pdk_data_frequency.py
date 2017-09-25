@@ -63,13 +63,14 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 def visualization(source, generator): # pylint: disable=unused-argument
     filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-counts.json'
 
-    with open(filename) as infile:
-        data = json.load(infile)
+    context = {}
 
-        context = {}
+    try:
+        with open(filename) as infile:
+            data = json.load(infile)
 
-        context['data'] = data
+            context['data'] = data
+    except IOError:
+        context['data'] = {}
 
-        return render_to_string('pdk_data_frequency_template.html', context)
-
-    return None
+    return render_to_string('pdk_data_frequency_template.html', context)
