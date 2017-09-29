@@ -73,8 +73,8 @@ class Command(BaseCommand):
                     if (point.source in seen_sources) is False:
                         seen_sources.append(point.source)
 
-                    if point.source in source_identifiers:
-                        source_identifiers = source_identifiers[point.source]
+                    if (point.source in source_identifiers) is False:
+                        source_identifiers[point.source] = []
 
                     latest_key = point.source + '--' + point.generator_identifier
 
@@ -82,7 +82,10 @@ class Command(BaseCommand):
                         latest_points[latest_key] = point
 
                     if (point.generator_identifier in seen_generators) is False:
-                        seen_sources.append(point.generator_identifier)
+                        seen_generators.append(point.generator_identifier)
+
+                    if (point.generator_identifier in source_identifiers[point.source]) is False:
+                        source_identifiers[point.source].append(point.generator_identifier)
 
                     new_point_count += 1
 
