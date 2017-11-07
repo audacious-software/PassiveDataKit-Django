@@ -129,23 +129,24 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                 while index < count:
                     for point in points[index:(index + 500)]:
                         properties = point.fetch_properties()
+                        
+                        if 'observed' in properties['sensor_data']:
+                            for i in range(0, len(properties['sensor_data']['observed'])):
+                                row = []
 
-                        for i in range(0, len(properties['sensor_data']['observed'])):
-                            row = []
+                                row.append(point.source)
+                                row.append(calendar.timegm(point.created.utctimetuple()))
+                                row.append(point.created.isoformat())
 
-                            row.append(point.source)
-                            row.append(calendar.timegm(point.created.utctimetuple()))
-                            row.append(point.created.isoformat())
+                                row.append(calendar.timegm(point.recorded.utctimetuple()))
+                                row.append(point.recorded.isoformat())
 
-                            row.append(calendar.timegm(point.recorded.utctimetuple()))
-                            row.append(point.recorded.isoformat())
+                                row.append(properties['sensor_data']['raw_timestamp'][i])
+                                row.append(properties['sensor_data']['observed'][i])
+                                row.append(properties['sensor_data']['light_level'][i])
+                                row.append(properties['sensor_data']['accuracy'][i])
 
-                            row.append(properties['sensor_data']['raw_timestamp'][i])
-                            row.append(properties['sensor_data']['observed'][i])
-                            row.append(properties['sensor_data']['light_level'][i])
-                            row.append(properties['sensor_data']['accuracy'][i])
-
-                            writer.writerow(row)
+                                writer.writerow(row)
 
                     index += 500
 
