@@ -129,7 +129,7 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                 while index < count:
                     for point in points[index:(index + 500)]:
                         properties = point.fetch_properties()
-                        
+
                         if 'observed' in properties['sensor_data']:
                             for i in range(0, len(properties['sensor_data']['observed'])):
                                 row = []
