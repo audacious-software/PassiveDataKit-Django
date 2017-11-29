@@ -80,7 +80,9 @@ def data_table(source, generator):
 
 
 # def compile_report(generator, sources): # pylint: disable=too-many-locals
-#    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+#    timestamp = arrow.get()
+#    filename = tempfile.gettempdir() + '/pdk_export_' + str(timestamp.seconds) + '.' + \
+#               str(timestamp.seconds / 1e6) + '.zip'
 #
 #    with ZipFile(filename, 'w') as export_file:
 #        for secondary_identifier in SECONDARY_FIELDS:

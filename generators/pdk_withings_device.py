@@ -70,7 +70,8 @@ def extract_secondary_identifier(properties):
 
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for secondary_identifier in SECONDARY_FIELDS:

@@ -6,8 +6,9 @@ import importlib
 import json
 import os
 import tempfile
-# import traceback
 import zipfile
+
+import zipstream
 
 from django.conf import settings
 from django.core.files import File
@@ -44,6 +45,8 @@ class Command(BaseCommand):
                                   .order_by('requested', 'pk')\
                                   .first()
 
+        to_delete = []
+
         if report is not None:
             report.started = timezone.now()
             report.save()
@@ -65,7 +68,8 @@ class Command(BaseCommand):
 
             filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
 
-            with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as export_file: # pylint: disable=line-too-long
+            with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
+#            with zipstream.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                 for generator in generators: # pylint: disable=too-many-nested-blocks
                     if raw_json:
                         for source in sources:
@@ -109,7 +113,7 @@ class Command(BaseCommand):
                                         out_points.append(point.properties)
 
                                     if out_points:
-                                        export_file.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+                                        export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
 
                                     start = day_end
                     else:
@@ -122,27 +126,30 @@ class Command(BaseCommand):
 
                                     output_file = pdk_api.compile_report(generator, sources)
 
-                                    if output_file.lower().endswith('.zip'):
-                                        with zipfile.ZipFile(output_file, 'r') as source_file:
-                                            for name in source_file.namelist():
-                                                export_file.writestr(name, source_file.open(name).read()) # pylint: disable=line-too-long
+                                    if output_file is not None:
+                                        if output_file.lower().endswith('.zip'):
+                                            with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                for name in source_file.namelist():
+                                                    data_file = source_file.open(name)
 
-                                        os.remove(output_file)
+                                                    export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                        else:
+                                            name = os.path.basename(os.path.normpath(output_file))
 
-                                        output_file = None
+                                            export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
+
+                                        to_delete.append(output_file)
                                 except ImportError:
-#                                    traceback.print_exc()
                                     output_file = None
                                 except AttributeError:
-#                                    traceback.print_exc()
                                     output_file = None
 
-                        if output_file is not None:
-                            export_file.write(output_file, output_file.split('/')[-1])
+                with open(filename, 'wb') as final_output_file:
+                    for data in export_stream:
+                        final_output_file.write(data)
 
-                            os.remove(output_file)
-
-                export_file.close()
+                for output_file in to_delete:
+                    os.remove(output_file)
 
             report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
             report.completed = timezone.now()

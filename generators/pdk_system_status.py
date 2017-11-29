@@ -42,7 +42,8 @@ def data_table(source, generator):
     return render_to_string('generators/pdk_device_system_status_table_template.html', context)
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:

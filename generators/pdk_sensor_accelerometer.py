@@ -4,6 +4,7 @@ import calendar
 import csv
 import datetime
 import json
+import math
 import os
 import tempfile
 import time
@@ -19,6 +20,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from ..models import DataPoint
+
+SPLIT_SIZE = 10000
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Accelerometer Sensor'
@@ -83,67 +86,98 @@ def data_table(source, generator): # pylint: disable=unused-argument
 
     return None
 
-def compile_report(generator, sources): # pylint: disable=too-many-locals
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+def compile_report(generator, sources): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
-            identifier = slugify(generator + '__' + source)
+            points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
 
-            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+            points_count = float(points.count())
 
-            with open(secondary_filename, 'w') as outfile:
-                writer = csv.writer(outfile, delimiter='\t')
+            splits = int(math.ceil(points_count / SPLIT_SIZE))
 
-                columns = [
-                    'Source',
-                    'Created Timestamp',
-                    'Created Date',
-                    'Recorded Timestamp',
-                    'Recorded Date',
-                    'Raw Timestamp',
-                    'Normalized Timestamp',
-                    'X',
-                    'Y',
-                    'Z',
-                    'Accuracy'
-                ]
+            for split_index in range(0, splits):
+                identifier = slugify(generator + '__' + source)
 
-                writer.writerow(columns)
+                if splits > 1:
+                    identifier += '__' + str(split_index)
 
-                points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
+                secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
-                index = 0
-                count = points.count()
+                with open(secondary_filename, 'w') as outfile:
+                    writer = csv.writer(outfile, delimiter='\t')
 
-                while index < count:
-                    for point in points[index:(index + 500)]:
-                        properties = point.fetch_properties()
+                    columns = [
+                        'Source',
+                        'Created Timestamp',
+                        'Created Date',
+                        'Recorded Timestamp',
+                        'Recorded Date',
+                        'Raw Timestamp',
+                        'Normalized Timestamp',
+                        'X',
+                        'Y',
+                        'Z',
+                        'Accuracy'
+                    ]
 
-                        if 'observed' in properties['sensor_data']:
-                            for i in range(0, len(properties['sensor_data']['observed'])):
-                                row = []
+                    writer.writerow(columns)
 
-                                row.append(point.source)
-                                row.append(calendar.timegm(point.created.utctimetuple()))
-                                row.append(point.created.isoformat())
+                    index = split_index * SPLIT_SIZE
 
-                                row.append(calendar.timegm(point.recorded.utctimetuple()))
-                                row.append(point.recorded.isoformat())
+                    while index < (split_index + 1) * SPLIT_SIZE and index < points_count:
+                        for point in points[index:(index + 500)]:
+                            properties = point.fetch_properties()
 
-                                row.append(properties['sensor_data']['raw_timestamp'][i])
-                                row.append(properties['sensor_data']['observed'][i])
-                                row.append(properties['sensor_data']['x'][i])
-                                row.append(properties['sensor_data']['y'][i])
-                                row.append(properties['sensor_data']['z'][i])
-                                row.append(properties['sensor_data']['accuracy'][i])
+                            if 'observed' in properties['sensor_data']:
+                                for i in range(0, len(properties['sensor_data']['observed'])):
+                                    row = []
 
-                                writer.writerow(row)
+                                    row.append(point.source)
+                                    row.append(calendar.timegm(point.created.utctimetuple()))
+                                    row.append(point.created.isoformat())
 
-                    index += 500
+                                    row.append(calendar.timegm(point.recorded.utctimetuple()))
+                                    row.append(point.recorded.isoformat())
 
-            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+                                    try:
+                                        row.append(properties['sensor_data']['raw_timestamp'][i])
+                                    except IndexError:
+                                        row.append('')
 
-            os.remove(secondary_filename)
+                                    try:
+                                        row.append(properties['sensor_data']['observed'][i])
+                                    except IndexError:
+                                        row.append('')
+
+                                    try:
+                                        row.append(properties['sensor_data']['x'][i])
+                                    except IndexError:
+                                        row.append('')
+
+                                    try:
+                                        row.append(properties['sensor_data']['y'][i])
+                                    except IndexError:
+                                        row.append('')
+
+                                    try:
+                                        row.append(properties['sensor_data']['z'][i])
+                                    except IndexError:
+                                        row.append('')
+
+                                    try:
+                                        row.append(properties['sensor_data']['accuracy'][i])
+                                    except IndexError:
+                                        row.append('')
+
+                                    writer.writerow(row)
+
+                        index += 500
+
+                export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+
+                os.remove(secondary_filename)
 
     return filename

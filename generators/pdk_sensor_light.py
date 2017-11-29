@@ -96,9 +96,10 @@ def data_table(source, generator):
     return render_to_string('pdk_sensor_light_table_template.html', context)
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
-    with ZipFile(filename, 'w') as export_file:
+    with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
             identifier = slugify(generator + '__' + source)
 
@@ -141,10 +142,25 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                                 row.append(calendar.timegm(point.recorded.utctimetuple()))
                                 row.append(point.recorded.isoformat())
 
-                                row.append(properties['sensor_data']['raw_timestamp'][i])
-                                row.append(properties['sensor_data']['observed'][i])
-                                row.append(properties['sensor_data']['light_level'][i])
-                                row.append(properties['sensor_data']['accuracy'][i])
+                                try:
+                                    row.append(properties['sensor_data']['raw_timestamp'][i])
+                                except IndexError:
+                                    row.append('')
+
+                                try:
+                                    row.append(properties['sensor_data']['observed'][i])
+                                except IndexError:
+                                    row.append('')
+
+                                try:
+                                    row.append(properties['sensor_data']['light_level'][i])
+                                except IndexError:
+                                    row.append('')
+
+                                try:
+                                    row.append(properties['sensor_data']['accuracy'][i])
+                                except IndexError:
+                                    row.append('')
 
                                 writer.writerow(row)
 

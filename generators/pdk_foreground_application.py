@@ -107,7 +107,9 @@ def data_table(source, generator): # pylint: disable=too-many-locals
     return render_to_string('pdk_foreground_application_table_template.html', context)
 
 # def compile_report(generator, sources): # pylint: disable=too-many-locals
-#    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
+#    timestamp = arrow.get()
+#    filename = tempfile.gettempdir() + '/pdk_export_' + str(timestamp.seconds) + '.' + \
+#               str(timestamp.seconds / 1e6) + '.zip'
 #
 #    with ZipFile(filename, 'w') as export_file:
 #        for secondary_identifier in SECONDARY_FIELDS:
