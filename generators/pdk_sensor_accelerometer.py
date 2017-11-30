@@ -176,7 +176,12 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals, too-m
 
                         index += 500
 
-                export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+                source_name = source
+
+                if splits > 1:
+                    source_name += '__' + str(split_index)
+
+                export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source_name) + '.txt')
 
                 os.remove(secondary_filename)
 
