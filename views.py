@@ -8,7 +8,7 @@ import os
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse, UnreadablePostError
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -306,7 +306,7 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
 
 @staff_member_required
 def pdk_download_report(request, report_id): # pylint: disable=unused-argument
-    job = ReportJob.objects.get(pk=int(report_id))
+    job = get_object_or_404(ReportJob, pk=int(report_id))
 
     filename = settings.MEDIA_ROOT + '/' + job.report.name
 
