@@ -325,6 +325,32 @@ def pdk_export(request): # pylint: disable=too-many-branches
     context['sources'] = sorted(DataPoint.objects.sources())
     context['generators'] = sorted(DataPoint.objects.generator_identifiers())
 
+    for generator in context['generators']:
+        if generator in context['sources']:
+            context['sources'].remove(generator)
+
+    all_extra_generators = []
+
+    for app in settings.INSTALLED_APPS:
+        for generator in context['generators']:
+            try:
+                module_name = '.generators.' + generator.replace('-', '_')
+
+                generator_module = importlib.import_module(module_name, package=app)
+
+                extra_generators = generator_module.extra_generators(generator)
+
+                if extra_generators is not None and extra_generators:
+                    for extra_generator in extra_generators:
+                        all_extra_generators.append(extra_generator)
+            except ImportError:
+                pass
+
+            except AttributeError:
+                pass
+
+    context['extra_generators'] = all_extra_generators
+
     context['message'] = ''
     context['message_type'] = 'ok'
 
@@ -343,6 +369,12 @@ def pdk_export(request): # pylint: disable=too-many-branches
 
             if key in request.POST:
                 export_generators.append(generator)
+
+        for generator in context['extra_generators']:
+            key = 'generator_' + generator[0]
+
+            if key in request.POST:
+                export_generators.append(generator[0])
 
         if len(export_sources) == 0: # pylint: disable=len-as-condition
             context['message_type'] = 'error'

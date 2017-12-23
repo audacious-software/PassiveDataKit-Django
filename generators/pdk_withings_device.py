@@ -68,61 +68,66 @@ def extract_secondary_identifier(properties):
 
     return None
 
+def extra_generators(generator): # pylint: disable=unused-argument
+    return [('pdk-withings-device-full', 'Full Withings Server Data')]
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
-    with ZipFile(filename, 'w') as export_file:
-        for secondary_identifier in SECONDARY_FIELDS:
-            secondary_filename = tempfile.gettempdir() + '/' + generator + '-' + \
-                                 secondary_identifier + '.txt'
+    if generator == 'pdk-withings-device':
+        with ZipFile(filename, 'w') as export_file:
+            for secondary_identifier in SECONDARY_FIELDS:
+                secondary_filename = tempfile.gettempdir() + '/' + generator + '-' + \
+                                     secondary_identifier + '.txt'
 
-            with open(secondary_filename, 'w') as outfile:
-                writer = csv.writer(outfile, delimiter='\t')
+                with open(secondary_filename, 'w') as outfile:
+                    writer = csv.writer(outfile, delimiter='\t')
 
-                columns = [
-                    'Source',
-                    'Created Timestamp',
-                    'Created Date',
-                ]
+                    columns = [
+                        'Source',
+                        'Created Timestamp',
+                        'Created Date',
+                    ]
 
-                for column in SECONDARY_FIELDS[secondary_identifier]:
-                    columns.append(column)
+                    for column in SECONDARY_FIELDS[secondary_identifier]:
+                        columns.append(column)
 
-                writer.writerow(columns)
+                    writer.writerow(columns)
 
-                for source in sources:
-                    points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier).order_by('source', 'created') # pylint: disable=no-member,line-too-long
+                    for source in sources:
+                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier).order_by('source', 'created') # pylint: disable=no-member,line-too-long
 
-                    index = 0
-                    count = points.count()
+                        index = 0
+                        count = points.count()
 
-                    while index < count:
-                        for point in points[index:(index + 5000)]:
-                            row = []
+                        while index < count:
+                            for point in points[index:(index + 5000)]:
+                                row = []
 
-                            row.append(point.source)
-                            row.append(calendar.timegm(point.created.utctimetuple()))
-                            row.append(point.created.isoformat())
+                                row.append(point.source)
+                                row.append(calendar.timegm(point.created.utctimetuple()))
+                                row.append(point.created.isoformat())
 
-                            properties = point.fetch_properties()
+                                properties = point.fetch_properties()
 
-                            for column in SECONDARY_FIELDS[secondary_identifier]:
-                                if column in properties:
-                                    row.append(properties[column])
-                                else:
-                                    row.append('')
+                                for column in SECONDARY_FIELDS[secondary_identifier]:
+                                    if column in properties:
+                                        row.append(properties[column])
+                                    else:
+                                        row.append('')
 
-                            writer.writerow(row)
+                                writer.writerow(row)
 
-                        index += 5000
+                            index += 5000
 
-            export_file.write(secondary_filename, secondary_filename.split('/')[-1])
+                export_file.write(secondary_filename, secondary_filename.split('/')[-1])
 
-            os.remove(secondary_filename)
+                os.remove(secondary_filename)
 
-    return filename
+        return filename
+
+    return None
 
 def data_table(source, generator):
     context = {}
