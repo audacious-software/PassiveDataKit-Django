@@ -14,50 +14,6 @@ from django.conf import settings
 
 from ..models import DataPoint
 
-SECONDARY_IDENTIFIER_ACTIVITY = 'activity-measures'
-SECONDARY_IDENTIFIER_INTRADAY = 'intraday-activity'
-SECONDARY_IDENTIFIER_SLEEP = 'sleep-measures'
-SECONDARY_IDENTIFIER_BODY = 'body'
-
-SECONDARY_FIELDS = {
-    'intraday-activity': [
-        'intraday_activity_history',
-        'activity_start',
-        'activity_duration',
-        'calories',
-        'distance',
-        'elevation_climbed',
-        'steps',
-        'swim_strokes',
-        'pool_laps',
-    ],
-    'body': [
-        'measure_date',
-        'measure_status',
-        'measure_category',
-        'measure_type',
-        'measure_value',
-    ],
-    'activity-measures': [
-        'date_start',
-        'timezone',
-        'steps',
-        'distance',
-        'active_calories',
-        'total_calories',
-        'elevation',
-        'soft_activity_duration',
-        'moderate_activity_duration',
-        'intense_activity_duration',
-    ],
-    'sleep-measures': [
-        'start_date',
-        'end_date',
-        'state',
-        'measurement_device',
-    ]
-}
-
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
