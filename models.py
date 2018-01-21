@@ -312,8 +312,20 @@ class DataSourceGroup(models.Model):
     def __unicode__(self):
         return self.name
 
+class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
+    def sources(self): # pylint: disable=no-self-use
+        source_list = []
+
+        for source in DataSource.objects.all():
+            if (source.identifier in source_list) is False:
+                source_list.append(source.identifier)
+
+        return source_list
+
 
 class DataSource(models.Model):
+    objects = DataSourceManager()
+
     identifier = models.CharField(max_length=1024, db_index=True)
     name = models.CharField(max_length=1024, db_index=True, unique=True)
 

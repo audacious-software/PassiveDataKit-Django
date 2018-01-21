@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataPointVisualization
+from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource
 
 class Command(BaseCommand):
     help = 'Compiles support files and other resources used for data inspection and visualization.'
@@ -41,7 +41,9 @@ class Command(BaseCommand):
             if options['source'] != 'all':
                 sources = [options['source']]
             else:
-                sources = sorted(DataPoint.objects.sources())
+                sources = sorted(DataSource.objects.sources())
+
+#            print('LOOP[' + str(repeat) + '] = ' + str(len(sources)))
 
             update_delta = 0
 
@@ -52,6 +54,8 @@ class Command(BaseCommand):
                     identifier_list.append(identifier)
 
                 for identifier in identifier_list:
+#                    print(timezone.now().isoformat() + ' -- ' + source + ' -- ' + identifier)
+
                     compiled = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
 
                     if compiled is None:
@@ -70,6 +74,8 @@ class Command(BaseCommand):
                             update_delta = this_delta
 
             if last_updated is not None:
+#                print('UPDATING: ' + last_updated.source + ' -- ' + last_updated.generator_identifier)
+
                 points = None
 
                 if last_updated.generator_identifier == 'pdk-data-frequency':
