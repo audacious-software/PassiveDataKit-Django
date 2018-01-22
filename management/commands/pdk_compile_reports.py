@@ -67,11 +67,11 @@ class Command(BaseCommand):
             filename = tempfile.gettempdir() + '/pdk_export_final_' + str(report.pk) + '.zip'
 
             with open(filename, 'wb') as final_output_file:
-                for generator in generators:
+                with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                     to_delete = []
 
-                    with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
-                        if raw_json: # pylint: disable=too-many-nested-blocks
+                    for generator in generators: # pylint: disable=too-many-nested-blocks
+                        if raw_json:
                             for source in sources:
                                 first = DataPoint.objects.filter(source=source, generator_identifier=generator).first() # pylint: disable=line-too-long
                                 last = DataPoint.objects.filter(source=source, generator_identifier=generator).last() # pylint: disable=line-too-long
@@ -144,8 +144,8 @@ class Command(BaseCommand):
                                     except AttributeError:
                                         output_file = None
 
-                        for data in export_stream:
-                            final_output_file.write(data)
+                    for data in export_stream:
+                        final_output_file.write(data)
 
                     for output_file in to_delete:
                         os.remove(output_file)
