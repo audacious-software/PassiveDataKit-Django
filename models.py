@@ -237,6 +237,8 @@ class DataPoint(models.Model):
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
     secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
 
+    user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True)
 
@@ -276,6 +278,20 @@ class DataPoint(models.Model):
             return self.properties
 
         return json.loads(self.properties)
+
+    def fetch_user_agent(self):
+        if self.user_agent is None:
+            properties = self.fetch_properties()
+
+            if 'passive-data-metadata' in properties:
+                if 'generator' in properties['passive-data-metadata']:
+                    tokens = properties['passive-data-metadata']['generator'].split(':')
+
+                    self.user_agent = tokens[-1].strip()
+
+                    self.save()
+
+        return self.user_agent
 
 
 class DataServerMetadatum(models.Model):
@@ -355,10 +371,15 @@ class DataSource(models.Model):
 
         # Update latest_point
 
-        latest_point = DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
+        latest_point = None
 
-        if latest_point is not None:
-            metadata['latest_point'] = latest_point.pk
+        for point in DataPoint.objects.filter(source=self.identifier).exclude(user_agent__icontains='Passive Data Kit Server').order_by('-created'):
+            if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
+                metadata['latest_point'] = point.pk
+
+                latest_point = point
+
+                break
 
         # Update point_count
 
