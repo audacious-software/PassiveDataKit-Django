@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import calendar
+import datetime
 import json
 
 import importlib
@@ -208,11 +209,18 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
+    def update_server_generated_status(self, days=1):
+        day_ago = timezone.now() - datetime.timedelta(days=days)
+
+        self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
+
 
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['source', 'created'],
+            ['source', 'user_agent'],
+            ['source', 'server_generated'],
             ['source', 'generator_identifier'],
             ['source', 'generator_identifier', 'created'],
             ['source', 'generator_identifier', 'recorded'],
@@ -241,6 +249,8 @@ class DataPoint(models.Model):
 
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True)
+
+    server_generated = models.BooleanField(default=False, db_index=True)
 
     recorded = models.DateTimeField(db_index=True)
 
@@ -369,11 +379,18 @@ class DataSource(models.Model):
     def update_performance_metadata(self):
         metadata = self.fetch_performance_metadata()
 
+        DataPoint.objects.update_server_generated_status()
+
         # Update latest_point
 
-        latest_point = None
+        latest_point = self.latest_point()
 
-        for point in DataPoint.objects.filter(source=self.identifier).exclude(user_agent__icontains='Passive Data Kit Server').order_by('-created'):
+        query = Q(source=self.identifier)
+
+        if latest_point is not None:
+            query = query & Q(created__gt=latest_point.created)
+
+        for point in DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created'):
             if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
                 metadata['latest_point'] = point.pk
 
