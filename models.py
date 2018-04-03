@@ -59,11 +59,16 @@ def generator_slugify(str_obj):
 def install_supports_jsonfield():
     global DB_SUPPORTS_JSON # pylint: disable=global-statement
 
-    if True and DB_SUPPORTS_JSON is None:
+    if DB_SUPPORTS_JSON is None:
         try:
             DB_SUPPORTS_JSON = connection.pg_version >= 90400
         except AttributeError:
             DB_SUPPORTS_JSON = False
+
+        try:
+            DB_SUPPORTS_JSON = (settings.PDK_DISABLE_NATIVE_JSON_FIELDS is False)
+        except AttributeError:
+            pass
 
     return DB_SUPPORTS_JSON
 
@@ -372,7 +377,8 @@ class DataSource(models.Model):
             if install_supports_jsonfield():
                 return self.performance_metadata
 
-            return json.loads(self.performance_metadata)
+            if self.performance_metadata.strip():
+                return json.loads(self.performance_metadata)
 
         return {}
 
