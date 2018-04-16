@@ -33,6 +33,7 @@ class Command(BaseCommand):
         to_delete = []
 
         supports_json = install_supports_jsonfield()
+
         default_tz = timezone.get_default_timezone()
 
         new_point_count = 0
