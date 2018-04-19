@@ -15,7 +15,7 @@ requirejs(['./common'], function (common) {
 			}
 		});
 
-		$.get("/data/unmatched-sources.json", function(data)
+		$.get("unmatched-sources.json", function(data)
 		{
 	        $(".typeahead").typeahead({ source: data });
         });
