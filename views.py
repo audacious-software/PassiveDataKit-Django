@@ -312,26 +312,40 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
     response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
 
+    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + str(job.pk) + '.zip'
+
     response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = 'attachment; filename=pdk-export.zip'
+    response['Content-Disposition'] = 'attachment; filename=' + download_name
 
     return response
 
 
 @staff_member_required
-def pdk_export(request): # pylint: disable=too-many-branches
+def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     context = {}
 
     context['sources'] = sorted(DataPoint.objects.sources())
     context['generators'] = sorted(DataPoint.objects.generator_identifiers())
 
+    to_remove = []
+
     for generator in context['generators']:
         if generator in context['sources']:
             context['sources'].remove(generator)
 
-    all_extra_generators = []
+        try:
+            if generator in settings.PDK_EXCLUDE_GENERATORS:
+                to_remove.append(generator)
+        except KeyError:
+            pass
 
-    for app in settings.INSTALLED_APPS:
+    for generator in to_remove:
+        context['generators'].remove(generator)
+
+    all_extra_generators = []
+    to_remove = []
+
+    for app in settings.INSTALLED_APPS: # pylint: disable=too-many-nested-blocks
         for generator in context['generators']:
             try:
                 module_name = '.generators.' + generator.replace('-', '_')
@@ -343,11 +357,21 @@ def pdk_export(request): # pylint: disable=too-many-branches
                 if extra_generators is not None and extra_generators:
                     for extra_generator in extra_generators:
                         all_extra_generators.append(extra_generator)
+
+                        try:
+                            if extra_generator[0] in settings.PDK_EXCLUDE_GENERATORS:
+                                to_remove.append(extra_generator)
+                        except KeyError:
+                            pass
+
             except ImportError:
                 pass
 
             except AttributeError:
                 pass
+
+    for generator in to_remove:
+        all_extra_generators.remove(generator)
 
     context['extra_generators'] = all_extra_generators
 

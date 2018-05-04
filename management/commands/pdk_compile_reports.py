@@ -64,7 +64,7 @@ class Command(BaseCommand):
             if ('raw_data' in parameters) and parameters['raw_data'] is True:
                 raw_json = True
 
-            filename = tempfile.gettempdir() + '/pdk_export_final_' + str(report.pk) + '.zip'
+            filename = tempfile.gettempdir() + '/pdk_export_final_' + str(report.pk) + '_' + report.started.date().isoformat() + '.zip'
 
             with open(filename, 'wb') as final_output_file:
                 with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long

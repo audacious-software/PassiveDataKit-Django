@@ -70,8 +70,9 @@
                 </p>
                 
                 <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
-                	<p><strong>Special Generators</strong></p>
                     {% if extra_generators %}
+	                	<p><strong>Special Generators</strong></p>
+	                	
 						{% for generator in extra_generators %}
 							<p style="padding-bottom: 0.25em; margin: 0px;">
 								<input type="checkbox" name="generator_{{ generator.0 }}" id="generator_{{ generator.0 }}" class="generator_checkbox" /> 
@@ -82,7 +83,7 @@
                     {% endif %}
                 	<p><strong>Standard Generators</strong></p>
                     {% for generator in generators %}
-                        <p style="padding-bottom: 0.25em; margin: 0px;">
+                        <p style="padding-bottom: 0.25em; margin: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         	<input type="checkbox" name="generator_{{ generator }}" id="generator_{{ generator }}" class="generator_checkbox" /> 
                         	<label for="generator_{{ generator }}" style="font-weight: normal;">{% generator_name generator %} ({{ generator }})</label>
                         </p>
