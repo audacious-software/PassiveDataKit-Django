@@ -4,6 +4,7 @@
 		<tr>
 			<th data-sortable="true">Name</th>
 			<th data-sortable="true">Identifier</th>
+			<th data-sortable="true">User Agent</th>
 			<th data-sortable="true">Latest Point</th>
 			<th data-sortable="true">No. of Points</th>
 			<th data-sortable="true">Frequency</th>
@@ -15,6 +16,7 @@
 			<tr>
 				<td>{{ source.name }}</td>
 				<td><a href="{% url 'pdk_source' source.identifier %}">{{ source.identifier }}</a></td>
+				<td>{{ source.latest_user_agent }}</td>
 				<td>{% latest_point source %}</td>
 				<td>{% point_count source %}</td>
 				<td>{% point_hz source %}</td>

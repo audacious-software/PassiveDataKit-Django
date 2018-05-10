@@ -1,0 +1,37 @@
+{% load passive_data_kit %}
+<table id="system_status_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Total Storage</th>
+            <th data-sortable="true">Available Storage</th>
+            <th data-sortable="true">Other Storage</th>
+            <th data-sortable="true">App Storage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for point in values %}
+			<tr>
+				<td>
+					<span style="display: none;">
+						{{ point.created.isoformat }}
+					</span>
+					{{ point.created }}
+				</td>
+
+				{% with properties=point.fetch_properties %}
+					<td>{{ properties.storage_total|to_gb }}</td>
+					<td>{{ properties.storage_available|to_gb }}</td>
+					<td>{{ properties.storage_other|to_gb }}</td>
+					<td>{{ properties.storage_app|to_gb }}</td>
+				{% endwith %}
+			</tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#system_status_values_table").show();
+	};
+</script>

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import calendar
+import datetime
 import json
 
 import importlib
@@ -58,11 +59,16 @@ def generator_slugify(str_obj):
 def install_supports_jsonfield():
     global DB_SUPPORTS_JSON # pylint: disable=global-statement
 
-    if True and DB_SUPPORTS_JSON is None:
+    if DB_SUPPORTS_JSON is None:
         try:
             DB_SUPPORTS_JSON = connection.pg_version >= 90400
         except AttributeError:
             DB_SUPPORTS_JSON = False
+
+        try:
+            DB_SUPPORTS_JSON = (settings.PDK_DISABLE_NATIVE_JSON_FIELDS is False)
+        except AttributeError:
+            pass
 
     return DB_SUPPORTS_JSON
 
@@ -208,11 +214,18 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
+    def update_server_generated_status(self, days=1):
+        day_ago = timezone.now() - datetime.timedelta(days=days)
+
+        self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
+
 
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['source', 'created'],
+            ['source', 'user_agent'],
+            ['source', 'server_generated'],
             ['source', 'generator_identifier'],
             ['source', 'generator_identifier', 'created'],
             ['source', 'generator_identifier', 'recorded'],
@@ -237,8 +250,12 @@ class DataPoint(models.Model):
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
     secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
 
+    user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True)
+
+    server_generated = models.BooleanField(default=False, db_index=True)
 
     recorded = models.DateTimeField(db_index=True)
 
@@ -277,6 +294,20 @@ class DataPoint(models.Model):
 
         return json.loads(self.properties)
 
+    def fetch_user_agent(self):
+        if self.user_agent is None:
+            properties = self.fetch_properties()
+
+            if 'passive-data-metadata' in properties:
+                if 'generator' in properties['passive-data-metadata']:
+                    tokens = properties['passive-data-metadata']['generator'].split(':')
+
+                    self.user_agent = tokens[-1].strip()
+
+                    self.save()
+
+        return self.user_agent
+
 
 class DataServerMetadatum(models.Model):
     key = models.CharField(max_length=1024, db_index=True)
@@ -312,8 +343,20 @@ class DataSourceGroup(models.Model):
     def __unicode__(self):
         return self.name
 
+class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
+    def sources(self): # pylint: disable=no-self-use
+        source_list = []
+
+        for source in DataSource.objects.all():
+            if (source.identifier in source_list) is False:
+                source_list.append(source.identifier)
+
+        return source_list
+
 
 class DataSource(models.Model):
+    objects = DataSourceManager()
+
     identifier = models.CharField(max_length=1024, db_index=True)
     name = models.CharField(max_length=1024, db_index=True, unique=True)
 
@@ -334,19 +377,32 @@ class DataSource(models.Model):
             if install_supports_jsonfield():
                 return self.performance_metadata
 
-            return json.loads(self.performance_metadata)
+            if self.performance_metadata.strip():
+                return json.loads(self.performance_metadata)
 
         return {}
 
     def update_performance_metadata(self):
         metadata = self.fetch_performance_metadata()
 
+        DataPoint.objects.update_server_generated_status()
+
         # Update latest_point
 
-        latest_point = DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
+        latest_point = self.latest_point()
+
+        query = Q(source=self.identifier)
 
         if latest_point is not None:
-            metadata['latest_point'] = latest_point.pk
+            query = query & Q(created__gt=latest_point.created)
+
+        for point in DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created'):
+            if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
+                metadata['latest_point'] = point.pk
+
+                latest_point = point
+
+                break
 
         # Update point_count
 
@@ -435,6 +491,20 @@ class DataSource(models.Model):
             return metadata['generator_statistics']
 
         return []
+
+    def latest_user_agent(self):
+        latest_point = self.latest_point()
+
+        if latest_point is not None:
+            properties = latest_point.fetch_properties()
+
+            if 'passive-data-metadata' in properties:
+                if 'generator' in properties['passive-data-metadata']:
+                    tokens = properties['passive-data-metadata']['generator'].split(':')
+
+                    return tokens[-1].strip()
+
+        return None
 
 
 class DataSourceAlert(models.Model):

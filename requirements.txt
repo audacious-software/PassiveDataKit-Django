@@ -5,7 +5,8 @@ backports.functools-lru-cache==1.3
 bandit==1.4.0
 configparser==3.5.0
 dj-database-url==0.4.2
-Django==1.11.4
+Django==1.11.13
+django-extensions==1.9.0
 django-mathfilters==0.4.0
 enum34==1.1.6
 gitdb2==2.0.0
@@ -15,9 +16,11 @@ isort==4.2.5
 lazy-object-proxy==1.2.2
 lockfile==0.12.2
 mccabe==0.6.1
+numpy==1.13.1
 oauthlib==2.0.2
 packaging==16.8
 pbr==3.0.0
+psutil==5.2.2
 psycopg2==2.7.1
 pylint==1.7.1
 pyparsing==2.2.0
@@ -29,6 +32,8 @@ requests-oauthlib==0.8.0
 singledispatch==3.4.0.3
 six==1.10.0
 smmap2==2.0.1
+sphinx-me==0.3
 stevedore==1.21.0
 whitenoise==3.3.0
 wrapt==1.10.10
+zipstream==1.1.4

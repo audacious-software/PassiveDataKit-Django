@@ -1,21 +1,19 @@
 # pylint: disable=line-too-long, no-member
 
 import datetime
-import time
 
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 from ..models import DataPoint
 
-def extract_secondary_identifier(properties):
+def extract_secondary_identifier(properties): # pylint: disable=unused-argument
     return None
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Device Pedometer'
 
-def visualization(source, generator):
+def visualization(source, generator): # pylint: disable=unused-argument
     return 'TODO'
 
 def data_table(source, generator):

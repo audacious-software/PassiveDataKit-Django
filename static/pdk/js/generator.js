@@ -16,11 +16,6 @@ requirejs(['./common'], function (common) {
 			}
 		});
 
-		$.get("/data/unmatched-sources.json", function(data)
-		{
-	        $(".typeahead").typeahead({ source: data });
-        });
-
 		$('[data-toggle="tooltip"]').tooltip();
 		
 		$("select#field_assigned_group").change(function()

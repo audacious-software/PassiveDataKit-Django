@@ -1,11 +1,20 @@
 # pylint: disable=line-too-long, no-member
 
+import calendar
+import csv
 import datetime
+import os
+import tempfile
 import time
+
+from zipfile import ZipFile
+
+import arrow
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.text import slugify
 
 from ..models import DataPoint
 
@@ -78,55 +87,101 @@ def data_table(source, generator):
 
     return render_to_string('pdk_device_location_table_template.html', context)
 
+def compile_report(generator, sources): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
-# def compile_report(generator, sources): # pylint: disable=too-many-locals
-#    filename = tempfile.gettempdir() + '/pdk_export_' + str(arrow.get().timestamp) + '.zip'
-#
-#    with ZipFile(filename, 'w') as export_file:
-#        for secondary_identifier in SECONDARY_FIELDS:
-#            secondary_filename = tempfile.gettempdir() + '/' + generator + '-' + \
-#                                 secondary_identifier + '.txt'
-#
-#            with open(secondary_filename, 'w') as outfile:
-#                writer = csv.writer(outfile, delimiter='\t')
-#
-#                columns = [
-#                    'Source',
-#                    'Created Timestamp',
-#                    'Created Date',
-#                ]
-#
-#                for column in SECONDARY_FIELDS[secondary_identifier]:
-#                    columns.append(column)
-#
-#                writer.writerow(columns)
-#
-#                for source in sources:
-#                    points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier).order_by('source', 'created') # pylint: disable=no-member,line-too-long
-#
-#                    index = 0
-#                    count = points.count()
-#
-#                    while index < count:
-#                        for point in points[index:(index + 5000)]:
-#                            row = []
-#
-#                            row.append(point.source)
-#                            row.append(calendar.timegm(point.created.utctimetuple()))
-#                            row.append(point.created.isoformat())
-#
-#                            properties = point.fetch_properties()
-#
-#                            for column in SECONDARY_FIELDS[secondary_identifier]:
-#                                if column in properties:
-#                                    row.append(properties[column])
-#                                else:
-#                                    row.append('')
-#
-#                            writer.writerow(row)
-#
-#                        index += 5000
-#
-#            export_file.write(secondary_filename, secondary_filename.split('/')[-1])
-#
-#    return filename
+    with ZipFile(filename, 'w', allowZip64=True) as export_file:
+        for source in sources:
+            points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
+
+            identifier = slugify(generator + '__' + source)
+
+            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+
+            with open(secondary_filename, 'w') as outfile:
+                writer = csv.writer(outfile, delimiter='\t')
+
+                columns = [
+                    'Source',
+                    'Created Timestamp',
+                    'Created Date',
+                    'Recorded Timestamp',
+                    'Recorded Date',
+                    'Observed',
+                    'Raw Timestamp',
+                    'Provider',
+                    'Latitude',
+                    'Longitude',
+                    'Accuracy',
+                    'Altitude',
+                    'Speed',
+                    'Bearing',
+                ]
+
+                writer.writerow(columns)
+
+                for point in points:
+                    properties = point.fetch_properties()
+
+                    row = []
+
+                    row.append(point.source)
+                    row.append(calendar.timegm(point.created.utctimetuple()))
+                    row.append(point.created.isoformat())
+
+                    row.append(calendar.timegm(point.recorded.utctimetuple()))
+                    row.append(point.recorded.isoformat())
+
+                    try:
+                        row.append(properties['observed'])
+                    except IndexError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['location_timestamp'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['provider'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['latitude'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['longitude'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['accuracy'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['altitude'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['speed'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['bearing'])
+                    except KeyError:
+                        row.append('')
+
+                    writer.writerow(row)
+
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+
+            os.remove(secondary_filename)
+
+    return filename

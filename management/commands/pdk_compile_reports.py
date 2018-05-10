@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=no-member
+# pylint: disable=no-member,line-too-long
 
 import datetime
 import importlib
 import json
 import os
 import tempfile
-# import traceback
 import zipfile
+
+import zipstream
 
 from django.conf import settings
 from django.core.files import File
@@ -63,86 +64,91 @@ class Command(BaseCommand):
             if ('raw_data' in parameters) and parameters['raw_data'] is True:
                 raw_json = True
 
-            filename = tempfile.gettempdir() + '/pdk_export_' + str(report.pk) + '.zip'
+            filename = tempfile.gettempdir() + '/pdk_export_final_' + str(report.pk) + '_' + report.started.date().isoformat() + '.zip'
 
-            with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as export_file: # pylint: disable=line-too-long
-                for generator in generators: # pylint: disable=too-many-nested-blocks
-                    if raw_json:
-                        for source in sources:
-                            first = DataPoint.objects.filter(source=source, generator_identifier=generator).first() # pylint: disable=line-too-long
-                            last = DataPoint.objects.filter(source=source, generator_identifier=generator).last() # pylint: disable=line-too-long
+            with open(filename, 'wb') as final_output_file:
+                with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
+                    to_delete = []
 
-                            if first is not None:
-                                first_create = first.created
-                                last_create = last.created
+                    for generator in generators: # pylint: disable=too-many-nested-blocks
+                        if raw_json:
+                            for source in sources:
+                                first = DataPoint.objects.filter(source=source, generator_identifier=generator).first() # pylint: disable=line-too-long
+                                last = DataPoint.objects.filter(source=source, generator_identifier=generator).last() # pylint: disable=line-too-long
 
-                                start = datetime.datetime(first_create.year, \
-                                                          first_create.month, \
-                                                          first_create.day, \
-                                                          0, \
-                                                          0, \
-                                                          0, \
-                                                          0, \
-                                                          first_create.tzinfo)
+                                if first is not None:
+                                    first_create = first.created
+                                    last_create = last.created
 
-                                end = datetime.datetime(last_create.year, \
-                                                        last_create.month, \
-                                                        last_create.day, \
-                                                        0, \
-                                                        0, \
-                                                        0, \
-                                                        0, \
-                                                        first_create.tzinfo) + \
-                                      datetime.timedelta(days=1)
+                                    start = datetime.datetime(first_create.year, \
+                                                              first_create.month, \
+                                                              first_create.day, \
+                                                              0, \
+                                                              0, \
+                                                              0, \
+                                                              0, \
+                                                              first_create.tzinfo)
 
-                                while start <= end:
-                                    day_end = start + datetime.timedelta(days=1)
+                                    end = datetime.datetime(last_create.year, \
+                                                            last_create.month, \
+                                                            last_create.day, \
+                                                            0, \
+                                                            0, \
+                                                            0, \
+                                                            0, \
+                                                            first_create.tzinfo) + \
+                                          datetime.timedelta(days=1)
 
-                                    day_filename = source + '__' + generator + '__' + \
-                                                   start.date().isoformat() + '.json'
+                                    while start <= end:
+                                        day_end = start + datetime.timedelta(days=1)
 
-                                    points = DataPoint.objects.filter(source=source, generator_identifier=generator, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
+                                        day_filename = source + '__' + generator + '__' + \
+                                                       start.date().isoformat() + '.json'
 
-                                    out_points = []
+                                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
 
-                                    for point in points:
-                                        out_points.append(point.properties)
+                                        out_points = []
 
-                                    if out_points:
-                                        export_file.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+                                        for point in points:
+                                            out_points.append(point.properties)
 
-                                    start = day_end
-                    else:
-                        output_file = None
+                                        if out_points:
+                                            export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
 
-                        for app in settings.INSTALLED_APPS:
-                            if output_file is None:
-                                try:
-                                    pdk_api = importlib.import_module(app + '.pdk_api')
+                                        start = day_end
+                        else:
+                            output_file = None
 
-                                    output_file = pdk_api.compile_report(generator, sources)
+                            for app in settings.INSTALLED_APPS:
+                                if output_file is None:
+                                    try:
+                                        pdk_api = importlib.import_module(app + '.pdk_api')
 
-                                    if output_file.lower().endswith('.zip'):
-                                        with zipfile.ZipFile(output_file, 'r') as source_file:
-                                            for name in source_file.namelist():
-                                                export_file.writestr(name, source_file.open(name).read()) # pylint: disable=line-too-long
+                                        output_file = pdk_api.compile_report(generator, sources)
 
-                                        os.remove(output_file)
+                                        if output_file is not None:
+                                            if output_file.lower().endswith('.zip'):
+                                                with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                    for name in source_file.namelist():
+                                                        data_file = source_file.open(name)
 
+                                                        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                            else:
+                                                name = os.path.basename(os.path.normpath(output_file))
+
+                                                export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
+
+                                            to_delete.append(output_file)
+                                    except ImportError:
                                         output_file = None
-                                except ImportError:
-#                                    traceback.print_exc()
-                                    output_file = None
-                                except AttributeError:
-#                                    traceback.print_exc()
-                                    output_file = None
+                                    except AttributeError:
+                                        output_file = None
 
-                        if output_file is not None:
-                            export_file.write(output_file, output_file.split('/')[-1])
+                    for data in export_stream:
+                        final_output_file.write(data)
 
-                            os.remove(output_file)
-
-                export_file.close()
+                    for output_file in to_delete:
+                        os.remove(output_file)
 
             report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
             report.completed = timezone.now()

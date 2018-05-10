@@ -1,0 +1,89 @@
+<div id="chart_container">
+    {% for value in values %}
+		<div class="row">
+			<div class="col-md-1"><span class="pull-right" id="day-date-{{ forloop.counter0 }}"></span></div>
+	        <div class="col-md-11">
+	        	<div id="day-chart-{{ forloop.counter0 }}" style="display: inline-block; width: 100%; height: 20px; background-color: #000000;"></div>
+	        </div>
+	    </div>
+    {% endfor %}
+</div>
+
+<script>
+    window.showVisualization = function() {
+        var graph = null;
+        var yTicks = null;
+        var xAxis = null;
+    
+        {% for value in values %}
+        	$("#day-date-{{ forloop.counter0 }}").html(moment({{ value.start }} * 1000).format("MMM D"));
+        	 
+            {% if value.start_day %}
+                graph = new Rickshaw.Graph({
+                    element: document.querySelector("#day-chart-{{ forloop.counter0 }}"), 
+                    renderer: 'multi',
+                    interpolation: 'step-after',
+                    series: [{
+                        name: 'Day',
+                        color: '#1565C0',
+                        renderer: 'area',
+                        data: [
+                            { 'x': {{ value.start }}, 'y': 1 },
+                            { 'x': {{ value.sunset }}, 'y': 0 },
+                            { 'x': {{ value.sunrise }}, 'y': 1 },
+                            { 'x': {{ value.end }}, 'y': 1 }
+                        ]
+                    }]
+                });
+            {% else %}
+                graph = new Rickshaw.Graph({
+                    element: document.querySelector("#day-chart-{{ forloop.counter0 }}"), 
+                    renderer: 'multi',
+                    interpolation: 'step-after',
+                    series: [{
+                        name: 'Day',
+                        color: '#1565C0',
+                        renderer: 'area',
+                        data: [
+                            { 'x': {{ value.start }}, 'y': 0 },
+                            { 'x': {{ value.sunrise }}, 'y': 1 },
+                            { 'x': {{ value.sunset }}, 'y': 0 },
+                            { 'x': {{ value.end }}, 'y': 0 }
+                        ]
+                    }]
+                });
+            {% endif %}
+            
+            yTicks = new Rickshaw.Graph.Axis.Y( {
+                graph: graph
+            });
+
+            graph.render();
+
+            xAxis = new Rickshaw.Graph.Axis.Time( {
+                graph: graph,
+                timeFixture: new Rickshaw.Fixtures.Time.Local()
+            });
+        
+            xAxis.render();
+
+			new Rickshaw.Graph.HoverDetail( {
+				graph: graph,
+				formatter: function(series, x, y) {
+					return null;
+				}
+			});
+
+        {% endfor %}
+                
+        $(".x_tick .title").css("color", "white");
+        $(".y_ticks text").css("fill", "white");
+
+        $(".x_tick").css("border-left-color", "rgba(128, 128, 128, 1.0)");
+
+        $(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+        $("path.path").css("stroke-width", "1");
+
+        $(".rickshaw_graph .detail .x_label").css("opacity", "0.0");
+    };
+</script>

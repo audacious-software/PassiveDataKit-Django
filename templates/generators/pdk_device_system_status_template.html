@@ -1,0 +1,163 @@
+{% load passive_data_kit %}
+<div id="chart_container">
+	<div id="system-status-chart" style="display: inline-block; width: 100%; height: 240px; background-color: #000000;"></div>
+
+	<div id="system-runtime-chart" style="display: inline-block; width: 100%; height: 160px; background-color: #000000;"></div>
+
+    <div id="system-hz-chart" style="display: inline-block; height: 160px; background-color: #000000; width: 100%;"></div>
+</div>
+
+<script>
+    window.showVisualization = function() {
+		var available = [];
+		var other = [];
+		var app = [];
+		
+		var runtime = [];
+		
+		{% for point in values %}
+			{% with properties=point.fetch_properties %}
+				available.splice(0, 0, { 'x': {{ properties.observed }} / 1000, 'y': {{ properties.storage_available }} / (1024 * 1024 * 1024) });
+				other.splice(0, 0, { 'x': {{ properties.observed }} / 1000, 'y': {{ properties.storage_other }}  / (1024 * 1024 * 1024) });
+				app.splice(0, 0, { 'x': {{ properties.observed }} / 1000, 'y': {{ properties.storage_app }}  / (1024 * 1024 * 1024) });
+
+				runtime.splice(0, 0, { 'x': {{ properties.observed }} / 1000, 'y': {{ properties.runtime }}  / (1000 * 60 * 60) });
+			{% endwith %}
+		{% endfor %}
+    
+		var graph = new Rickshaw.Graph({
+			element: document.querySelector("#system-status-chart"), 
+			renderer: 'area',
+			interpolation: 'linear',
+			series: [{
+				name: 'Other',
+				color: '#263238',
+				data: other
+			}, {
+				name: 'App',
+				color: '#01579B',
+				data: app
+			}, {
+				name: 'Available',
+				color: '#1B5E20',
+				data: available
+			}]
+		});
+
+		var yTicks = new Rickshaw.Graph.Axis.Y( {
+			graph: graph
+		});
+
+		graph.render();
+
+		var xAxis = new Rickshaw.Graph.Axis.Time( {
+			graph: graph,
+			timeFixture: new Rickshaw.Fixtures.Time.Local()
+		});
+	
+		xAxis.render();
+
+		new Rickshaw.Graph.HoverDetail( {
+			graph: graph,
+			formatter: function(series, x, y) {
+				var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+				var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+				var content = swatch + series.name + ": " + y.toFixed(2) + ' GB<br>' + date;
+				return content;
+			}
+		});
+
+		graph = new Rickshaw.Graph({
+			element: document.querySelector("#system-runtime-chart"), 
+			renderer: 'area',
+			interpolation: 'step-after',
+			series: [{
+				name: 'Runtime',
+				color: '#1B5E20',
+				data: runtime
+			}]
+		});
+
+		yTicks = new Rickshaw.Graph.Axis.Y( {
+			graph: graph
+		});
+
+		graph.render();
+
+		xAxis = new Rickshaw.Graph.Axis.Time( {
+			graph: graph,
+			timeFixture: new Rickshaw.Fixtures.Time.Local()
+		});
+	
+		xAxis.render();
+
+		new Rickshaw.Graph.HoverDetail( {
+			graph: graph,
+			formatter: function(series, x, y) {
+				var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+				var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+				var content = swatch + series.name + ": " + y.toFixed(2) + ' hr.<br>' + date;
+				return content;
+			}
+		});		
+
+
+        // Data frequency graph...
+        
+        var data = [];
+        
+        {% for key in hz_data.keys %}
+            data.push({
+                'x': {{ key }},
+                'y': {{ hz_data|get_item:key }}
+            });
+        {% endfor %}
+
+        graph = new Rickshaw.Graph( {
+            element: document.querySelector("#system-hz-chart"), 
+            height: 160, 
+            renderer: 'line',
+            interpolation: 'linear',
+            series: [{
+                name: 'Samples',
+                color: '#66BB6A',
+                data: data
+            }]
+        });
+
+        yTicks = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+        });
+
+        graph.render();
+
+        xAxis = new Rickshaw.Graph.Axis.Time( {
+            graph: graph,
+            timeFixture: new Rickshaw.Fixtures.Time.Local()
+        });
+        
+        xAxis.render();
+
+        hoverDetail = new Rickshaw.Graph.HoverDetail( {
+            graph: graph,
+            formatter: function(series, x, y) {
+                var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+                var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+                var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+                return content;
+            }
+        });
+
+                
+        $(".x_tick .title").css("color", "white");
+        $(".y_ticks text").css("fill", "white");
+
+        $(".x_tick").css("border-left-color", "rgba(128, 128, 128, 1.0)");
+
+        $(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+        $("path.path").css("stroke-width", "1");
+
+        $(".rickshaw_graph .detail .x_label").css("opacity", "0.0");
+    };
+</script>

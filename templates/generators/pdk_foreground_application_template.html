@@ -1,0 +1,66 @@
+{% load passive_data_kit %}
+<div id="chart_container">
+    <div id="foreground-hz-chart" style="display: inline-block; height: 240px; background-color: #000000; width: 100%;"></div>
+</div>
+
+<script>
+    window.showVisualization = function() {
+        // Data frequency graph...
+        
+        var data = [];
+        
+        {% for key in hz_data.keys %}
+            data.push({
+                'x': {{ key }},
+                'y': {{ hz_data|get_item:key }}
+            });
+        {% endfor %}
+
+        var graph = new Rickshaw.Graph( {
+            element: document.querySelector("#foreground-hz-chart"), 
+            height: 240, 
+            renderer: 'line',
+            interpolation: 'linear',
+            series: [{
+                name: 'Samples',
+                color: '#66BB6A',
+                data: data
+            }]
+        });
+
+        var yTicks = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+        });
+
+        graph.render();
+
+        var xAxis = new Rickshaw.Graph.Axis.Time( {
+            graph: graph,
+            timeFixture: new Rickshaw.Fixtures.Time.Local()
+        });
+        
+        xAxis.render();
+
+        var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+            graph: graph,
+            formatter: function(series, x, y) {
+                var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+                var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+                var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+                return content;
+            }
+        });
+
+                
+        $(".x_tick .title").css("color", "white");
+        $(".y_ticks text").css("fill", "white");
+
+        $(".x_tick").css("border-left-color", "rgba(128, 128, 128, 1.0)");
+
+        $(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+        $("path.path").css("stroke-width", "1");
+
+        $(".rickshaw_graph .detail .x_label").css("opacity", "0.0");
+    };
+</script>

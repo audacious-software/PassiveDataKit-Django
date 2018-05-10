@@ -8,7 +8,7 @@ import os
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse, UnreadablePostError
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -253,14 +253,15 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
     context['visualization'] = None
 
     for app in settings.INSTALLED_APPS:
-        try:
-            pdk_api = importlib.import_module(app + '.pdk_api')
+        if context['visualization'] is None:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
 
-            context['visualization'] = pdk_api.visualization(source, generator_id)
-        except ImportError:
-            pass
-        except AttributeError:
-            pass
+                context['visualization'] = pdk_api.visualization(source, generator_id)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
 
     for app in settings.INSTALLED_APPS:
         try:
@@ -305,24 +306,74 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
 
 @staff_member_required
 def pdk_download_report(request, report_id): # pylint: disable=unused-argument
-    job = ReportJob.objects.get(pk=int(report_id))
+    job = get_object_or_404(ReportJob, pk=int(report_id))
 
     filename = settings.MEDIA_ROOT + '/' + job.report.name
 
     response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
 
+    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + str(job.pk) + '.zip'
+
     response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = 'attachment; filename=pdk-export.zip'
+    response['Content-Disposition'] = 'attachment; filename=' + download_name
 
     return response
 
 
 @staff_member_required
-def pdk_export(request): # pylint: disable=too-many-branches
+def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     context = {}
 
     context['sources'] = sorted(DataPoint.objects.sources())
     context['generators'] = sorted(DataPoint.objects.generator_identifiers())
+
+    to_remove = []
+
+    for generator in context['generators']:
+        if generator in context['sources']:
+            context['sources'].remove(generator)
+
+        try:
+            if generator in settings.PDK_EXCLUDE_GENERATORS:
+                to_remove.append(generator)
+        except KeyError:
+            pass
+
+    for generator in to_remove:
+        context['generators'].remove(generator)
+
+    all_extra_generators = []
+    to_remove = []
+
+    for app in settings.INSTALLED_APPS: # pylint: disable=too-many-nested-blocks
+        for generator in context['generators']:
+            try:
+                module_name = '.generators.' + generator.replace('-', '_')
+
+                generator_module = importlib.import_module(module_name, package=app)
+
+                extra_generators = generator_module.extra_generators(generator)
+
+                if extra_generators is not None and extra_generators:
+                    for extra_generator in extra_generators:
+                        all_extra_generators.append(extra_generator)
+
+                        try:
+                            if extra_generator[0] in settings.PDK_EXCLUDE_GENERATORS:
+                                to_remove.append(extra_generator)
+                        except KeyError:
+                            pass
+
+            except ImportError:
+                pass
+
+            except AttributeError:
+                pass
+
+    for generator in to_remove:
+        all_extra_generators.remove(generator)
+
+    context['extra_generators'] = all_extra_generators
 
     context['message'] = ''
     context['message_type'] = 'ok'
@@ -342,6 +393,12 @@ def pdk_export(request): # pylint: disable=too-many-branches
 
             if key in request.POST:
                 export_generators.append(generator)
+
+        for generator in context['extra_generators']:
+            key = 'generator_' + generator[0]
+
+            if key in request.POST:
+                export_generators.append(generator[0])
 
         if len(export_sources) == 0: # pylint: disable=len-as-condition
             context['message_type'] = 'error'
@@ -372,10 +429,10 @@ def pdk_export(request): # pylint: disable=too-many-branches
 @staff_member_required
 def pdk_system_health(request):
     datum = DataServerMetadatum.objects.filter(key='Server Health').first()
-    
+
     if datum is not None:
         return render(request, 'pdk_system_health.html', context=json.loads(datum.value))
-        
+
     return render(request, 'pdk_system_health.html', context={})
 
 

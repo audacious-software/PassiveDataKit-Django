@@ -33,6 +33,7 @@ class Command(BaseCommand):
         to_delete = []
 
         supports_json = install_supports_jsonfield()
+
         default_tz = timezone.get_default_timezone()
 
         new_point_count = 0
@@ -48,7 +49,7 @@ class Command(BaseCommand):
                 bundle.properties = json.loads(bundle.properties)
 
             for bundle_point in bundle.properties:
-                if 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata']:
+                if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                     point = DataPoint(recorded=timezone.now())
                     point.source = bundle_point['passive-data-metadata']['source']
                     point.generator = bundle_point['passive-data-metadata']['generator']
@@ -67,14 +68,15 @@ class Command(BaseCommand):
                         point.properties = json.dumps(bundle_point, indent=2)
 
                     point.fetch_secondary_identifier()
+                    point.fetch_user_agent()
 
                     point.save()
 
                     if (point.source in seen_sources) is False:
                         seen_sources.append(point.source)
 
-                    if point.source in source_identifiers:
-                        source_identifiers = source_identifiers[point.source]
+                    if (point.source in source_identifiers) is False:
+                        source_identifiers[point.source] = []
 
                     latest_key = point.source + '--' + point.generator_identifier
 
@@ -82,7 +84,10 @@ class Command(BaseCommand):
                         latest_points[latest_key] = point
 
                     if (point.generator_identifier in seen_generators) is False:
-                        seen_sources.append(point.generator_identifier)
+                        seen_generators.append(point.generator_identifier)
+
+                    if (point.generator_identifier in source_identifiers[point.source]) is False:
+                        source_identifiers[point.source].append(point.generator_identifier)
 
                     new_point_count += 1
 

@@ -14,6 +14,6 @@ class Command(BaseCommand):
 
         if source is None:
             source = DataSource.objects.all().order_by('performance_metadata_updated').first()
-            
+
         if source is not None:
             source.update_performance_metadata()
