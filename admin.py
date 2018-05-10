@@ -16,7 +16,7 @@ reset_visualizations.description = 'Reset visualizations'
 
 @admin.register(DataPointVisualization)
 class DataPointVisualizationAdmin(admin.OSMGeoAdmin):
-    list_display = ('source', 'generator_identifier', 'last_updated',)
+    list_display = ('source', 'generator_identifier',)
     list_filter = ('source', 'generator_identifier', 'last_updated',)
 
     actions = [reset_visualizations]

@@ -180,7 +180,7 @@ class DataPointManager(models.Manager):
         latest = None
 
         if latest_point_datum is not None:
-            latest = DataPoint.objects.get(pk=int(latest_point_datum.value))
+            latest = DataPoint.objects.filter(pk=int(latest_point_datum.value)).first()
         else:
             if identifier == 'pdk-data-frequency':
                 latest = DataPoint.objects.filter(source=source).order_by('-recorded').first()

@@ -61,7 +61,7 @@ class Command(BaseCommand):
                         compiled.save()
 
                     last_point = DataPoint.objects.latest_point(source, identifier)
-
+                    
                     if last_point is not None:
                         this_delta = (last_point.recorded - compiled.last_updated).total_seconds()
 

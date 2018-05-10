@@ -372,8 +372,11 @@ def pdk_export(request): # pylint: disable=too-many-branches
 @staff_member_required
 def pdk_system_health(request):
     datum = DataServerMetadatum.objects.filter(key='Server Health').first()
-
-    return render(request, 'pdk_system_health.html', context=json.loads(datum.value))
+    
+    if datum is not None:
+        return render(request, 'pdk_system_health.html', context=json.loads(datum.value))
+        
+    return render(request, 'pdk_system_health.html', context={})
 
 
 @staff_member_required

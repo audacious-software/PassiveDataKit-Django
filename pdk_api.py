@@ -5,6 +5,7 @@ import csv
 import importlib
 import json
 import tempfile
+import traceback
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -31,9 +32,9 @@ def visualization(source, generator):
         if output is not None:
             return output
     except ImportError:
-        pass
+		traceback.print_exc()
     except AttributeError:
-        pass
+		traceback.print_exc()
 
     context = {}
     context['source'] = source

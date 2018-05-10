@@ -2,6 +2,7 @@
 
 import datetime
 import importlib
+import traceback
 
 import arrow
 
@@ -463,9 +464,9 @@ class PointsVisualizationNode(template.Node):
 
                     visualization_html = pdk_api.visualization(source, generator)
                 except ImportError:
-                    pass
+                    traceback.print_exc()
                 except AttributeError:
-                    pass
+                    traceback.print_exc()
 
         return visualization_html
 
