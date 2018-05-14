@@ -1,5 +1,7 @@
 import datetime
+import json
 
+from django.contrib.admin import SimpleListFilter
 from django.contrib.gis import admin
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
@@ -21,6 +23,61 @@ class DataPointVisualizationAdmin(admin.OSMGeoAdmin):
 
     actions = [reset_visualizations]
 
+class DataPointGeneratorIdentifierFilter(SimpleListFilter):
+    title = 'Generator Identifier'
+    parameter_name = 'generator_identifier'
+
+    def lookups(self, request, model_admin):
+        values = []
+        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
+        
+        if identifiers is not None:
+            seen_identifiers = json.loads(identifiers.value)
+            
+            seen_identifiers.sort()
+            
+            for identifier in seen_identifiers:
+                values.append((identifier, identifier,))
+            
+        return values
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(generator_identifier=self.value())
+
+
+class DataPointSourceFilter(SimpleListFilter):
+    title = 'Source'
+    parameter_name = 'source'
+
+    def lookups(self, request, model_admin):
+        values = []
+        
+        sources = DataServerMetadatum.objects.filter(key="Data Point Sources").first()
+
+        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
+        
+        seen_identifiers = []
+        
+        if identifiers is not None:
+            seen_identifiers = json.loads(identifiers.value)
+        
+        if sources is not None:
+            seen_sources = json.loads(sources.value)
+
+            seen_sources.sort()
+            
+            for source in seen_sources:
+                if (source in seen_identifiers) is False:
+                    values.append((source, source,))
+            
+        return values
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(source=self.value())
+
+
 @admin.register(DataPoint)
 class DataPointAdmin(admin.OSMGeoAdmin):
     openlayers_url = 'https://openlayers.org/api/2.13.1/OpenLayers.js'
@@ -36,7 +93,8 @@ class DataPointAdmin(admin.OSMGeoAdmin):
     list_filter = (
         'created',
         'recorded',
-        'generator_identifier',
+        DataPointGeneratorIdentifierFilter,
+        DataPointSourceFilter,
         )
 
 @admin.register(DataBundle)
