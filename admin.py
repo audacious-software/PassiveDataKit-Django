@@ -1,3 +1,5 @@
+# pylint: disable=no-member
+
 import datetime
 import json
 
@@ -30,15 +32,15 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
     def lookups(self, request, model_admin):
         values = []
         identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
-        
+
         if identifiers is not None:
             seen_identifiers = json.loads(identifiers.value)
-            
+
             seen_identifiers.sort()
-            
+
             for identifier in seen_identifiers:
                 values.append((identifier, identifier,))
-            
+
         return values
 
     def queryset(self, request, queryset):
@@ -52,25 +54,25 @@ class DataPointSourceFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         values = []
-        
+
         sources = DataServerMetadatum.objects.filter(key="Data Point Sources").first()
 
         identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
-        
+
         seen_identifiers = []
-        
+
         if identifiers is not None:
             seen_identifiers = json.loads(identifiers.value)
-        
+
         if sources is not None:
             seen_sources = json.loads(sources.value)
 
             seen_sources.sort()
-            
+
             for source in seen_sources:
                 if (source in seen_identifiers) is False:
                     values.append((source, source,))
-            
+
         return values
 
     def queryset(self, request, queryset):
