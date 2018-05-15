@@ -336,7 +336,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         try:
             if generator in settings.PDK_EXCLUDE_GENERATORS:
                 to_remove.append(generator)
-        except KeyError:
+        except AttributeError:
             pass
 
     for generator in to_remove:
@@ -361,7 +361,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
                         try:
                             if extra_generator[0] in settings.PDK_EXCLUDE_GENERATORS:
                                 to_remove.append(extra_generator)
-                        except KeyError:
+                        except AttributeError:
                             pass
 
             except ImportError:
