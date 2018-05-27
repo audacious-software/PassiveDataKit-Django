@@ -22,16 +22,9 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     start = now - datetime.timedelta(days=2)
 
-    points = points.filter(created__lte=now, created__gte=start).order_by('created')
+    points = points.filter(created__lte=now, created__gte=start)
 
     end = start + datetime.timedelta(seconds=600)
-    point_index = 0
-    point_count = points.count()
-
-    point = None
-
-    if point_count > 0:
-        point = points[point_index]
 
     timestamp_counts = {}
 
@@ -42,14 +35,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
         keys.append(timestamp)
 
-        timestamp_counts[timestamp] = 0
-
-        while point is not None and point.created < end and point_index < (point_count - 1):
-            timestamp_counts[timestamp] += 1
-
-            point_index += 1
-
-            point = points[point_index]
+        timestamp_counts[timestamp] = points.filter(created__lte=end, created__gte=start).count()
 
         start = end
         end = start + datetime.timedelta(seconds=600)

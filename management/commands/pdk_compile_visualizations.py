@@ -33,6 +33,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals
         repeat = options['repeat']
 
+        if options['source'] != 'all':
+            DataPointVisualization.objects.filter(source=options['source']).delete()
+
         while repeat > 0:
             last_updated = None
 
@@ -43,8 +46,6 @@ class Command(BaseCommand):
             else:
                 sources = sorted(DataSource.objects.sources())
 
-#            print('LOOP[' + str(repeat) + '] = ' + str(len(sources)))
-
             update_delta = 0
 
             for source in sources:
@@ -54,8 +55,6 @@ class Command(BaseCommand):
                     identifier_list.append(identifier)
 
                 for identifier in identifier_list:
-#                    print(timezone.now().isoformat() + ' -- ' + source + ' -- ' + identifier)
-
                     compiled = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated').first()
 
                     if compiled is None:
@@ -74,8 +73,6 @@ class Command(BaseCommand):
                             update_delta = this_delta
 
             if last_updated is not None:
-#                print('UPDATING: ' + last_updated.source + ' -- ' + last_updated.generator_identifier)
-
                 points = None
 
                 if last_updated.generator_identifier == 'pdk-data-frequency':

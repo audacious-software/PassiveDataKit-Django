@@ -396,13 +396,17 @@ class DataSource(models.Model):
         if latest_point is not None:
             query = query & Q(created__gt=latest_point.created)
 
-        for point in DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created'):
+        point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
+
+        while point is not None:
             if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
                 metadata['latest_point'] = point.pk
 
                 latest_point = point
 
-                break
+                point = None
+            else:
+                point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
 
         # Update point_count
 
