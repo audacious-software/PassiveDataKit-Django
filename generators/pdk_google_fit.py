@@ -4,11 +4,7 @@ import datetime
 import json
 import time
 
-from django.conf import settings
-from django.template.loader import render_to_string
 from django.utils import timezone
-
-from ..models import DataPoint
 
 def extract_secondary_identifier(properties):
     if 'reading-type' in properties:
