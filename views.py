@@ -194,7 +194,23 @@ def pdk_home(request):
             group = request.POST['assigned_group']
             group_name = request.POST['new_group_name'].strip()
 
-            source = DataSource(identifier=identifier, name=name)
+            final_identifier = identifier
+            final_count = 2
+
+            while DataSource.objects.filter(identifier=final_identifier).count() > 0:
+                final_identifier = identifier + '-' + str(final_count)
+
+                final_count += 1
+
+            final_name = name
+            final_count = 2
+
+            while DataSource.objects.filter(name=final_name).count() > 0:
+                final_name = name + ' ' + str(final_count)
+
+                final_count += 1
+
+            source = DataSource(identifier=final_identifier, name=final_name)
 
             if group == "-1":
                 pass

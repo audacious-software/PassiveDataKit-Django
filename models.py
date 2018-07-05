@@ -340,6 +340,8 @@ class DataFile(models.Model):
 class DataSourceGroup(models.Model):
     name = models.CharField(max_length=1024, db_index=True)
 
+    suppress_alerts = models.BooleanField(default=False)
+
     def __unicode__(self):
         return self.name
 
@@ -362,6 +364,8 @@ class DataSource(models.Model):
 
     group = models.ForeignKey(DataSourceGroup, related_name='sources', null=True, on_delete=models.SET_NULL)
 
+    suppress_alerts = models.BooleanField(default=False)
+
     if install_supports_jsonfield():
         performance_metadata = JSONField(null=True, blank=True)
     else:
@@ -381,6 +385,15 @@ class DataSource(models.Model):
                 return json.loads(self.performance_metadata)
 
         return {}
+
+    def should_suppress_alerts(self):
+        if self.suppress_alerts:
+            return True
+
+        if self.group.suppress_alerts:
+            return True
+
+        return False
 
     def update_performance_metadata(self):
         metadata = self.fetch_performance_metadata()

@@ -106,12 +106,13 @@ class DataBundleAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataSourceGroup)
 class DataSourceGroupAdmin(admin.OSMGeoAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'suppress_alerts',)
+    list_filter = ('suppress_alerts',)
 
 @admin.register(DataSource)
 class DataSourceAdmin(admin.OSMGeoAdmin):
-    list_display = ('name', 'identifier', 'group')
-    list_filter = ('group',)
+    list_display = ('name', 'identifier', 'group', 'suppress_alerts',)
+    list_filter = ('group', 'suppress_alerts',)
 
 
 def reset_report_jobs(modeladmin, request, queryset): # pylint: disable=unused-argument
