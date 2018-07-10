@@ -1,222 +1,226 @@
-<div id="map" style="height: 480px;"></div>
-<script>
-	var map, heatmap;
+{% if google_api_key %}
+	<div id="map" style="height: 480px;"></div>
+	<script>
+		var map, heatmap;
 
-	function initMap() {
-		var points = [];
+		function initMap() {
+			var points = [];
 	
-		{% for value in values %}
-			points.push({
-				location: new google.maps.LatLng({{ value.latitude }}, {{ value.longitude }}),
-				weight: 1
+			{% for value in values %}
+				points.push({
+					location: new google.maps.LatLng({{ value.latitude }}, {{ value.longitude }}),
+					weight: 1
+				});
+			{% endfor %}
+
+			map = new google.maps.Map(document.getElementById('map'), {
+				center: {
+					lat: {{ center_latitude }}, 
+					lng: {{ center_longitude }}
+				},
+				zoom: 8,
+				styles: [
+				  {
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#212121"
+					  }
+					]
+				  },
+				  {
+					"elementType": "labels.icon",
+					"stylers": [
+					  {
+						"visibility": "off"
+					  }
+					]
+				  },
+				  {
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#757575"
+					  }
+					]
+				  },
+				  {
+					"elementType": "labels.text.stroke",
+					"stylers": [
+					  {
+						"color": "#212121"
+					  }
+					]
+				  },
+				  {
+					"featureType": "administrative",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#757575"
+					  }
+					]
+				  },
+				  {
+					"featureType": "administrative.country",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#9e9e9e"
+					  }
+					]
+				  },
+				  {
+					"featureType": "administrative.land_parcel",
+					"stylers": [
+					  {
+						"visibility": "off"
+					  }
+					]
+				  },
+				  {
+					"featureType": "administrative.locality",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#bdbdbd"
+					  }
+					]
+				  },
+				  {
+					"featureType": "poi",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#757575"
+					  }
+					]
+				  },
+				  {
+					"featureType": "poi.park",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#181818"
+					  }
+					]
+				  },
+				  {
+					"featureType": "poi.park",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#616161"
+					  }
+					]
+				  },
+				  {
+					"featureType": "poi.park",
+					"elementType": "labels.text.stroke",
+					"stylers": [
+					  {
+						"color": "#1b1b1b"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road",
+					"elementType": "geometry.fill",
+					"stylers": [
+					  {
+						"color": "#2c2c2c"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#8a8a8a"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road.arterial",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#373737"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road.highway",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#3c3c3c"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road.highway.controlled_access",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#4e4e4e"
+					  }
+					]
+				  },
+				  {
+					"featureType": "road.local",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#616161"
+					  }
+					]
+				  },
+				  {
+					"featureType": "transit",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#757575"
+					  }
+					]
+				  },
+				  {
+					"featureType": "water",
+					"elementType": "geometry",
+					"stylers": [
+					  {
+						"color": "#000000"
+					  }
+					]
+				  },
+				  {
+					"featureType": "water",
+					"elementType": "labels.text.fill",
+					"stylers": [
+					  {
+						"color": "#3d3d3d"
+					  }
+					]
+				  }
+				]
 			});
-		{% endfor %}
 
-		map = new google.maps.Map(document.getElementById('map'), {
-			center: {
-				lat: {{ center_latitude }}, 
-				lng: {{ center_longitude }}
-			},
-			zoom: 8,
-			styles: [
-			  {
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#212121"
-				  }
-				]
-			  },
-			  {
-				"elementType": "labels.icon",
-				"stylers": [
-				  {
-					"visibility": "off"
-				  }
-				]
-			  },
-			  {
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#757575"
-				  }
-				]
-			  },
-			  {
-				"elementType": "labels.text.stroke",
-				"stylers": [
-				  {
-					"color": "#212121"
-				  }
-				]
-			  },
-			  {
-				"featureType": "administrative",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#757575"
-				  }
-				]
-			  },
-			  {
-				"featureType": "administrative.country",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#9e9e9e"
-				  }
-				]
-			  },
-			  {
-				"featureType": "administrative.land_parcel",
-				"stylers": [
-				  {
-					"visibility": "off"
-				  }
-				]
-			  },
-			  {
-				"featureType": "administrative.locality",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#bdbdbd"
-				  }
-				]
-			  },
-			  {
-				"featureType": "poi",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#757575"
-				  }
-				]
-			  },
-			  {
-				"featureType": "poi.park",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#181818"
-				  }
-				]
-			  },
-			  {
-				"featureType": "poi.park",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#616161"
-				  }
-				]
-			  },
-			  {
-				"featureType": "poi.park",
-				"elementType": "labels.text.stroke",
-				"stylers": [
-				  {
-					"color": "#1b1b1b"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road",
-				"elementType": "geometry.fill",
-				"stylers": [
-				  {
-					"color": "#2c2c2c"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#8a8a8a"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road.arterial",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#373737"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road.highway",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#3c3c3c"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road.highway.controlled_access",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#4e4e4e"
-				  }
-				]
-			  },
-			  {
-				"featureType": "road.local",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#616161"
-				  }
-				]
-			  },
-			  {
-				"featureType": "transit",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#757575"
-				  }
-				]
-			  },
-			  {
-				"featureType": "water",
-				"elementType": "geometry",
-				"stylers": [
-				  {
-					"color": "#000000"
-				  }
-				]
-			  },
-			  {
-				"featureType": "water",
-				"elementType": "labels.text.fill",
-				"stylers": [
-				  {
-					"color": "#3d3d3d"
-				  }
-				]
-			  }
-			]
-		});
+			heatmap = new google.maps.visualization.HeatmapLayer({
+				data: points,
+				map: map,
+				opacity: 1,
+				radius: 5,
+				maxIntensity: 5
+			});
+		};
 
-        heatmap = new google.maps.visualization.HeatmapLayer({
-			data: points,
-			map: map,
-			opacity: 1,
-			radius: 5,
-			maxIntensity: 5
-        });
-	};
-
-	window.showVisualization = function() { 
+		window.showVisualization = function() { 
 	
-	};
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&callback=initMap&libraries=visualization" async defer></script>
+		};
+	</script>
+	<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&callback=initMap&libraries=visualization" async defer></script>
+{% else %}
+	<p>Missing <code>PDK_GOOGLE_MAPS_API_KEY</code> in site settings. Please obtain a Google Maps API key and update your settings accordingly.</p>
+{% endif %}
