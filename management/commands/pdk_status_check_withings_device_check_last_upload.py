@@ -1,5 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -16,6 +17,15 @@ class Command(BaseCommand):
 
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
+        try:
+            if (GENERATOR in settings.PDK_ENABLED_CHECKS) is False:
+                DataSourceAlert.objects.filter(generator_identifier=GENERATOR, active=True).update(active=False)
+
+                return
+        except AttributeError:
+            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
+            print 'Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)'
+
         now = timezone.now()
 
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
