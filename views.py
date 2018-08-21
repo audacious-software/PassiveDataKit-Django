@@ -93,7 +93,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
                                 status=201)
 
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST, HEAD'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
@@ -126,7 +126,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
                                 status=201)
 
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST, HEAD'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
@@ -163,13 +163,22 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
     elif request.method == 'OPTIONS':
         response = HttpResponse('', content_type='text/plain', status=200)
         response['Access-Control-Allow-Origin'] = '*'
-        response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST, HEAD'
+        response['Access-Control-Request-Headers'] = 'Content-Type'
+        response['Access-Control-Allow-Headers'] = 'Content-Type'
+
+        return response
+    elif request.method == 'HEAD':
+        response = HttpResponse('', content_type='text/plain', status=200)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'CREATE, POST, HEAD'
         response['Access-Control-Request-Headers'] = 'Content-Type'
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
         return response
 
-    return HttpResponseNotAllowed(['CREATE', 'POST'])
+
+    return HttpResponseNotAllowed(['CREATE', 'POST', 'HEAD'])
 
 
 @staff_member_required

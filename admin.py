@@ -47,6 +47,8 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
         if self.value():
             return queryset.filter(generator_identifier=self.value())
 
+        return None
+
 
 class DataPointSourceFilter(SimpleListFilter):
     title = 'Source'
@@ -78,6 +80,8 @@ class DataPointSourceFilter(SimpleListFilter):
     def queryset(self, request, queryset):
         if self.value():
             return queryset.filter(source=self.value())
+
+        return None
 
 
 @admin.register(DataPoint)

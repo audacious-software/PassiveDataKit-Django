@@ -32,6 +32,11 @@ def visualization(source, generator):
     context['source'] = source
     context['generator_identifier'] = generator
 
+    try:
+        context['google_api_key'] = settings.PDK_GOOGLE_MAPS_API_KEY
+    except AttributeError:
+        pass
+
     values = []
 
     end = timezone.now()
@@ -70,8 +75,6 @@ def visualization(source, generator):
 
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
-
-    context['google_api_key'] = settings.PDK_GOOGLE_MAPS_API_KEY
 
     return render_to_string('pdk_device_location_template.html', context)
 
