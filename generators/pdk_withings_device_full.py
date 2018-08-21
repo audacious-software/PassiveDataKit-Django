@@ -67,7 +67,7 @@ def fetch_intraday(source, properties, start): # pylint: disable=too-many-locals
         while start < final_end:
             end = start.shift(hours=+12)
 
-            api_url = 'https://wbsapi.withings.net/v2/measure?action=getintradayactivity'
+            api_url = 'https://api.health.nokia.com/v2/measure?action=getintradayactivity'
             api_url += '&userid=' + properties['oauth_user_id']
             api_url += '&startdate=' + str(start.timestamp)
             api_url += '&enddate=' + str(end.timestamp)
@@ -157,7 +157,7 @@ def fetch_sleep_measures(source, properties, start): # pylint: disable=too-many-
         while start < final_end:
             end = start.shift(hours=+12)
 
-            api_url = 'https://wbsapi.withings.net/v2/sleep?action=get'
+            api_url = 'https://api.health.nokia.com/v2/sleep?action=get'
             api_url += '&userid=' + properties['oauth_user_id']
             api_url += '&startdate=' + str(start.timestamp)
             api_url += '&enddate=' + str(end.timestamp)
