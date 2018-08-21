@@ -253,7 +253,7 @@ class DataPoint(models.Model):
     user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
-    generated_at = models.PointField(null=True)
+    generated_at = models.PointField(null=True, blank=True)
 
     server_generated = models.BooleanField(default=False, db_index=True)
 
