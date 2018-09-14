@@ -418,7 +418,7 @@ class DataSource(models.Model):
 
         return False
 
-    def update_performance_metadata(self):
+    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements
         metadata = self.fetch_performance_metadata()
 
         DataPoint.objects.update_server_generated_status()
@@ -431,6 +431,8 @@ class DataSource(models.Model):
 
         if latest_point is not None:
             query = query & Q(created__gt=latest_point.created)
+        else:
+            latest_point = DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
 
         point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
 
@@ -442,7 +444,10 @@ class DataSource(models.Model):
 
                 point = None
             else:
-                point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
+                latest_point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
+
+                if latest_point is not None:
+                    metadata['latest_point'] = latest_point.pk
 
         # Update point_count
 
