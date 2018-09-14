@@ -219,6 +219,29 @@ class DataPointManager(models.Manager):
 
         self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
+    def create_data_point(self, identifier, source, payload): # pylint: disable=no-self-use
+        now = timezone.now()
+
+        payload['passive-data-metadata'] = {
+            'timestamp': calendar.timegm(now.utctimetuple()),
+            'generator-id': identifier,
+            'generator': identifier + ': Passive Data Kit Server',
+            'source': source
+        }
+
+        point = DataPoint(source=source, generator=payload['passive-data-metadata']['generator'], generator_identifier=identifier)
+
+        if install_supports_jsonfield():
+            point.properties = payload
+        else:
+            point.properties = json.dumps(payload, indent=2)
+
+        point.user_agent = 'Passive Data Kit Server'
+        point.created = now
+        point.recorded = now
+
+        point.save()
+
 
 class DataPoint(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
