@@ -488,3 +488,37 @@ def to_gb(value):
     value = value * 1024
 
     return '%.3f MB' %  value
+
+@register.tag(name="additional_home_actions")
+def additional_home_actions(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, source = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires 1 source arguments" % \
+                                           token.contents.split()[0])
+
+    return AdditionalHomeActionsNode(source)
+
+class AdditionalHomeActionsNode(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        actions = []
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                actions.extend(pdk_api.additional_home_actions(source))
+            except ImportError:
+                traceback.print_exc()
+            except AttributeError:
+                traceback.print_exc()
+
+        context['actions'] = actions
+        context['source'] = source
+
+        return render_to_string('tag_additional_home_actions.html', context.flatten())
