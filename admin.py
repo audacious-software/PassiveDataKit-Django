@@ -156,7 +156,8 @@ class ReportJobBatchRequestAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataServerMetadatum)
 class DataServerMetadatumAdmin(admin.OSMGeoAdmin):
-    list_display = ('key', 'formatted_value',)
+    list_display = ('key', 'last_updated',)
+    list_filter = ('last_updated',)
     search_fields = ['key', 'value']
 
 

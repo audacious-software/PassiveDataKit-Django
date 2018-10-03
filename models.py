@@ -16,7 +16,7 @@ from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 from django.db import connection
 from django.db.models import Q, QuerySet
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from django.utils.text import slugify
@@ -333,12 +333,19 @@ class DataPoint(models.Model):
 
 
 class DataServerMetadatum(models.Model):
+    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+        verbose_name_plural = "data server metadata"
+
     key = models.CharField(max_length=1024, db_index=True)
     value = models.TextField(max_length=1048576)
+    last_updated = models.DateTimeField(null=True, blank=True)
 
     def formatted_value(self): # pylint: disable=no-self-use
         return 'TODO'
 
+@receiver(pre_save, sender=DataServerMetadatum)
+def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
+    instance.last_updated = timezone.now()
 
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)

@@ -101,7 +101,7 @@
 			</div>
 		</form>
 	</div>
-	<!-- Modal -->
+	<!-- Delete Data Source Modal -->
 	<div class="modal fade" id="delete_source_modal" tabindex="-1" role="dialog" aria-labelledby="delete_source_modal_label">
 		<div class="modal-dialog" role="document">
 			<div class="modal-content">
@@ -129,6 +129,75 @@
 			{% csrf_token %}
 			<input type="hidden" name="operation" value="remove_source" />
 			<input type="hidden" name="pk" value="" id="delete_source_pk" />
+		</form>
+	</div>
+
+	<!-- Move Data Source Modal -->
+	<div class="modal fade" id="move_source_modal" tabindex="-1" role="dialog" aria-labelledby="move_source_modal_label">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="move_source_modal_label">Move data source?</h4>
+				</div>
+				<div class="modal-body">
+					<p>To which group should <strong id="move_source_name">NAME</strong> be placed?</p>
+					
+					<p>
+						<label for="field_move_existing">Move to&#8230;</label>
+
+						<select name="move_assigned_group" id="field_move_existing" class="form-control">
+							<option value="0">New Group</option>
+							{% for group in groups %}
+								<option value="{{ group.pk }}">{{ group.name }}</option>
+							{% endfor %}
+						</select>
+					</p>
+					<p id="move_new_group_fields">
+						<label for="field_new_group_name_move">New Group Name</label>
+						<input type="text" class="form-control" name="new_group_name_move" id="field_new_group_name_move" placeholder="New Group Name">
+					</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary" id="btn_move_source">Move Data Source</button>
+				</div>
+			</div>
+		</div>
+		<form action="" method="POST" id="form_move_source">
+			{% csrf_token %}
+			<input type="hidden" name="operation" value="move_source" />
+			<input type="hidden" name="move_pk" value="" id="move_source_pk" />
+			<input type="hidden" name="move_group_pk" value="" id="move_source_group_pk" />
+			<input type="hidden" name="move_group_name" value="" id="move_source_group_name" />
+		</form>
+	</div>
+
+	<!-- Move Data Source Modal -->
+	<div class="modal fade" id="rename_source_modal" tabindex="-1" role="dialog" aria-labelledby="rename_source_modal_label">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="rename_source_modal_label">Rename data source?</h4>
+				</div>
+				<div class="modal-body">
+					<p>
+						<label for="field_rename_existing">Data Source Name</label>
+						<input type="text" class="form-control" name="field_rename_existing" id="field_rename_existing" placeholder="Data Source Name">
+					</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default pull-left" data-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-primary" id="btn_rename_source">Rename Data Source</button>
+				</div>
+			</div>
+		</div>
+		<form action="" method="POST" id="form_rename_source">
+			{% csrf_token %}
+			<input type="hidden" name="operation" value="rename_source" />
+			<input type="hidden" name="rename_pk" value="" id="rename_source_pk" />
+			<input type="hidden" name="rename_name" value="" id="rename_source_name" />
 		</form>
 	</div>
 

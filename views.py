@@ -20,7 +20,7 @@ from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource
 
 
 @csrf_exempt
-def add_data_point(request):
+def pdk_add_data_point(request):
     response = {'message': 'Data point added successfully.'}
 
     if request.method == 'CREATE':
@@ -84,7 +84,7 @@ def add_data_point(request):
 
 
 @csrf_exempt
-def add_data_bundle(request): # pylint: disable=too-many-statements
+def pdk_add_data_bundle(request): # pylint: disable=too-many-statements
     response = {'message': 'Data bundle added successfully, and ready for processing.'}
 
     if request.method == 'CREATE':
@@ -182,7 +182,7 @@ def add_data_bundle(request): # pylint: disable=too-many-statements
 
 
 @staff_member_required
-def pdk_home(request):
+def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
     for app in settings.INSTALLED_APPS:
         try:
             app_views = importlib.import_module(app + '.views')
@@ -235,8 +235,31 @@ def pdk_home(request):
                 source.group = DataSourceGroup.objects.get(pk=int(group))
 
             source.save()
-        if request.POST['operation'] == 'remove_source':
+        elif request.POST['operation'] == 'remove_source':
             DataSource.objects.filter(pk=int(request.POST['pk'])).delete()
+        elif request.POST['operation'] == 'move_source':
+            source = DataSource.objects.get(pk=int(request.POST['move_pk']))
+
+            group_pk = int(request.POST['move_group_pk'])
+            group_name = request.POST['move_group_name']
+
+            if group_pk == 0 and group_name.strip() != '':
+                group = DataSourceGroup.objects.filter(name=group_name).first()
+
+                if group is None:
+                    group = DataSourceGroup(name=group_name)
+                    group.save()
+
+                source.group = group
+            else:
+                source.group = DataSourceGroup.objects.get(pk=group_pk)
+
+            source.save()
+        elif request.POST['operation'] == 'rename_source':
+            source = DataSource.objects.get(pk=int(request.POST['rename_pk']))
+            source.name = request.POST['rename_name']
+
+            source.save()
 
     context['groups'] = DataSourceGroup.objects.order_by('name')
     context['solo_sources'] = DataSource.objects.filter(group=None).order_by('name')
@@ -302,11 +325,11 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
 
 
 @staff_member_required
-def unmatched_sources(request): # pylint: disable=unused-argument
-    sources = []
+def pdk_unmatched_sources(request): # pylint: disable=unused-argument
+    sources = DataPoint.objects.sources()
 
-    for point in DataPoint.objects.order_by('source').values_list('source', flat=True).distinct():
-        sources.append(point)
+#    for point in DataPoint.objects.order_by('source').values_list('source', flat=True).distinct():
+#        sources.append(point)
 
     return JsonResponse(sources, safe=False, json_dumps_params={'indent': 2})
 
