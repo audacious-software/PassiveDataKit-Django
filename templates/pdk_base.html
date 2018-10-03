@@ -7,7 +7,6 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="" />
 		<meta name="author" content="" />
-		<link rel="icon" href="../../favicon.ico" />
 		<title>Passive Data Kit</title>
 		<link href="{% static 'pdk/css/lib/bootstrap.min.css' %}" rel="stylesheet" />
 		<link href="{% static 'pdk/css/lib/bootstrap-theme.min.css' %}" rel="stylesheet" />
@@ -20,11 +19,14 @@
 		<link rel="manifest" href="{% static 'pdk/icons/manifest.json' %}">
 		<link rel="mask-icon" href="{% static 'pdk/icons/safari-pinned-tab.svg' %}" color="#01579b">
 		<link rel="shortcut icon" href="{% static 'pdk/icons/favicon.ico' %}">
+
+		<link href="https://fonts.googleapis.com/css?family=Play" rel="stylesheet">
+
 		<meta name="msapplication-config" content="{% static 'pdk/icons/browserconfig.xml' %}">
 	</head>
 
 	<body>
-		<nav class="navbar navbar-inverse navbar-fixed-top">
+		<nav class="navbar navbar-inverse navbar-fixed-top" style="background-image: none; background-color: #000000;">
 			<div class="container-fluid">
 				<div class="navbar-header">
 					<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -33,7 +35,11 @@
 						<span class="icon-bar"></span>
 						<span class="icon-bar"></span>
 					</button>
-					<a class="navbar-brand" href="{% url 'pdk_home' %}">Passive Data Kit</a>
+					<a class="navbar-brand" href="{% url 'pdk_home' %}" style="display: inline-block;">
+						<!-- <img src="{% static 'pdk/icons/pdk-header-logo-40.png' %}" style="width: 40px; height: 40px; padding: 5px; margin-top: -13px; margin-bottom: -10px; margin-left: -10px; display: inline-block; background-color: #ffffff; border-radius: 10px;" /> -->
+						<img src="{% static 'pdk/icons/pdk-header-logo-light-40.png' %}" style="width: 40px; height: 40px; padding: 5px; margin-top: -13px; margin-bottom: -10px; margin-left: -10px; display: inline-block;" /> 
+						<span style="font-family: 'Play', sans-serif;">Passive Data Kit</span>
+					</a>
 				</div>
 				<div id="navbar" class="navbar-collapse collapse">
 					<ul class="nav navbar-nav navbar-right">
