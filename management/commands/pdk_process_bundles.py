@@ -91,6 +91,9 @@ class Command(BaseCommand):
 
                     new_point_count += 1
 
+            if supports_json is False:
+                bundle.properties = json.dumps(bundle.properties, indent=2)
+
             bundle.processed = True
             bundle.save()
 

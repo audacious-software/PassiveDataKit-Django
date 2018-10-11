@@ -1,5 +1,6 @@
 {% load passive_data_kit %}
-<table class="alerts_table table-striped" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
+<div id="source_alerts"><h3 style="margin: 0px;"><a name="alerts"></a>Data Alerts</h3></div>
+<table class="alerts_table table-striped" data-toolbar="#source_alerts" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
     <thead>
         <tr>
             <th data-sortable="true"><span class="glyphicon glyphicon-alert" aria-hidden="true"></span></th>
@@ -47,3 +48,4 @@
         {% endfor %}
     </tbody>
 </table>
+<hr />

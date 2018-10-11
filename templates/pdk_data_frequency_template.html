@@ -5,13 +5,21 @@
 <script>
 	window.showVisualization = function() {
 		var data = [];
+
+		var max = Number.MIN_VALUE;
 	
 		{% for key in data.keys %}
 			data.push({
 				'x': {{ key }},
-				'y': {{ data|get_item:key }}
+				'y': ({{ data|get_item:key }} + 1)
 			});
+
+			max = Math.max(max, ({{ data|get_item:key }} + 1));
 		{% endfor %}
+		
+		console.log('MAX: ' + max);
+
+		var logScale = d3.scale.log().domain([1, max]);
 
 		var graph = new Rickshaw.Graph( {
 			element: document.querySelector("#pdk-data-frequency-chart"), 
@@ -20,16 +28,19 @@
 			series: [{
 				name: 'Data Points',
 				color: 'steelblue',
-				data: data
+				data: data,
+				scale: logScale
 			}]
 		});
 
 		var ticksTreatment = 'glow';
 
-		var yTicks = new Rickshaw.Graph.Axis.Y( {
+		var yTicks = new Rickshaw.Graph.Axis.Y.Scaled( {
 			graph: graph,
 			ticksTreatment: ticksTreatment,
-			tickFormat: Rickshaw.Fixtures.Number.formatKMBT
+			tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+			tickValues: [1, 10, 100, 1000, 10000, 100000], // values to use/display
+			scale: logScale
 		});
 
 		graph.render();
@@ -44,10 +55,17 @@
 
 		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 			graph: graph,
+			xFormatter: function(x) {
+				var momentDate = moment(x * 1000);
+				
+				return momentDate.format('LLL');
+			},
 			formatter: function(series, x, y) {
-				var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+				var momentDate = moment(x * 1000);
+				
+				var date = '<span class="date">' + momentDate.format('LLL') + '</span>';
 				var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
-				var content = swatch + series.name + ": " + parseInt(y) + '<br>' + date;
+				var content = swatch + series.name + ": " + parseInt(y - 1) + '<br>' + date;
 				return content;
 			}
 		});

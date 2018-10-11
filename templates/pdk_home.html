@@ -26,19 +26,11 @@
 {% block content %}
 	<div class="row">
 		<div class="col-md-12">
-			<h2 class="sub-header"><a name="alerts"></a>Alerts</h2> 
-		</div>
-		
-		<div class="col-md-12">
 			{% system_alerts_table %}
 		</div>
 	</div>
 	{% for group in groups %}
 		<div class="row">
-			<div class="col-md-12">
-				<h2 class="sub-header"><a name="group_{{ group.pk }}"></a>{{ group.name }}</h2> 
-			</div>
-			
 			<div class="col-md-12">
 				{% sources_table group.sources %}
 			</div>

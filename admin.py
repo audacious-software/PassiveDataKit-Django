@@ -3,8 +3,11 @@
 import datetime
 import json
 
+from prettyjson import PrettyJSONWidget
+
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis import admin
+from django.contrib.postgres.fields import JSONField
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
@@ -88,6 +91,10 @@ class DataPointSourceFilter(SimpleListFilter):
 class DataPointAdmin(admin.OSMGeoAdmin):
     openlayers_url = 'https://openlayers.org/api/2.13.1/OpenLayers.js'
 
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget}
+    }
+
     list_display = (
         'source',
         'generator_identifier',
@@ -105,6 +112,10 @@ class DataPointAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataBundle)
 class DataBundleAdmin(admin.OSMGeoAdmin):
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget}
+    }
+
     list_display = ('recorded', 'processed',)
     list_filter = ('processed', 'recorded',)
 

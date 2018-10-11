@@ -32,9 +32,11 @@ def visualization(source, generator):
         if output is not None:
             return output
     except ImportError:
-        traceback.print_exc()
+        # traceback.print_exc()
+        pass
     except AttributeError:
-        traceback.print_exc()
+        # traceback.print_exc()
+        pass
 
     context = {}
     context['source'] = source

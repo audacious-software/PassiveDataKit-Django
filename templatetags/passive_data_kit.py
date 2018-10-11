@@ -468,9 +468,11 @@ class PointsVisualizationNode(template.Node):
 
                     visualization_html = pdk_api.visualization(source, generator)
                 except ImportError:
-                    traceback.print_exc()
+                    # traceback.print_exc()
+                    pass
                 except AttributeError:
-                    traceback.print_exc()
+                    # traceback.print_exc()
+                    pass
 
         return visualization_html
 
@@ -514,9 +516,11 @@ class AdditionalHomeActionsNode(template.Node):
 
                 actions.extend(pdk_api.additional_home_actions(source))
             except ImportError:
-                traceback.print_exc()
+                # traceback.print_exc()
+                pass
             except AttributeError:
-                traceback.print_exc()
+                # traceback.print_exc()
+                pass
 
         context['actions'] = actions
         context['source'] = source

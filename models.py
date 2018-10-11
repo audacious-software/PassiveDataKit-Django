@@ -323,7 +323,7 @@ class DataPoint(models.Model):
 
             if 'passive-data-metadata' in properties:
                 if 'generator' in properties['passive-data-metadata']:
-                    tokens = properties['passive-data-metadata']['generator'].split(':')
+                    tokens = properties['passive-data-metadata']['generator'].split(':', 1)
 
                     self.user_agent = tokens[-1].strip()
 

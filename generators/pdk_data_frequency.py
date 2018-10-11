@@ -1,5 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
+import calendar
 import datetime
 import json
 import time
@@ -31,7 +32,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     keys = []
 
     while start < now:
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.timetuple()))
 
         keys.append(timestamp)
 

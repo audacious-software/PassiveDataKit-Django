@@ -1,5 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
+import calendar
 import datetime
 import json
 import time
@@ -66,8 +67,8 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     context['values'] = values
 
-    context['start'] = time.mktime(start.timetuple())
-    context['end'] = time.mktime(now.timetuple())
+    context['start'] = calendar.timegm(start.timetuple())
+    context['end'] = calendar.timegm(now.timetuple())
 
     with open(folder + '/battery-level.json', 'w') as outfile:
         json.dump(context, outfile, indent=2)
@@ -101,7 +102,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
     keys = []
 
     while start < now:
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.timetuple()))
 
         keys.append(timestamp)
 

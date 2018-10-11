@@ -1,5 +1,6 @@
 {% load passive_data_kit %}
-<table class="group_table" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
+<div id="group_toolbar_{{ group.pk }}"><h3 style="margin: 0px;"><a name="group_{{ group.pk }}"></a>{{ group.name }}</h3></div>
+<table class="group_table" data-toolbar="#group_toolbar_{{ group.pk }}" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
 	<thead>
 		<tr>
 			<th data-sortable="true">Name</th>
@@ -25,3 +26,7 @@
 		{% endfor %}
 	</tbody>
 </table>
+<hr />
+
+
+				
