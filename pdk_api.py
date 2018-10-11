@@ -5,7 +5,6 @@ import csv
 import importlib
 import json
 import tempfile
-import traceback
 
 from django.conf import settings
 from django.template.loader import render_to_string

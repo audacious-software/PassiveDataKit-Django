@@ -3,7 +3,6 @@
 import calendar
 import datetime
 import json
-import time
 
 from django.conf import settings
 from django.template.loader import render_to_string
