@@ -525,3 +525,24 @@ class AdditionalHomeActionsNode(template.Node):
         context['source'] = source
 
         return render_to_string('tag_additional_home_actions.html', context.flatten())
+
+@register.tag(name="pdk_custom_nav_items")
+def pdk_custom_nav_items(parser, token): # pylint: disable=unused-argument
+    tag_name = token.split_contents() # pylint: disable=unused-variable
+
+    return CustomNavigationItemsNode()
+
+class CustomNavigationItemsNode(template.Node):
+    def render(self, context):
+        actions = []
+
+        try:
+            actions = settings.PDK_CUSTOM_NAV_ITEMS
+        except ImportError:
+            # traceback.print_exc()
+            pass
+        except AttributeError:
+            # traceback.print_exc()
+            pass
+
+        return render_to_string('tag_custom_nav_items.html', {'actions': actions})
