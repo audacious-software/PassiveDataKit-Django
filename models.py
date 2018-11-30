@@ -462,14 +462,15 @@ class DataSource(models.Model):
 
         # Update point_frequency
 
+        metadata['point_frequency'] = 0
+
         if metadata['point_count'] > 1:
             earliest_point = DataPoint.objects.filter(source=self.identifier).order_by('created').first()
 
             seconds = (latest_point.created - earliest_point.created).total_seconds()
 
-            metadata['point_frequency'] = metadata['point_count'] / seconds
-        else:
-            metadata['point_frequency'] = 0
+            if seconds > 0:
+                metadata['point_frequency'] = metadata['point_count'] / seconds
 
         generators = []
 
