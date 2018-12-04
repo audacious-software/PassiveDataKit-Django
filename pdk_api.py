@@ -160,3 +160,15 @@ def compile_visualization(identifier, points, folder):
         pass
     except AttributeError:
         pass
+
+def extract_location_method(identifier):
+    try:
+        generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
+
+        return generator_module.extract_location
+    except ImportError:
+        pass
+    except AttributeError:
+        pass
+
+    return None

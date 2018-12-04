@@ -12,6 +12,7 @@ from zipfile import ZipFile
 import arrow
 
 from django.conf import settings
+from django.contrib.gis.geos import GEOSGeometry
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
@@ -188,3 +189,13 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals, too-m
             os.remove(secondary_filename)
 
     return filename
+
+def extract_location(point):
+    properties = point.fetch_properties()
+
+    latitude = properties['latitude']
+    longitude = properties['longitude']
+
+    if latitude is not None and longitude is not None:
+        point.generated_at = GEOSGeometry('POINT(' + str(longitude) + ' ' + str(latitude) + ')')
+        point.save()
