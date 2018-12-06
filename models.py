@@ -219,13 +219,13 @@ class DataPointManager(models.Manager):
 
         self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
-    def create_data_point(self, identifier, source, payload): # pylint: disable=no-self-use
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server'): # pylint: disable=no-self-use
         now = timezone.now()
 
         payload['passive-data-metadata'] = {
             'timestamp': calendar.timegm(now.utctimetuple()),
             'generator-id': identifier,
-            'generator': identifier + ': Passive Data Kit Server',
+            'generator': identifier + ': ' + user_agent,
             'source': source
         }
 
