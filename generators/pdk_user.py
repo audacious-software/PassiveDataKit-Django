@@ -20,7 +20,7 @@ from django.utils.text import slugify
 from ..models import DataPoint
 
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Screen State'
+    return 'User State'
 
 def visualization(source, generator):
     context = {}
@@ -45,7 +45,7 @@ def visualization(source, generator):
 
             data_obj = {
                 'timestamp': calendar.timegm(point.created.utctimetuple()),
-                'value': properties['state']
+                'value': properties['mode']
             }
 
             point_list.append(data_obj)
@@ -63,7 +63,7 @@ def visualization(source, generator):
 
     context['days'] = json.dumps(days)
 
-    return render_to_string('pdk_device_screen_state_template.html', context)
+    return render_to_string('pdk_device_user_template.html', context)
 
 def data_table(source, generator):
     context = {}
@@ -72,7 +72,7 @@ def data_table(source, generator):
 
     context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:1000]
 
-    return render_to_string('pdk_screen_state_table_template.html', context)
+    return render_to_string('pdk_user_table_template.html', context)
 
 def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
     now = arrow.get()
@@ -91,7 +91,7 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
                     'Source',
                     'Created Timestamp',
                     'Created Date',
-                    'Screen State'
+                    'Mode'
                 ]
 
                 writer.writerow(columns)
@@ -116,8 +116,11 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
                     row.append(point.source)
                     row.append(calendar.timegm(point.created.utctimetuple()))
                     row.append(created.isoformat())
-
-                    row.append(properties['state'])
+                    
+                    if 'mode' in properties:
+                        row.append(properties['mode'])
+                    else:
+                        row.append(None)
 
                     writer.writerow(row)
 

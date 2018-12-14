@@ -10,6 +10,8 @@ import zipfile
 
 import zipstream
 
+import pytz
+
 from django.conf import settings
 from django.core.files import File
 from django.core.mail import send_mail
@@ -25,17 +27,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         pass
-#        parser.add_argument('--delete',
-#            action='store_true',
-#            dest='delete',
-#            default=False,
-#            help='Delete data bundles after processing')
-#
-#        parser.add_argument('--count',
-#            type=int,
-#            dest='bundle_count',
-#            default=100,
-#            help='Number of bundles to process in a single run')
 
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -58,6 +49,36 @@ class Command(BaseCommand):
 
             sources = parameters['sources']
             generators = parameters['generators']
+
+            data_start = None
+            data_end = None
+
+            tz_info = pytz.timezone(settings.TIME_ZONE)
+
+            if 'data_start' in parameters and parameters['data_start']:
+                tokens = parameters['data_start'].split('/')
+
+                data_start = datetime.datetime(int(tokens[2]), \
+                                               int(tokens[0]), \
+                                               int(tokens[1]), \
+                                               0, \
+                                               0, \
+                                               0, \
+                                               0, \
+                                               tz_info)
+
+            if 'data_end' in parameters and parameters['data_end']:
+                tokens = parameters['data_end'].split('/')
+
+                data_end = datetime.datetime(int(tokens[2]), \
+                                             int(tokens[0]), \
+                                             int(tokens[1]), \
+                                             23, \
+                                             59, \
+                                             59, \
+                                             999999, \
+                                             tz_info)
+
 
             raw_json = False
 
@@ -97,7 +118,13 @@ class Command(BaseCommand):
                                                             0, \
                                                             0, \
                                                             first_create.tzinfo) + \
-                                          datetime.timedelta(days=1)
+                                                            datetime.timedelta(days=1)
+
+                                    if data_start is not None and data_start > start:
+                                        start = data_start
+
+                                    if data_end is not None and data_end < data_end:
+                                        end = data_end
 
                                     while start <= end:
                                         day_end = start + datetime.timedelta(days=1)
@@ -124,7 +151,7 @@ class Command(BaseCommand):
                                     try:
                                         pdk_api = importlib.import_module(app + '.pdk_api')
 
-                                        output_file = pdk_api.compile_report(generator, sources)
+                                        output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end)
 
                                         if output_file is not None:
                                             if output_file.lower().endswith('.zip'):

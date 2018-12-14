@@ -597,7 +597,7 @@ class DataPointVisualization(models.Model):
 
 
 class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
-    def create_jobs(self, user, sources, generators, export_raw=False): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use
+    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments
         batch_request = ReportJobBatchRequest(requester=user, requested=timezone.now())
 
         params = {}
@@ -605,6 +605,8 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
         params['sources'] = sources
         params['generators'] = generators
         params['export_raw'] = export_raw
+        params['data_start'] = data_start
+        params['data_end'] = data_end
 
         if install_supports_jsonfield():
             batch_request.parameters = params
@@ -713,6 +715,8 @@ class ReportJobBatchRequest(models.Model):
                 job_params['sources'] = report_sources
                 job_params['generators'] = params['generators']
                 job_params['raw_data'] = params['export_raw']
+                job_params['data_start'] = params['data_start']
+                job_params['data_end'] = params['data_end']
 
                 if install_supports_jsonfield():
                     job.parameters = job_params
@@ -734,6 +738,8 @@ class ReportJobBatchRequest(models.Model):
             job_params['sources'] = report_sources
             job_params['generators'] = params['generators']
             job_params['raw_data'] = params['export_raw']
+            job_params['data_start'] = params['data_start']
+            job_params['data_end'] = params['data_end']
 
             if install_supports_jsonfield():
                 job.parameters = job_params
