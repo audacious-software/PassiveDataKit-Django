@@ -462,7 +462,11 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         else:
             export_raw = ('export_raw_json' in request.POST and request.POST['export_raw_json'])
 
-            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw)
+            data_start = request.POST['data_start']
+
+            data_end = request.POST['data_end']
+
+            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw, data_start, data_end)
 
             context['message_type'] = 'ok'
 

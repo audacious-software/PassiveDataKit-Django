@@ -51,14 +51,14 @@
                 <h3>Sources</h3>
                 
                 <p>
-                    <input type="checkbox" id="sources_select_all"> Select All Sources
+                    <input type="checkbox" id="sources_select_all">&nbsp;&nbsp;Select All Sources
                 </p>
                 
                 <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
                     {% for source in sources %}
                         <p style="padding-bottom: 0.25em; margin: 0px;">
                         	<input type="checkbox" name="source_{{ source }}" id="source_{{ source }}" class="source_checkbox" /> 
-                        	<label for="source_{{ source }}" style="font-weight: normal;">{{ source }}</label>
+                        	<label for="source_{{ source }}" style="font-weight: normal; normal; padding-left: 5px;">{{ source }}</label>
                         </p>
                     {% endfor %}
                 </div>
@@ -66,7 +66,7 @@
             <div class="col-md-6">
                 <h3>Data Generators</h3>
                 <p>
-                    <input type="checkbox" id="generators_select_all"> Select All Generators
+                    <input type="checkbox" id="generators_select_all">&nbsp;&nbsp;Select All Generators
                 </p>
                 
                 <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
@@ -76,7 +76,7 @@
 						{% for generator in extra_generators %}
 							<p style="padding-bottom: 0.25em; margin: 0px;">
 								<input type="checkbox" name="generator_{{ generator.0 }}" id="generator_{{ generator.0 }}" class="generator_checkbox" /> 
-								<label for="generator_{{ generator.0 }}" style="font-weight: normal;">{{ generator.1 }} ({{ generator.0 }})</label>
+								<label for="generator_{{ generator.0 }}" style="font-weight: normal; padding-left: 5px;">{{ generator.1 }} ({{ generator.0 }})</label>
 							</p>
 						{% endfor %}
 						<br />
@@ -85,7 +85,7 @@
                     {% for generator in generators %}
                         <p style="padding-bottom: 0.25em; margin: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         	<input type="checkbox" name="generator_{{ generator }}" id="generator_{{ generator }}" class="generator_checkbox" /> 
-                        	<label for="generator_{{ generator }}" style="font-weight: normal;">{% generator_name generator %} ({{ generator }})</label>
+                        	<label for="generator_{{ generator }}" style="font-weight: normal; padding-left: 5px;">{% generator_name generator %} ({{ generator }})</label>
                         </p>
                     {% endfor %}
                 </div>
@@ -93,10 +93,22 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-2">
+				<div class="form-group">
+					<input type="text" class="form-control" id="data_start" name="data_start" placeholder="Start Date (Optional)">
+				</div>
+            </div>
+            <div class="col-md-2">
+				<div class="form-group">
+					<input type="text" class="form-control" id="data_end" name="data_end" placeholder="End Date (Optional)">
+				</div>
+            </div>
+            <div class="col-md-2">
             </div>
             <div class="col-md-3">
-                  <input type="checkbox" name="export_raw_json" /> Export raw data as JSON
+				<p>
+					<input type="checkbox" name="export_raw_json" />&nbsp;&nbsp;Export raw data as JSON
+				</p>
             </div>
             <div class="col-md-3">
                   <button type="submit" class="btn btn-default pull-right">Export Data</button>
@@ -116,6 +128,9 @@
                 {
                     $(".generator_checkbox").prop("checked", $(this).is(":checked"));
                 });
+                
+                $('#data_start').datepicker();
+                $('#data_end').datepicker();
     		} else {
 				window.setTimeout(init, 100);
     		}
@@ -124,5 +139,5 @@
     	init();
     </script>
         
-    <script data-main="{% static  'pdk/js/generator.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+    <script data-main="{% static  'pdk/js/export.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
 {% endblock %}

@@ -87,11 +87,11 @@ def data_table(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
-def compile_report(generator, sources):
+def compile_report(generator, sources, data_start=None, data_end=None):
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
-        output_file = generator_module.compile_report(generator, sources)
+        output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end)
 
         if output_file is not None:
             return output_file
@@ -160,3 +160,15 @@ def compile_visualization(identifier, points, folder):
         pass
     except AttributeError:
         pass
+
+def extract_location_method(identifier):
+    try:
+        generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
+
+        return generator_module.extract_location
+    except ImportError:
+        pass
+    except AttributeError:
+        pass
+
+    return None
