@@ -565,7 +565,7 @@ class CustomSourceHeaderNode(template.Node):
         source = self.source.resolve(context)
 
         actions = []
-        
+
         output = ''
 
         for app in settings.INSTALLED_APPS:
@@ -573,7 +573,7 @@ class CustomSourceHeaderNode(template.Node):
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
                 header = pdk_api.pdk_custom_source_header(source)
-                
+
                 if header is not None:
                     output += header
 
@@ -583,5 +583,5 @@ class CustomSourceHeaderNode(template.Node):
             except AttributeError:
                 # traceback.print_exc()
                 pass
-                
+
         return output
