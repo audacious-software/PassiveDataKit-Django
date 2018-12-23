@@ -26,6 +26,8 @@
 			<h1 class="sub-header">{{ source.name }}: {{ source.identifier }}</h1> 
 		</div>
 	</div>
+	
+	{% pdk_custom_source_header source.identifier %}
 
 	{% if alerts.count > 0 %}
 		<div class="row">
