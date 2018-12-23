@@ -564,8 +564,6 @@ class CustomSourceHeaderNode(template.Node):
     def render(self, context):
         source = self.source.resolve(context)
 
-        actions = []
-
         output = ''
 
         for app in settings.INSTALLED_APPS:
