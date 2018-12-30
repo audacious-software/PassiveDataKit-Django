@@ -91,7 +91,14 @@ def compile_report(generator, sources, data_start=None, data_end=None):
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
-        output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+        output_file = None
+
+        try:
+            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+        except TypeError:
+            print 'TODO: Update ' + generator + '.compile_report to support data_start and data_end parameters!'
+
+            output_file = generator_module.compile_report(generator, sources)
 
         if output_file is not None:
             return output_file

@@ -68,10 +68,10 @@ def extract_secondary_identifier(properties):
 
     return None
 
-def extra_generators(generator): # pylint: disable=unused-argument
-    return [('pdk-withings-device-full', 'Full Withings Server Data')]
+# def extra_generators(generator): # pylint: disable=unused-argument
+#    return [('pdk-withings-device-full', 'Full Withings Server Data')]
 
-def compile_report(generator, sources): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
@@ -96,7 +96,15 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                     writer.writerow(columns)
 
                     for source in sources:
-                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier).order_by('source', 'created') # pylint: disable=no-member,line-too-long
+                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier)
+
+                        if data_start is not None:
+                            points = points.filter(created__gte=data_start)
+
+                        if data_end is not None:
+                            points = points.filter(created__lte=data_end)
+
+                        points = points.order_by('source', 'created')
 
                         index = 0
                         count = points.count()
