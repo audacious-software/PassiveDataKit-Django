@@ -37,9 +37,9 @@ ALERT_LEVEL_CHOICES = (
 METADATA_WINDOW_DAYS = 60
 
 try:
-	METADATA_WINDOW_DAYS = settings.PDK_METADATA_WINDOW_DAYS
+    METADATA_WINDOW_DAYS = settings.PDK_METADATA_WINDOW_DAYS
 except AttributeError:
-	pass
+    pass
 
 
 def generator_label(identifier):
@@ -432,13 +432,13 @@ class DataSource(models.Model):
 
         return False
 
-    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements
+    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         metadata = self.fetch_performance_metadata()
-        
+
         now = timezone.now()
-        
+
         window_start = now - datetime.timedelta(days=METADATA_WINDOW_DAYS)
-        
+
         DataPoint.objects.update_server_generated_status()
 
         # Update latest_point

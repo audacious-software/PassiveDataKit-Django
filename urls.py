@@ -37,4 +37,3 @@ try:
         urlpatterns.append(url(r'^$', pdk_home, name='pdk_home'))
 except AttributeError:
     pass
-

@@ -11,7 +11,7 @@ class Command(BaseCommand):
     @handle_lock
     def handle(self, *args, **options):
         source = DataSource.objects.filter(performance_metadata_updated=None).first()
-        
+
         if source is None:
             source = DataSource.objects.all().order_by('performance_metadata_updated').first()
 

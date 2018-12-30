@@ -10,8 +10,6 @@ import time
 import arrow
 import requests
 
-from requests_oauthlib import OAuth1Session
-
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -30,18 +28,18 @@ def refresh_access_token(properties):
         'client_secret': settings.PDK_WITHINGS_SECRET,
         'refresh_token': properties['refresh_token'],
     }
-    
+
     response = requests.post(REFRESH_TOKEN_URL, data=params)
-    
-    print('REFRESH RESPONSE: ' + json.dumps(response.json(), indent=2))
+
+    # print('REFRESH RESPONSE: ' + json.dumps(response.json(), indent=2))
 
     point = DataPoint(source=properties['passive-data-metadata']['source'], generator='pdk-withings-server-auth', created=timezone.now())
     point.recorded = point.created
     point.generator_identifier = point.generator
     point.server_generated = True
-    
+
     payload = response.json()
-    
+
     payload['passive-data-metadata'] = {
         'source': properties['passive-data-metadata']['source'],
         'generator-id': point.generator_identifier,
@@ -53,9 +51,9 @@ def refresh_access_token(properties):
         point.properties = payload
     else:
         point.properties = json.dumps(payload, indent=2)
-        
+
     point.save()
-    
+
     return payload['access_token']
 
 class Command(BaseCommand):
@@ -85,60 +83,58 @@ class Command(BaseCommand):
 
         start_date = arrow.get(start).replace(hour=0, minute=0, second=0).to(settings.TIME_ZONE)
         end_date = arrow.get(end).replace(hour=0, minute=0, second=0).to(settings.TIME_ZONE)
-        
+
         redo_dates = []
 
         sources = DataPoint.objects.filter(generator_identifier='pdk-withings-server-auth').order_by('source').values_list('source', flat=True).distinct()
 
         for source in sources:
-            print('GOT SOURCE: ' + source)
-
             data_point = DataPoint.objects.filter(source=source, generator_identifier='pdk-withings-server-auth').order_by('-created').first()
 
             if data_point is not None:
                 properties = data_point.fetch_properties()
-                
+
                 access_token = refresh_access_token(properties)
 
                 index_date = start_date
 
                 while index_date < end_date:
                     next_day = index_date.replace(days=+1)
-                    
+
                     try:
-                        print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                        # print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
                         fetch_intraday(data_point.source, access_token, index_date, next_day)
 
                         time.sleep(1)
 
-                        print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                        # print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
                         fetch_sleep_measures(data_point.source, access_token, index_date, next_day)
 
                         time.sleep(1)
                     except requests.exceptions.ReadTimeout:
                         problem_date = index_date.date()
-                        
+
                         if (problem_date in redo_dates) is False:
                             redo_dates.append(problem_date)
 
                     index_date = next_day
-        
+
         for redo_date in redo_dates:
-            print('REDO: ' + str(redo_date))
+            print 'REDO DATE: ' + str(redo_date)
 
 
 def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     api_url = 'https://wbsapi.withings.net/v2/measure'
-    
+
     params = {
         'action': 'getintradayactivity',
         'access_token': access_token,
         'startdate': str(start_date.timestamp),
         'enddate': str(end_date.timestamp)
     }
-    
+
     response = requests.get(api_url, params=params, timeout=30)
 
     results = response.json()
@@ -159,7 +155,7 @@ def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disab
 
                 if match_props['datastream'] == 'intraday-activity':
                     found = True
-                    
+
             if found is False:
                 now = arrow.utcnow()
 
@@ -212,14 +208,14 @@ def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disab
 
 def fetch_sleep_measures(user_id, access_token, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     api_url = 'https://wbsapi.withings.net/v2/sleep'
-    
+
     params = {
         'action': 'get',
         'access_token': access_token,
         'startdate': str(start_date.timestamp),
         'enddate': str(end_date.timestamp)
     }
-    
+
     response = requests.get(api_url, params=params, timeout=30)
 
     results = response.json()
