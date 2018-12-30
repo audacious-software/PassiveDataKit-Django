@@ -11,6 +11,7 @@ import time
 from zipfile import ZipFile
 
 import arrow
+import pytz
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -54,7 +55,7 @@ def data_table(source, generator):
 
     return render_to_string('generators/pdk_device_system_status_table_template.html', context)
 
-def compile_report(generator, sources): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
@@ -71,30 +72,36 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                     'Source',
                     'Created Timestamp',
                     'Created Date',
-                    'Recorded Timestamp',
-                    'Recorded Date',
                     'Available Storage',
                     'Other Storage',
                     'App Storage',
                     'Total Storage',
                     'App Runtime',
+                    'System Runtime',
                 ]
 
                 writer.writerow(columns)
 
-                points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
+                points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+
+                if data_start is not None:
+                    points = points.filter(created__gte=data_start)
+
+                if data_end is not None:
+                    points = points.filter(created__lte=data_end)
+
+                points = points.order_by('source', 'created')
 
                 for point in points:
                     properties = point.fetch_properties()
 
                     row = []
 
+                    created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
+
                     row.append(point.source)
                     row.append(calendar.timegm(point.created.utctimetuple()))
-                    row.append(point.created.isoformat())
-
-                    row.append(calendar.timegm(point.recorded.utctimetuple()))
-                    row.append(point.recorded.isoformat())
+                    row.append(created.isoformat())
 
                     row.append(properties['storage_available'])
                     row.append(properties['storage_other'])
@@ -103,6 +110,11 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
 
                     if 'runtime' in properties:
                         row.append(properties['runtime'])
+                    else:
+                        row.append(None)
+
+                    if 'system_runtime' in properties:
+                        row.append(properties['system_runtime'])
                     else:
                         row.append(None)
 

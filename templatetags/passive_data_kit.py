@@ -547,3 +547,40 @@ class CustomNavigationItemsNode(template.Node):
             pass
 
         return render_to_string('tag_custom_nav_items.html', {'actions': actions})
+
+@register.tag(name="pdk_custom_source_header")
+def pdk_custom_source_header(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, source = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires 1 source arguments" % \
+                                           token.contents.split()[0])
+
+    return CustomSourceHeaderNode(source)
+
+class CustomSourceHeaderNode(template.Node):
+    def __init__(self, source):
+        self.source = template.Variable(source)
+
+    def render(self, context):
+        source = self.source.resolve(context)
+
+        output = ''
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                header = pdk_api.pdk_custom_source_header(source)
+
+                if header is not None:
+                    output += header
+
+            except ImportError:
+                # traceback.print_exc()
+                pass
+            except AttributeError:
+                # traceback.print_exc()
+                pass
+
+        return output

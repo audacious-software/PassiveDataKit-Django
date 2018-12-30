@@ -7,7 +7,7 @@ import tempfile
 from lockfile import FileLock, AlreadyLocked, LockTimeout
 
 from django.conf import settings
-
+from django.utils.text import slugify
 """
 A decorator for management commands (or any class method) to ensure that there is
 only ever one process running the method at any one time.
@@ -27,6 +27,18 @@ def handle_lock(handle):
     """
 
     def wrapper(self, *args, **options):
+        lock_prefix = ''
+
+        try:
+            lock_prefix = settings.SITE_URL.split('//')[1].replace('/', '').replace('.', '-')
+        except AttributeError:
+            try:
+                lock_prefix = settings.ALLOWED_HOSTS[0].replace('.', '-')
+            except IndexError:
+                lock_prefix = 'pdk_lock'
+
+        lock_prefix = slugify(lock_prefix)
+
         start_time = time.time()
         verbosity = options.get('verbosity', 0)
         if verbosity == 0:
@@ -42,7 +54,7 @@ def handle_lock(handle):
         logging.debug("-" * 72)
 
         lock_name = self.__module__.split('.').pop()
-        lock = FileLock('%s/pdk_lock_%s' % (tempfile.gettempdir(), lock_name))
+        lock = FileLock('%s/%s__%s' % (tempfile.gettempdir(), lock_prefix, lock_name))
 
         logging.debug("%s - acquiring lock...", lock_name)
 

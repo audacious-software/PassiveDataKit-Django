@@ -226,13 +226,13 @@ class DataPointManager(models.Manager):
 
         self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
-    def create_data_point(self, identifier, source, payload): # pylint: disable=no-self-use
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server'): # pylint: disable=no-self-use
         now = timezone.now()
 
         payload['passive-data-metadata'] = {
             'timestamp': calendar.timegm(now.utctimetuple()),
             'generator-id': identifier,
-            'generator': identifier + ': Passive Data Kit Server',
+            'generator': identifier + ': ' + user_agent,
             'source': source
         }
 
@@ -473,14 +473,15 @@ class DataSource(models.Model):
 
         # Update point_frequency
 
+        metadata['point_frequency'] = 0
+
         if metadata['point_count'] > 1:
             earliest_point = DataPoint.objects.filter(source=self.identifier, created__gte=window_start).order_by('created').first()
 
             seconds = (latest_point.created - earliest_point.created).total_seconds()
 
-            metadata['point_frequency'] = metadata['point_count'] / seconds
-        else:
-            metadata['point_frequency'] = 0
+            if seconds > 0:
+                metadata['point_frequency'] = metadata['point_count'] / seconds
 
         generators = []
 
@@ -607,7 +608,7 @@ class DataPointVisualization(models.Model):
 
 
 class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
-    def create_jobs(self, user, sources, generators, export_raw=False): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use
+    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments
         batch_request = ReportJobBatchRequest(requester=user, requested=timezone.now())
 
         params = {}
@@ -615,6 +616,8 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
         params['sources'] = sources
         params['generators'] = generators
         params['export_raw'] = export_raw
+        params['data_start'] = data_start
+        params['data_end'] = data_end
 
         if install_supports_jsonfield():
             batch_request.parameters = params
@@ -723,6 +726,8 @@ class ReportJobBatchRequest(models.Model):
                 job_params['sources'] = report_sources
                 job_params['generators'] = params['generators']
                 job_params['raw_data'] = params['export_raw']
+                job_params['data_start'] = params['data_start']
+                job_params['data_end'] = params['data_end']
 
                 if install_supports_jsonfield():
                     job.parameters = job_params
@@ -744,6 +749,8 @@ class ReportJobBatchRequest(models.Model):
             job_params['sources'] = report_sources
             job_params['generators'] = params['generators']
             job_params['raw_data'] = params['export_raw']
+            job_params['data_start'] = params['data_start']
+            job_params['data_end'] = params['data_end']
 
             if install_supports_jsonfield():
                 job.parameters = job_params
