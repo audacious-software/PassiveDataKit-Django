@@ -250,7 +250,7 @@ class DataPointManager(models.Manager):
         point.save()
 
 
-class DataPoint(models.Model):
+class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['source', 'created'],
