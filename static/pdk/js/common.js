@@ -1,7 +1,7 @@
 requirejs.config({
-    baseUrl: '/static/pdk/js/lib',
+    baseUrl: "/static/pdk/js/lib",
     paths: {
-        app: '../app'
+        app: "../app"
     },
     shim: {
         "jquery": {
@@ -11,21 +11,24 @@ requirejs.config({
             exports: "moment"
         },
         "bootstrap": {
-            deps: ['jquery', 'jquery-cookie'],
-            exports: 'bootstrap'
+            deps: ["jquery", "jquery-cookie"],
+            exports: "bootstrap"
         },
         "bootstrap-typeahead": {
-            deps: ['bootstrap'],
+            deps: ["bootstrap"],
         },
         "bootstrap-table": {
-            deps: ['bootstrap'],
+            deps: ["bootstrap"],
+        },
+        "bootstrap-datepicker": {
+            deps: ["bootstrap"],
         },
         "rickshaw": {
-            deps: ['d3-layout', 'jquery'],
+            deps: ["d3-layout", "jquery"],
             exports: "Rickshaw"
         },
         "d3-layout": {
-            deps: ['d3', 'jquery']
+            deps: ["d3", "jquery"]
         },
         "d3": {
             exports: "d3"

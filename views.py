@@ -393,6 +393,12 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     all_extra_generators = []
     to_remove = []
 
+    try:
+        for extra_generator in settings.PDK_EXTRA_GENERATORS:
+            all_extra_generators.append(extra_generator)
+    except AttributeError:
+        pass
+
     for app in settings.INSTALLED_APPS: # pylint: disable=too-many-nested-blocks
         for generator in context['generators']:
             try:

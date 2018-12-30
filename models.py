@@ -34,6 +34,13 @@ ALERT_LEVEL_CHOICES = (
     ('critical', 'Critical'),
 )
 
+METADATA_WINDOW_DAYS = 60
+
+try:
+    METADATA_WINDOW_DAYS = settings.PDK_METADATA_WINDOW_DAYS
+except AttributeError:
+    pass
+
 
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
@@ -243,7 +250,7 @@ class DataPointManager(models.Manager):
         point.save()
 
 
-class DataPoint(models.Model):
+class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['source', 'created'],
@@ -425,8 +432,12 @@ class DataSource(models.Model):
 
         return False
 
-    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements
+    def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         metadata = self.fetch_performance_metadata()
+
+        now = timezone.now()
+
+        window_start = now - datetime.timedelta(days=METADATA_WINDOW_DAYS)
 
         DataPoint.objects.update_server_generated_status()
 
@@ -451,21 +462,21 @@ class DataSource(models.Model):
 
                 point = None
             else:
-                latest_point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
+                point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
 
-                if latest_point is not None:
-                    metadata['latest_point'] = latest_point.pk
+                if point is not None:
+                    metadata['latest_point'] = point.pk
 
         # Update point_count
 
-        metadata['point_count'] = DataPoint.objects.filter(source=self.identifier).count()
+        metadata['point_count'] = DataPoint.objects.filter(source=self.identifier, created__gte=window_start).count()
 
         # Update point_frequency
 
         metadata['point_frequency'] = 0
 
         if metadata['point_count'] > 1:
-            earliest_point = DataPoint.objects.filter(source=self.identifier).order_by('created').first()
+            earliest_point = DataPoint.objects.filter(source=self.identifier, created__gte=window_start).order_by('created').first()
 
             seconds = (latest_point.created - earliest_point.created).total_seconds()
 
@@ -474,7 +485,7 @@ class DataSource(models.Model):
 
         generators = []
 
-        identifiers = DataPoint.objects.filter(source=self.identifier).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
+        identifiers = list(DataPoint.objects.filter(source=self.identifier, created__gte=window_start).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct())
 
         for identifier in identifiers:
             generator = {}
@@ -483,11 +494,11 @@ class DataSource(models.Model):
             generator['source'] = self.identifier
             generator['label'] = generator_label(identifier)
 
-            generator['points_count'] = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).count()
+            generator['points_count'] = DataPoint.objects.filter(source=self.identifier, created__gte=window_start, generator_identifier=identifier).count()
 
-            first_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).order_by('created').first()
-            last_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).order_by('-created').first()
-            last_recorded = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier).order_by('-recorded').first()
+            first_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('created').first()
+            last_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('-created').first()
+            last_recorded = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('-recorded').first()
 
             generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
             generator['first_created'] = calendar.timegm(first_point.created.timetuple())
