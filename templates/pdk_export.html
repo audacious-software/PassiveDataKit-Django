@@ -93,17 +93,15 @@
         </div>
 
         <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-3">
 				<div class="form-group">
 					<input type="text" class="form-control" id="data_start" name="data_start" placeholder="Start Date (Optional)">
 				</div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
 				<div class="form-group">
 					<input type="text" class="form-control" id="data_end" name="data_end" placeholder="End Date (Optional)">
 				</div>
-            </div>
-            <div class="col-md-2">
             </div>
             <div class="col-md-3">
 				<p>
@@ -115,29 +113,6 @@
             </div>
         </div>
     </form>
-    
-    <script>
-    	var init = function() {
-    		if (window.jQuery) {
-                $('#sources_select_all').change(function() 
-                {
-                    $(".source_checkbox").prop("checked", $(this).is(":checked"));
-                });
-
-                $('#generators_select_all').change(function() 
-                {
-                    $(".generator_checkbox").prop("checked", $(this).is(":checked"));
-                });
-                
-                $('#data_start').datepicker();
-                $('#data_end').datepicker();
-    		} else {
-				window.setTimeout(init, 100);
-    		}
-    	};
-    	
-    	init();
-    </script>
-        
+            
     <script data-main="{% static  'pdk/js/export.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
 {% endblock %}

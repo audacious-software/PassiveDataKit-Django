@@ -17,5 +17,20 @@ requirejs(['./common'], function (common) {
 		});
 
 		$('[data-toggle="tooltip"]').tooltip();
+
+		$('#sources_select_all').change(function() 
+		{
+			$(".source_checkbox").prop("checked", $(this).is(":checked"));
+		});
+
+		$('#generators_select_all').change(function() 
+		{
+			$(".generator_checkbox").prop("checked", $(this).is(":checked"));
+		});
+		
+		$('#data_start').datepicker();
+		$('#data_end').datepicker();
+		
+		console.log("INITED");
 	}); 
 });
