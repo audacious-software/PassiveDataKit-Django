@@ -30,7 +30,5 @@ requirejs(['./common'], function (common) {
 		
 		$('#data_start').datepicker();
 		$('#data_end').datepicker();
-		
-		console.log("INITED");
 	}); 
 });
