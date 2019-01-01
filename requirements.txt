@@ -2,6 +2,7 @@ appdirs==1.4.3
 arrow==0.12.1
 astroid==1.6.5
 backports.functools-lru-cache==1.5
+boto==2.49.0
 bandit==1.4.0
 configparser==3.5.0
 cryptography==2.3.1
