@@ -41,3 +41,4 @@ stevedore==1.29.0
 whitenoise==4.0
 wrapt==1.10.11
 zipstream==1.1.4
+pyfcm==1.4.5
