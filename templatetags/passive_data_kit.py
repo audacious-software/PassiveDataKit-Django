@@ -2,6 +2,7 @@
 
 import datetime
 import importlib
+import json
 
 import arrow
 
@@ -14,12 +15,12 @@ from ..models import DataSourceAlert
 
 register = template.Library()
 
-@register.tag(name="sources_table")
+@register.tag(name='sources_table')
 def sources_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, query = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return SourcesTableNode(query)
@@ -36,12 +37,12 @@ class SourcesTableNode(template.Node):
         return render_to_string('tag_sources_table.html', context.flatten())
 
 
-@register.tag(name="latest_point")
+@register.tag(name='latest_point')
 def latest_point(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" %
+        raise template.TemplateSyntaxError('%r tag requires a single argument' %
                                            token.contents.split()[0])
 
     return LatestPointNode(source)
@@ -58,12 +59,12 @@ class LatestPointNode(template.Node):
         return render_to_string('tag_latest_point.html', context.flatten())
 
 
-@register.tag(name="point_count")
+@register.tag(name='point_count')
 def point_count(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return PointCountNode(source)
@@ -78,12 +79,12 @@ class PointCountNode(template.Node):
         return source.point_count()
 
 
-@register.tag(name="point_hz")
+@register.tag(name='point_hz')
 def point_hz(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return PointHzNode(source)
@@ -100,44 +101,44 @@ class PointHzNode(template.Node):
         if frequency is None:
             frequency = 0
 
-        value = "{:10.3f}".format(frequency) + " Hz"
+        value = '{:10.3f}'.format(frequency) + ' Hz'
 
         if frequency < 1.0:
-            value = "{:10.3f}".format(frequency * 1000) + " mHz"
+            value = '{:10.3f}'.format(frequency * 1000) + ' mHz'
 
-        tooltip = "{:10.3f}".format(frequency) + " samples per second"
+        tooltip = '{:10.3f}'.format(frequency) + ' samples per second'
 
         if frequency < 1.0:
             frequency *= 60
 
             if frequency > 1.0:
-                tooltip = "{:10.3f}".format(frequency) + " samples per minute"
+                tooltip = '{:10.3f}'.format(frequency) + ' samples per minute'
             else:
                 frequency *= 60
 
                 if frequency > 1.0:
-                    tooltip = "{:10.3f}".format(frequency) + " samples per hour"
+                    tooltip = '{:10.3f}'.format(frequency) + ' samples per hour'
                 else:
                     frequency *= 24
 
                     if frequency > 1.0:
-                        tooltip = "{:10.3f}".format(frequency) + " samples per day"
+                        tooltip = '{:10.3f}'.format(frequency) + ' samples per day'
                     else:
                         frequency *= 7
 
-                        tooltip = "{:10.3f}".format(frequency) + " samples per week"
+                        tooltip = '{:10.3f}'.format(frequency) + ' samples per week'
 
         context['value'] = value
         context['tooltip'] = tooltip
 
         return render_to_string('tag_point_hz.html', context.flatten())
 
-@register.tag(name="to_hz")
+@register.tag(name='to_hz')
 def to_hz(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, frequency = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return ToHzNode(frequency)
@@ -149,44 +150,44 @@ class ToHzNode(template.Node):
     def render(self, context):
         frequency = self.frequency.resolve(context)
 
-        value = "{:10.3f}".format(frequency) + " Hz"
+        value = '{:10.3f}'.format(frequency) + ' Hz'
 
         if frequency < 1.0:
-            value = "{:10.3f}".format(frequency * 1000) + " mHz"
+            value = '{:10.3f}'.format(frequency * 1000) + ' mHz'
 
-        tooltip = "{:10.3f}".format(frequency) + " samples per second"
+        tooltip = '{:10.3f}'.format(frequency) + ' samples per second'
 
         if frequency < 1.0:
             frequency *= 60
 
             if frequency > 1.0:
-                tooltip = "{:10.3f}".format(frequency) + " samples per minute"
+                tooltip = '{:10.3f}'.format(frequency) + ' samples per minute'
             else:
                 frequency *= 60
 
                 if frequency > 1.0:
-                    tooltip = "{:10.3f}".format(frequency) + " samples per hour"
+                    tooltip = '{:10.3f}'.format(frequency) + ' samples per hour'
                 else:
                     frequency *= 24
 
                     if frequency > 1.0:
-                        tooltip = "{:10.3f}".format(frequency) + " samples per day"
+                        tooltip = '{:10.3f}'.format(frequency) + ' samples per day'
                     else:
                         frequency *= 7
 
-                        tooltip = "{:10.3f}".format(frequency) + " samples per week"
+                        tooltip = '{:10.3f}'.format(frequency) + ' samples per week'
 
         context['value'] = value
         context['tooltip'] = tooltip
 
         return render_to_string('tag_point_hz.html', context.flatten())
 
-@register.tag(name="date_ago")
+@register.tag(name='date_ago')
 def date_ago(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, date_obj = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return DateAgoNode(date_obj)
@@ -223,12 +224,12 @@ class DateAgoNode(template.Node):
         return render_to_string('tag_date_ago.html', context.flatten())
 
 
-@register.tag(name="human_duration")
+@register.tag(name='human_duration')
 def tag_human_duration(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, seconds_obj = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return HumanDurationNode(seconds_obj)
@@ -246,11 +247,47 @@ class HumanDurationNode(template.Node):
         ago_str = str(seconds_obj) + 's'
 
         if seconds_obj > (24.0 * 60 * 60):
-            ago_str = "{0:.2f}".format(seconds_obj / (24.0 * 60 * 60)) + 'd'
+            ago_str = '{0:.2f}'.format(seconds_obj / (24.0 * 60 * 60)) + 'd'
         elif seconds_obj > (60.0 * 60):
-            ago_str = "{0:.2f}".format(seconds_obj / (60.0 * 60)) + 'h'
+            ago_str = '{0:.2f}'.format(seconds_obj / (60.0 * 60)) + 'h'
         elif seconds_obj > 60.0:
-            ago_str = "{0:.2f}".format(seconds_obj / 60.0) + 'm'
+            ago_str = '{0:.2f}'.format(seconds_obj / 60.0) + 'm'
+
+        context['human_duration'] = ago_str
+        context['seconds'] = seconds_obj
+
+        return render_to_string('tag_human_duration.html', context.flatten())
+
+@register.tag(name='human_duration_from_ms')
+def tag_human_duration_from_ms(parser, token): # pylint: disable=unused-argument
+    try:
+        tag_name, milliseconds_obj = token.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
+                                           token.contents.split()[0])
+
+    return HumanMSDurationNode(milliseconds_obj)
+
+class HumanMSDurationNode(template.Node):
+    def __init__(self, seconds_obj):
+        self.milliseconds_obj = template.Variable(seconds_obj)
+
+    def render(self, context):
+        milliseconds_obj = self.milliseconds_obj.resolve(context)
+
+        if milliseconds_obj is None:
+            return ''
+            
+        seconds_obj = milliseconds_obj / 1000
+
+        ago_str = str(seconds_obj) + 's'
+
+        if seconds_obj > (24.0 * 60 * 60):
+            ago_str = '{0:.2f}'.format(seconds_obj / (24.0 * 60 * 60)) + 'd'
+        elif seconds_obj > (60.0 * 60):
+            ago_str = '{0:.2f}'.format(seconds_obj / (60.0 * 60)) + 'h'
+        elif seconds_obj > 60.0:
+            ago_str = '{0:.2f}'.format(seconds_obj / 60.0) + 'm'
 
         context['human_duration'] = ago_str
         context['seconds'] = seconds_obj
@@ -258,12 +295,12 @@ class HumanDurationNode(template.Node):
         return render_to_string('tag_human_duration.html', context.flatten())
 
 
-@register.tag(name="generators_table")
+@register.tag(name='generators_table')
 def generators_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return GeneratorsTableNode(source)
@@ -280,12 +317,12 @@ class GeneratorsTableNode(template.Node):
         return render_to_string('tag_generators_table.html', context.flatten())
 
 
-@register.tag(name="generator_label")
+@register.tag(name='generator_label')
 def generator_label(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, generator_id = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return GeneratorLabelNode(generator_id)
@@ -302,7 +339,7 @@ class GeneratorLabelNode(template.Node):
         return render_to_string('tag_generators_table.html', context.flatten())
 
 
-@register.tag(name="system_alerts_table")
+@register.tag(name='system_alerts_table')
 def system_alerts_table(parser, token): # pylint: disable=unused-argument
     return SystemAlertsTableNode()
 
@@ -316,7 +353,7 @@ class SystemAlertsTableNode(template.Node):
 
         return render_to_string('tag_system_alerts_table.html', context.flatten())
 
-@register.tag(name="system_alerts_badge")
+@register.tag(name='system_alerts_badge')
 def system_alerts_badge(parser, token): # pylint: disable=unused-argument
     return SystemAlertsCountBadge()
 
@@ -332,12 +369,12 @@ class SystemAlertsCountBadge(template.Node):
 
         return ''
 
-@register.tag(name="source_alerts_table")
+@register.tag(name='source_alerts_table')
 def source_alerts_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return SourceAlertsTableNode(source)
@@ -353,12 +390,12 @@ class SourceAlertsTableNode(template.Node):
 
         return render_to_string('tag_source_alerts_table.html', context.flatten())
 
-@register.tag(name="source_alerts_badge")
+@register.tag(name='source_alerts_badge')
 def source_alerts_badge(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
     return SourceAlertsCountBadge(source)
 
@@ -376,12 +413,12 @@ class SourceAlertsCountBadge(template.Node):
 
         return ''
 
-@register.tag(name="generator_name")
+@register.tag(name='generator_name')
 def generator_name(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, generator = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
     return GeneratorName(generator)
 
@@ -409,20 +446,27 @@ class GeneratorName(template.Node):
 
         return generator
 
-@register.filter("to_datetime")
+@register.filter('to_datetime')
 def to_datetime(value):
     if value is None or value == '':
         return None
 
     return arrow.get(value).datetime
 
+@register.filter('to_datetime_from_ms')
+def to_datetime(value):
+    if value is None or value == '':
+        return None
 
-@register.tag(name="hour_minute_to_time")
+    return arrow.get(float(value) / 1000).datetime
+
+
+@register.tag(name='hour_minute_to_time')
 def hour_minute_to_time(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, hour, minute = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires a single argument" % \
+        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
                                            token.contents.split()[0])
 
     return HourMinuteTimeNode(hour, minute)
@@ -439,12 +483,12 @@ class HourMinuteTimeNode(template.Node):
         return datetime.time(hour, minute, 0, 0)
 
 
-@register.tag(name="points_visualization")
+@register.tag(name='points_visualization')
 def points_visualization(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source, generator = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires 2 arguments" % \
+        raise template.TemplateSyntaxError('%r tag requires 2 arguments' % \
                                            token.contents.split()[0])
 
     return PointsVisualizationNode(source, generator)
@@ -479,7 +523,7 @@ class PointsVisualizationNode(template.Node):
 def get_item(dictionary, key):
     return dictionary.get(key)
 
-@register.filter("to_gb")
+@register.filter('to_gb')
 def to_gb(value):
     value = (value / (1024.0 * 1024.0 * 1024.0))
 
@@ -490,12 +534,12 @@ def to_gb(value):
 
     return '%.3f MB' %  value
 
-@register.tag(name="additional_home_actions")
+@register.tag(name='additional_home_actions')
 def additional_home_actions(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires 1 source arguments" % \
+        raise template.TemplateSyntaxError('%r tag requires 1 source arguments' % \
                                            token.contents.split()[0])
 
     return AdditionalHomeActionsNode(source)
@@ -526,7 +570,7 @@ class AdditionalHomeActionsNode(template.Node):
 
         return render_to_string('tag_additional_home_actions.html', context.flatten())
 
-@register.tag(name="pdk_custom_nav_items")
+@register.tag(name='pdk_custom_nav_items')
 def pdk_custom_nav_items(parser, token): # pylint: disable=unused-argument
     tag_name = token.split_contents() # pylint: disable=unused-variable
 
@@ -546,3 +590,7 @@ class CustomNavigationItemsNode(template.Node):
             pass
 
         return render_to_string('tag_custom_nav_items.html', {'actions': actions})
+
+@register.filter
+def pdk_parse_json(value):
+    return json.loads(value)

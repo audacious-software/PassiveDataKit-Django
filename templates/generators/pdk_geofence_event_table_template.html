@@ -1,0 +1,42 @@
+{% load passive_data_kit %}
+<table id="system_status_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" data-search="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Transition</th>
+            <th data-sortable="true">Fence Name</th>
+            <th>Fence Coordinates</th>
+            <th data-sortable="true">Fence Radius</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for point in values %}
+			<tr>
+				<td>
+					<span style="display: none;">
+						{{ point.created.isoformat }}
+					</span>
+					{{ point.created }}
+				</td>
+
+				{% with properties=point.fetch_properties %}
+					<td>{{ properties.transition }}</td>
+					<td>{{ properties.fence_details.name }}</td>
+					<td>{{ properties.fence_details.center_latitude|floatformat:4 }}, {{ properties.fence_details.center_longitude|floatformat:4 }}</td>
+					<td>
+						<span style="display: none;">
+							{{ point.fence_details.radius }}
+						</span>
+						{{ properties.fence_details.radius }}m
+					</td>
+				{% endwith %}
+			</tr>
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#system_status_values_table").show();
+	};
+</script>
