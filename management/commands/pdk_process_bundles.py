@@ -42,10 +42,10 @@ class Command(BaseCommand):
         source_identifiers = {}
 
         latest_points = {}
-        
+
         new_point_count = 0
         process_limit = 1000
-        
+
         try:
             process_limit = settings.PDK_BUNDLE_PROCESS_LIMIT
         except AttributeError:
@@ -55,7 +55,7 @@ class Command(BaseCommand):
             if new_point_count < process_limit:
                 if supports_json is False:
                     bundle.properties = json.loads(bundle.properties)
-                    
+
                 for bundle_point in bundle.properties:
                     if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                         point = DataPoint(recorded=timezone.now())

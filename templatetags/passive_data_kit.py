@@ -277,7 +277,7 @@ class HumanMSDurationNode(template.Node):
 
         if milliseconds_obj is None:
             return ''
-            
+
         seconds_obj = milliseconds_obj / 1000
 
         ago_str = str(seconds_obj) + 's'
@@ -454,7 +454,7 @@ def to_datetime(value):
     return arrow.get(value).datetime
 
 @register.filter('to_datetime_from_ms')
-def to_datetime(value):
+def to_datetime_from_ms(value):
     if value is None or value == '':
         return None
 
@@ -631,4 +631,3 @@ class CustomSourceHeaderNode(template.Node):
                 pass
 
         return output
-
