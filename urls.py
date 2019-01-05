@@ -14,6 +14,15 @@ urlpatterns = [
 ]
 
 try:
+    from .withings_views import pdk_withings_start, pdk_withings_auth
+
+    if settings.PDK_WITHINGS_CLIENT_ID and settings.PDK_WITHINGS_SECRET:
+        urlpatterns.append(url(r'^withings/start/(?P<source_id>.+)$', pdk_withings_start, name='pdk_withings_start'))
+        urlpatterns.append(url(r'^withings/auth$', pdk_withings_auth, name='pdk_withings_auth'))
+except AttributeError:
+    pass
+
+try:
     if settings.PDK_DASHBOARD_ENABLED:
         urlpatterns.append(url(r'^visualization/(?P<source_id>.+)/(?P<generator_id>.+)/(?P<page>\d+).json$', \
                                pdk_visualization_data, name='pdk_visualization_data'))

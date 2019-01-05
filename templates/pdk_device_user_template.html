@@ -1,0 +1,106 @@
+<div id="chart_container">
+    <div id="user-chart-one" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-two" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-three" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-four" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-five" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-six" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+    <div id="user-chart-seven" style="display: inline-block; height: 60px; background-color: #000000; width: 100%;"></div>
+</div>
+
+<script>
+    var plotDay = function(daySelector, day) {
+        var data = [];
+        
+        for (var i = 0; i < day['points'].length; i++) {
+            if (day['points'][i]['value'] == 'background') {
+                data.push({ 'x': day['points'][i]['timestamp'], 'y': 0, 'state': 'background' });
+            } else if (day['points'][i]['value'] == 'foreground') {
+                data.push({ 'x': day['points'][i]['timestamp'], 'y': 1, 'state': 'timestamp' });
+            } 
+        }
+        
+        var graph = new Rickshaw.Graph({
+            element: document.querySelector(daySelector), 
+            renderer: 'multi',
+            interpolation: 'step-after',
+            series: [{
+                name: 'User Mode',
+                color: '#1B5E20',
+                renderer: 'area',
+                data: data
+            }, {
+                name: 'Min/Max',
+                color: '#000000',
+                renderer: 'line',
+                data: [{
+                    'x': day['start'],
+                    'y': 0
+                }, {
+                    'x': day['end'],
+                    'y': 0
+                }]
+            }]
+        });
+
+        var yTicks = new Rickshaw.Graph.Axis.Y( {
+            graph: graph
+        });
+
+        graph.render();
+
+        var xAxis = new Rickshaw.Graph.Axis.Time( {
+            graph: graph,
+            timeFixture: new Rickshaw.Fixtures.Time.Local()
+        });
+        
+        xAxis.render();
+
+        var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+            graph: graph,
+            formatter: function(series, x, y) {
+                if (series.name == "User Mode") {
+                    var date = '<span class="date">' + new Date(x * 1000).toString() + '</span>';
+                    var swatch = '<span class="detail_swatch" style="background-color: ' + series.color + '"></span>';
+                    var content = swatch + series.name + ": "
+                    
+                    if (y == 0) {
+                        content += "Background";
+                    } else if (y == 1) {
+                        content += "Foreground";
+                    }
+                        
+                    content += '<br>' + date;
+                    return content;
+                }
+                
+                return null;
+            },
+            xFormatter: function(x) {
+                return "";
+            }
+        });
+    };
+    
+    window.showVisualization = function() {
+        var days = {{ days|safe }};
+        
+        plotDay("#user-chart-one", days[0]);
+        plotDay("#user-chart-two", days[1]);
+        plotDay("#user-chart-three", days[2]);
+        plotDay("#user-chart-four", days[3]);
+        plotDay("#user-chart-five", days[4]);
+        plotDay("#user-chart-six", days[5]);
+        plotDay("#user-chart-seven", days[6]);
+                
+        $(".x_tick .title").css("color", "white");
+        $(".y_ticks text").css("fill", "white");
+
+        $(".x_tick").css("border-left-color", "rgba(128, 128, 128, 1.0)");
+
+        $(".y_grid line").css("stroke", "rgba(128, 128, 128, 1.0)");
+        $("path.path").css("stroke-width", "1");
+
+        $(".rickshaw_graph .detail .x_label").css("opacity", "0.0");
+    };
+</script>

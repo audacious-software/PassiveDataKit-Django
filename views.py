@@ -393,6 +393,12 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     all_extra_generators = []
     to_remove = []
 
+    try:
+        for extra_generator in settings.PDK_EXTRA_GENERATORS:
+            all_extra_generators.append(extra_generator)
+    except AttributeError:
+        pass
+
     for app in settings.INSTALLED_APPS: # pylint: disable=too-many-nested-blocks
         for generator in context['generators']:
             try:
@@ -462,7 +468,11 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         else:
             export_raw = ('export_raw_json' in request.POST and request.POST['export_raw_json'])
 
-            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw)
+            data_start = request.POST['data_start']
+
+            data_end = request.POST['data_end']
+
+            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw, data_start, data_end)
 
             context['message_type'] = 'ok'
 

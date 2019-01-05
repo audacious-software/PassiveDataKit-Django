@@ -9,8 +9,8 @@ def extract_secondary_identifier(properties):
 
     return None
 
-def extra_generators(generator): # pylint: disable=unused-argument
-    return [('pdk-nokia-health-full', 'Full Nokia Health Server Data')]
+# def extra_generators(generator): # pylint: disable=unused-argument
+#     return [('pdk-nokia-health-full', 'Full Nokia Health Server Data')]
 
 # def compile_report(generator, sources):
 #     filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'

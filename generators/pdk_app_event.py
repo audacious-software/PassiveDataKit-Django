@@ -7,6 +7,8 @@ import json
 import tempfile
 import time
 
+import pytz
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -22,7 +24,7 @@ def extract_secondary_identifier(properties):
 
     return None
 
-def compile_report(generator, sources):
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
     filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'
 
     with open(filename, 'w') as outfile:
@@ -37,7 +39,15 @@ def compile_report(generator, sources):
         ])
 
         for source in sources:
-            points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created') # pylint: disable=no-member,line-too-long
+            points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+
+            if data_start is not None:
+                points = points.filter(created__gte=data_start)
+
+            if data_end is not None:
+                points = points.filter(created__lte=data_end)
+
+            points = points.order_by('source', 'created')
 
             index = 0
             count = points.count()
@@ -46,9 +56,11 @@ def compile_report(generator, sources):
                 for point in points[index:(index + 5000)]:
                     row = []
 
+                    created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
+
                     row.append(point.source)
                     row.append(calendar.timegm(point.created.utctimetuple()))
-                    row.append(point.created.isoformat())
+                    row.append(created.isoformat())
 
                     properties = {}
 

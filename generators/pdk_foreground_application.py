@@ -1,12 +1,22 @@
 # pylint: disable=line-too-long, no-member
 
+import calendar
+import csv
 import datetime
 import json
+import os
+import tempfile
 import time
+
+from zipfile import ZipFile
+
+import arrow
+import pytz
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.text import slugify
 
 from ..models import DataPoint
 
@@ -142,56 +152,61 @@ def data_table(source, generator): # pylint: disable=too-many-locals
 
     return render_to_string('pdk_foreground_application_table_template.html', context)
 
-# def compile_report(generator, sources): # pylint: disable=too-many-locals
-#    timestamp = arrow.get()
-#    filename = tempfile.gettempdir() + '/pdk_export_' + str(timestamp.seconds) + '.' + \
-#               str(timestamp.seconds / 1e6) + '.zip'
-#
-#    with ZipFile(filename, 'w') as export_file:
-#        for secondary_identifier in SECONDARY_FIELDS:
-#            secondary_filename = tempfile.gettempdir() + '/' + generator + '-' + \
-#                                 secondary_identifier + '.txt'
-#
-#            with open(secondary_filename, 'w') as outfile:
-#                writer = csv.writer(outfile, delimiter='\t')
-#
-#                columns = [
-#                    'Source',
-#                    'Created Timestamp',
-#                    'Created Date',
-#                ]
-#
-#                for column in SECONDARY_FIELDS[secondary_identifier]:
-#                    columns.append(column)
-#
-#                writer.writerow(columns)
-#
-#                for source in sources:
-#                    points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier).order_by('source', 'created') # pylint: disable=no-member,line-too-long
-#
-#                    index = 0
-#                    count = points.count()
-#
-#                    while index < count:
-#                        for point in points[index:(index + 5000)]:
-#                            row = []
-#
-#                            row.append(point.source)
-#                            row.append(calendar.timegm(point.created.utctimetuple()))
-#                            row.append(point.created.isoformat())
-#
-#                            properties = point.fetch_properties()
-#
-#                            for column in SECONDARY_FIELDS[secondary_identifier]:
-#                                if column in properties:
-#                                    row.append(properties[column])
-#                                else:
-#                                    row.append('')
-#
-#                            writer.writerow(row)
-#
-#                        index += 5000
-#
-#            export_file.write(secondary_filename, secondary_filename.split('/')[-1])
-#
-#    return filename
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+
+    with ZipFile(filename, 'w') as export_file:
+        for source in sources:
+            identifier = slugify(generator + '__' + source)
+
+            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+
+            with open(secondary_filename, 'w') as outfile:
+                writer = csv.writer(outfile, delimiter='\t')
+
+                columns = [
+                    'Source',
+                    'Created Timestamp',
+                    'Created Date',
+                    'Application',
+                    'Duration',
+                    'Screen Active',
+                ]
+
+                writer.writerow(columns)
+
+                points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+
+                if data_start is not None:
+                    points = points.filter(created__gte=data_start)
+
+                if data_end is not None:
+                    points = points.filter(created__lte=data_end)
+
+                points = points.order_by('source', 'created')
+
+                for point in points:
+                    properties = point.fetch_properties()
+
+                    row = []
+
+                    created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
+
+                    row.append(point.source)
+                    row.append(calendar.timegm(point.created.utctimetuple()))
+                    row.append(created.isoformat())
+
+                    properties = point.fetch_properties()
+
+                    row.append(properties['application'])
+                    row.append(str(properties['duration']))
+                    row.append(str(properties['screen_active']))
+
+                    writer.writerow(row)
+
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+
+            os.remove(secondary_filename)
+
+    return filename
