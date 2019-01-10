@@ -34,4 +34,4 @@ class Command(BaseCommand):
 
         message = {'operation' : 'nudge', 'source': 'passive-data-kit'}
 
-        result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
+        push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
