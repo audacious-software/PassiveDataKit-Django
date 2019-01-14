@@ -98,13 +98,21 @@ def data_table(source, generator):
 
     return render_to_string('pdk_sensor_light_table_template.html', context)
 
-def compile_report(generator, sources): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
-            points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created')
+            points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+
+            if data_start is not None:
+                points = points.filter(created__gte=data_start)
+
+            if data_end is not None:
+                points = points.filter(created__lte=data_end)
+
+            points = points.order_by('created')
 
             points_count = float(points.count())
 

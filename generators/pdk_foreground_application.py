@@ -199,9 +199,20 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
 
                     properties = point.fetch_properties()
 
-                    row.append(properties['application'])
-                    row.append(str(properties['duration']))
-                    row.append(str(properties['screen_active']))
+                    if 'application' in properties:
+                        row.append(properties['application'])
+                    else:
+                        row.append('')
+
+                    if 'duration' in properties:
+                        row.append(str(properties['duration']))
+                    else:
+                        row.append('')
+
+                    if 'screen_active' in properties:
+                        row.append(str(properties['screen_active']))
+                    else:
+                        row.append('')
 
                     writer.writerow(row)
 

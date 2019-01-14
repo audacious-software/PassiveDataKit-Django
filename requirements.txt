@@ -5,7 +5,7 @@ backports.functools-lru-cache==1.5
 bandit==1.4.0
 configparser==3.5.0
 cryptography==2.3.1
-Django==1.11.17
+Django==1.11.18
 django-extensions==2.1.0
 django-mathfilters==0.4.0
 django-prettyjson==0.4.1
@@ -30,7 +30,7 @@ pylint==1.9.4
 pyparsing==2.2.0
 python-dateutil==2.7.3
 pytz==2018.7
-PyYAML==3.13
+PyYAML==4.2b2
 requests==2.20.1
 requests-oauthlib==1.0.0
 singledispatch==3.4.0.3
