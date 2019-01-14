@@ -151,21 +151,25 @@ class Command(BaseCommand):
                                     try:
                                         pdk_api = importlib.import_module(app + '.pdk_api')
 
-                                        output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+                                        try:
+                                            output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end)
 
-                                        if output_file is not None:
-                                            if output_file.lower().endswith('.zip'):
-                                                with zipfile.ZipFile(output_file, 'r') as source_file:
-                                                    for name in source_file.namelist():
-                                                        data_file = source_file.open(name)
+                                            if output_file is not None:
+                                                if output_file.lower().endswith('.zip'):
+                                                    with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                        for name in source_file.namelist():
+                                                            data_file = source_file.open(name)
 
-                                                        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
-                                            else:
-                                                name = os.path.basename(os.path.normpath(output_file))
+                                                            export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                else:
+                                                    name = os.path.basename(os.path.normpath(output_file))
 
-                                                export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
+                                                    export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
 
-                                            to_delete.append(output_file)
+                                                to_delete.append(output_file)
+                                        except TypeError as exception:
+                                            print 'Verify that ' + app + '.' + generator + ' implements all compile_report arguments!'
+                                            raise exception
                                     except ImportError:
                                         output_file = None
                                     except AttributeError:
