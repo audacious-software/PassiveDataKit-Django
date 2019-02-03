@@ -631,3 +631,34 @@ class CustomSourceHeaderNode(template.Node):
                 pass
 
         return output
+
+@register.tag(name="pdk_custom_home_header")
+def pdk_custom_home_header(parser, token): # pylint: disable=unused-argument
+    tag_name = token.split_contents() # pylint: disable=unused-variable
+
+    return CustomHomeHeaderNode()
+
+class CustomHomeHeaderNode(template.Node):
+    def __init__(self):
+        pass
+
+    def render(self, context):
+        output = ''
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                header = pdk_api.pdk_custom_home_header()
+
+                if header is not None:
+                    output += header
+
+            except ImportError:
+                # traceback.print_exc()
+                pass
+            except AttributeError:
+                # traceback.print_exc()
+                pass
+
+        return output

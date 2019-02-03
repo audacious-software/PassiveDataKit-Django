@@ -36,4 +36,6 @@ class Command(BaseCommand):
 
         result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
 
-        print 'RESULT: ' + str(result)
+        if settings.DEBUG:
+            print 'Firebase nudge result: ' + str(result)
+            print '(Update settings.DEBUG to suppress...)'

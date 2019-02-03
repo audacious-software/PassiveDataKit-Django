@@ -31,7 +31,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
 def visualization(source, generator): # pylint: disable=unused-argument
     context = {}
 
-    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-device-battery/battery-level.json'
+    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-device-battery/battery-level.json'
 
     with open(filename) as infile:
         context['data'] = json.load(infile)

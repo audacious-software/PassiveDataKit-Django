@@ -26,9 +26,16 @@
 {% block content %}
 	<div class="row">
 		<div class="col-md-12">
+			{% pdk_custom_home_header %}
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12">
 			{% system_alerts_table %}
 		</div>
 	</div>
+
 	{% for group in groups %}
 		<div class="row">
 			<div class="col-md-12">
