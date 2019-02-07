@@ -94,35 +94,38 @@ class Command(BaseCommand):
             if data_point is not None:
                 properties = data_point.fetch_properties()
 
-                access_token = refresh_access_token(properties)
+                try:
+                    access_token = refresh_access_token(properties)
 
-                index_date = start_date
+                    index_date = start_date
 
-                while index_date < end_date:
-                    next_day = index_date.replace(days=+1)
+                    while index_date < end_date:
+                        next_day = index_date.replace(days=+1)
 
-                    try:
-                        # print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                        try:
+                            # print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
-                        fetch_intraday(data_point.source, access_token, index_date, next_day)
+                            fetch_intraday(data_point.source, access_token, index_date, next_day)
 
-                        time.sleep(1)
+                            time.sleep(1)
 
-                        # print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                            # print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
-                        fetch_sleep_measures(data_point.source, access_token, index_date, next_day)
+                            fetch_sleep_measures(data_point.source, access_token, index_date, next_day)
 
-                        time.sleep(1)
-                    except requests.exceptions.ReadTimeout:
-                        problem_date = index_date.date()
+                            time.sleep(1)
+                        except requests.exceptions.ReadTimeout:
+                            problem_date = index_date.date()
 
-                        if (problem_date in redo_dates) is False:
-                            redo_dates.append(problem_date)
+                            if (problem_date in redo_dates) is False:
+                                redo_dates.append(problem_date)
 
-                    index_date = next_day
+                        index_date = next_day
+                except KeyError:
+                    print 'Error fetching data: ' + json.dumps(properties, indent=2)
 
-        for redo_date in redo_dates:
-            print 'REDO DATE: ' + str(redo_date)
+#        for redo_date in redo_dates:
+#            print 'REDO DATE: ' + str(redo_date)
 
 
 def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
