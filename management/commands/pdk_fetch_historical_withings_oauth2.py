@@ -58,6 +58,12 @@ def refresh_access_token(properties):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        parser.add_argument('--source',
+                            type=str,
+                            dest='source',
+                            default='all',
+                            help='Specific source to fetch')
+
         parser.add_argument('--start',
                             type=str,
                             dest='start',
@@ -86,9 +92,14 @@ class Command(BaseCommand):
 
         redo_dates = []
 
-        sources = DataPoint.objects.filter(generator_identifier='pdk-withings-server-auth').order_by('source').values_list('source', flat=True).distinct()
+        sources = []
 
-        for source in sources:
+        if options['source'] != 'all':
+            sources.append(options['source'])
+        else:
+            sources = DataPoint.objects.filter(generator_identifier='pdk-withings-server-auth').order_by('source').values_list('source', flat=True).distinct()
+
+        for source in sources: # pylint: disable=too-many-nested-blocks
             data_point = DataPoint.objects.filter(source=source, generator_identifier='pdk-withings-server-auth').order_by('-created').first()
 
             if data_point is not None:
@@ -103,13 +114,15 @@ class Command(BaseCommand):
                         next_day = index_date.replace(days=+1)
 
                         try:
-                            # print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                            if options['source'] != 'all':
+                                print 'FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day)
 
                             fetch_intraday(data_point.source, access_token, index_date, next_day)
 
                             time.sleep(1)
 
-                            # print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
+                            if options['source'] != 'all':
+                                print 'FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day)
 
                             fetch_sleep_measures(data_point.source, access_token, index_date, next_day)
 
@@ -124,8 +137,9 @@ class Command(BaseCommand):
                 except KeyError:
                     print 'Error fetching data: ' + json.dumps(properties, indent=2)
 
-#        for redo_date in redo_dates:
-#            print 'REDO DATE: ' + str(redo_date)
+        for redo_date in redo_dates:
+            if options['source'] != 'all':
+                print 'REDO DATE: ' + str(redo_date)
 
 
 def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
