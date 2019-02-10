@@ -793,7 +793,7 @@ class DataServerApiToken(models.Model):
         if (self.token is not None) and (self.token.strip() != ''):
             return self.token
 
-        self.token = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(64))
+        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
         self.save()
 
         return self.token
