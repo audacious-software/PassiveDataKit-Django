@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import calendar
 import datetime
 import json
+import random
+import string
 
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
@@ -12,14 +14,16 @@ from distutils.version import LooseVersion # pylint: disable=no-name-in-module, 
 import django
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
-from django.contrib.gis.db import models
 from django.db import connection
 from django.db.models import Q, QuerySet
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from django.utils.text import slugify
+
+from django.contrib.auth import get_user_model
+from django.contrib.postgres.fields import JSONField
+from django.contrib.gis.db import models
 
 DB_SUPPORTS_JSON = None
 TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
@@ -774,3 +778,22 @@ class ReportJobBatchRequest(models.Model):
 
         self.completed = timezone.now()
         self.save()
+
+
+class DataServerApiToken(models.Model):
+    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+        verbose_name = "data server API token"
+        verbose_name_plural = "data server API tokens"
+
+    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens')
+    token = models.CharField(max_length=1024, null=True, blank=True)
+    expires = models.DateTimeField(null=True, blank=True)
+
+    def fetch_token(self):
+        if (self.token is not None) and (self.token.strip() != ''):
+            return self.token
+
+        self.token = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(64))
+        self.save()
+
+        return self.token
