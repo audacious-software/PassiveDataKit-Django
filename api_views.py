@@ -76,7 +76,16 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         excludes = json.loads(request.POST['excludes'])
         order_bys = json.loads(request.POST['order_by'])
 
-        query = DataPoint.objects.all()
+        latest = None
+
+        if 'latest' in request.POST:
+            latest = int(request.POST['latest_pk'])
+        else:
+            latest_point = DataPoint.objects.all().order_by('-pk').first()
+
+            latest = latest_point.pk
+
+        query = DataPoint.objects.filter(pk__lte=latest)
 
         for filter_obj in filters:
             processed_filter = {}
@@ -103,6 +112,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
             query = query.exclude(**processed_exclude)
 
         payload = {
+            'latest': latest,
             'count': query.count(),
             'page_index': page_index,
             'page_size': page_size,
