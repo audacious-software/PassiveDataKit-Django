@@ -366,8 +366,8 @@ class DataBundle(models.Model):
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True)
-    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True)
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
     content_type = models.CharField(max_length=256, db_index=True)

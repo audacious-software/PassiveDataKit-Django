@@ -11,7 +11,7 @@ from django.contrib.postgres.fields import JSONField
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
-                    DataServerMetadatum, ReportJobBatchRequest
+                    DataServerMetadatum, ReportJobBatchRequest, DataFile
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -118,6 +118,11 @@ class DataBundleAdmin(admin.OSMGeoAdmin):
 
     list_display = ('recorded', 'processed',)
     list_filter = ('processed', 'recorded',)
+
+@admin.register(DataFile)
+class DataFileAdmin(admin.OSMGeoAdmin):
+    list_display = ('content_file', 'content_type', 'identifier', 'data_point', 'data_bundle',)
+    list_filter = ('content_type',)
 
 @admin.register(DataSourceGroup)
 class DataSourceGroupAdmin(admin.OSMGeoAdmin):
