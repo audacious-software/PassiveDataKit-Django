@@ -11,7 +11,6 @@ from django.contrib.postgres.fields import JSONField
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
-                    DataServerMetadatum, ReportJobBatchRequest, 
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
                     DataFile
 
