@@ -4,9 +4,7 @@ from django.conf.urls import url
 from django.contrib.auth.views import logout
 from django.conf import settings
 
-from .views import pdk_add_data_point, pdk_add_data_bundle, pdk_home, pdk_unmatched_sources, pdk_source, \
-                   pdk_source_generator, pdk_visualization_data, pdk_export, pdk_download_report, \
-                   pdk_system_health, pdk_profile
+from .views import pdk_add_data_point, pdk_add_data_bundle
 
 urlpatterns = [
     url(r'^add-point.json$', pdk_add_data_point, name='pdk_add_data_point'),
@@ -24,6 +22,10 @@ except AttributeError:
 
 try:
     if settings.PDK_DASHBOARD_ENABLED:
+        from .views import pdk_home, pdk_unmatched_sources, pdk_source, pdk_source_generator, \
+                           pdk_visualization_data, pdk_export, pdk_download_report, \
+                           pdk_system_health, pdk_profile
+
         urlpatterns.append(url(r'^visualization/(?P<source_id>.+)/(?P<generator_id>.+)/(?P<page>\d+).json$', \
                                pdk_visualization_data, name='pdk_visualization_data'))
         urlpatterns.append(url(r'^report/(?P<report_id>\d+)/download$', pdk_download_report, name='pdk_download_report'))
@@ -35,5 +37,13 @@ try:
         urlpatterns.append(url(r'^unmatched-sources.json$', pdk_unmatched_sources, name='pdk_unmatched_sources'))
         urlpatterns.append(url(r'^logout$', logout, name='pdk_logout'))
         urlpatterns.append(url(r'^$', pdk_home, name='pdk_home'))
+except AttributeError:
+    pass
+
+try:
+    if settings.PDK_API_ENABLED:
+        from .api_views import pdk_request_token, pdk_data_point_query
+        urlpatterns.append(url(r'^api/request-token.json$', pdk_request_token, name='pdk_request_token'))
+        urlpatterns.append(url(r'^api/data-points.json$', pdk_data_point_query, name='pdk_data_point_query'))
 except AttributeError:
     pass

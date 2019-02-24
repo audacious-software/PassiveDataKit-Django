@@ -11,7 +11,9 @@ from django.contrib.postgres.fields import JSONField
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
-                    DataServerMetadatum, ReportJobBatchRequest, DataFile
+                    DataServerMetadatum, ReportJobBatchRequest, 
+                    DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
+                    DataFile
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -190,3 +192,8 @@ class DataSourceAlertAdmin(admin.OSMGeoAdmin):
     )
 
     list_filter = ('active', 'created', 'updated', 'alert_level', 'generator_identifier',)
+
+@admin.register(DataServerApiToken)
+class DataServerApiTokenAdmin(admin.OSMGeoAdmin):
+    list_display = ('user', 'expires',)
+    list_filter = ('expires', 'user',)
