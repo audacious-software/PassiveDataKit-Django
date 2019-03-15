@@ -60,6 +60,10 @@ class Command(BaseCommand):
                     if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                         point = DataPoint(recorded=timezone.now())
                         point.source = bundle_point['passive-data-metadata']['source']
+
+                        if point.source is None:
+                            point.source = '-'
+
                         point.generator = bundle_point['passive-data-metadata']['generator']
 
                         if 'generator-id' in bundle_point['passive-data-metadata']:
