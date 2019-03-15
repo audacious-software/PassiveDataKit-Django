@@ -76,7 +76,8 @@ class Command(BaseCommand):
                             point.properties = json.dumps(bundle_point, indent=2)
 
                         point.fetch_secondary_identifier()
-                        point.fetch_user_agent()
+
+                        point.fetch_user_agent(skip_save=True)
 
                         point.save()
 

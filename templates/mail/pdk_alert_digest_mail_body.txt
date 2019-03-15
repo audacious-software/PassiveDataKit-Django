@@ -1,0 +1,8 @@
+{% load passive_data_kit %}
+The following alerts were active as of this e-mail:
+
+{% for source in sources.keys %}
+{{ source }}: {{ sources|get_item:source|length }} Alert(s)
+{% for alert in sources|get_item:source %}{% with alert.fetch_alert_details as alert_details %} - {{ alert.alert_name }}: {{ alert_details|get_item:'message' }} ({{ alert.created }}){% endwith %}
+{% endfor %}
+{% endfor %}
