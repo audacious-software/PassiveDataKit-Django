@@ -328,7 +328,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return json.loads(self.properties)
 
-    def fetch_user_agent(self):
+    def fetch_user_agent(self, skip_save=False):
         if self.user_agent is None:
             properties = self.fetch_properties()
 
@@ -338,7 +338,8 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
                     self.user_agent = tokens[-1].strip()
 
-                    self.save()
+                    if skip_save is False:
+                        self.save()
 
         return self.user_agent
 
@@ -370,8 +371,8 @@ class DataBundle(models.Model):
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True)
-    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True)
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
     content_type = models.CharField(max_length=256, db_index=True)
@@ -431,7 +432,7 @@ class DataSource(models.Model):
         if self.suppress_alerts:
             return True
 
-        if self.group.suppress_alerts:
+        if self.group and self.group.suppress_alerts:
             return True
 
         return False
@@ -532,7 +533,7 @@ class DataSource(models.Model):
         metadata = self.fetch_performance_metadata()
 
         if 'latest_point' in metadata:
-            return DataPoint.objects.get(pk=metadata['latest_point'])
+            return DataPoint.objects.filter(pk=metadata['latest_point']).first()
 
         return None
 

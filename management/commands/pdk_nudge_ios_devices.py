@@ -22,7 +22,12 @@ class Command(BaseCommand):
         if settings.PDK_APNS_IS_SANDBOX:
             apns = APNSSandboxClient(certificate=settings.PDK_APNS_CERTIFICATE)
 
-        # print('EXPIRED: ' + str(apns.get_expired_tokens()))
+        expired = []
+
+        exp_tokens = apns.get_expired_tokens()
+
+        for token in exp_tokens:
+            expired.append(token.token)
 
         tokens = {}
 
@@ -31,12 +36,18 @@ class Command(BaseCommand):
 
             tokens[point.source] = properties['event_details']['token']
 
+            if tokens[point.source] in expired:
+                print 'RENAMING TOKEN FOR ' + point.source
+
+                point.secondary_identifier = 'pdk-ios-device-token-expired'
+                point.save()
+
         token_list = []
 
         for source, token in tokens.iteritems(): # pylint: disable=unused-variable
-            if (token in token_list) is False:
+            if (token in token_list) is False and (token in expired) is False:
                 token_list.append(token)
 
-        notification = {'aps': {'operation' : 'nudge'}, 'source': 'passive-data-kit'}
+        notification = {'source': 'passive-data-kit', 'operation': 'nudge'}
 
-        apns.send(token_list, notification)
+        apns.send(token_list, notification, content_available=True)

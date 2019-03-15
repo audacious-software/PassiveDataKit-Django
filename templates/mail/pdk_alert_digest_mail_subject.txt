@@ -1,0 +1,1 @@
+Alert Digest: {{ sources.keys|length }} Affected Users

@@ -4,6 +4,9 @@ import datetime
 import json
 import time
 
+import pytz
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -20,7 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-branches
         datum = DataServerMetadatum.objects.filter(key='Server Health').first()
 
-        now = timezone.now()
+        now = timezone.now().astimezone(pytz.timezone(settings.TIME_ZONE))
 
         start = now - datetime.timedelta(days=1)
 

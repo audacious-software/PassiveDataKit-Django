@@ -130,5 +130,9 @@ requirejs(['./common'], function (common) {
 		});
 		
 		setupTableActions();
+
+		if (window.setupHome != undefined) {
+			window.setupHome();
+		}
 	}); 
 });
