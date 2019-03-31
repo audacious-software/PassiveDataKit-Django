@@ -4,10 +4,11 @@ import datetime
 import importlib
 import json
 import os
+import re
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
-                        FileResponse, UnreadablePostError
+                        FileResponse, UnreadablePostError, Http404
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +17,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
                     generator_label, install_supports_jsonfield, DataSourceAlert, \
-                    DataServerMetadatum
+                    DataServerMetadatum, AppConfiguration
 
 
 @csrf_exempt
@@ -520,3 +521,18 @@ def pdk_profile(request):
             context['message_class'] = 'danger'
 
     return render(request, 'pdk_user_profile.html', context=context)
+
+def pdk_app_config(request): # pylint: disable=too-many-statements
+    if request.method == 'GET':
+        if 'id' in request.GET and 'context' in request.GET:
+            identifier = request.GET['id']
+            context = request.GET['context']
+
+            for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
+                if re.search(config.id_pattern, identifier) is not None:
+                    if re.search(config.context_pattern, context) is not None:
+                        return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+        else:
+            raise Http404('"id" or "context" parameter not provided.')
+
+    raise Http404('Matching configuration not found.')

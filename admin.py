@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, line-too-long
 
 import datetime
 import json
@@ -12,7 +12,7 @@ from django.contrib.postgres.fields import JSONField
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
-                    DataFile
+                    DataFile, AppConfiguration
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -196,3 +196,10 @@ class DataSourceAlertAdmin(admin.OSMGeoAdmin):
 class DataServerApiTokenAdmin(admin.OSMGeoAdmin):
     list_display = ('user', 'expires',)
     list_filter = ('expires', 'user',)
+
+@admin.register(AppConfiguration)
+class AppConfigurationAdmin(admin.OSMGeoAdmin):
+    list_display = ('name', 'evaluate_order', 'id_pattern', 'context_pattern', 'is_valid', 'is_enabled',)
+    search_fields = ('name', 'id_pattern', 'context_pattern', 'configuration_json',)
+
+    list_filter = ('is_enabled', 'is_valid',)

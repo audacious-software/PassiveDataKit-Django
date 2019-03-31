@@ -1,8 +1,8 @@
 # pylint: disable=no-member,line-too-long
 
+import calendar
 import datetime
 import json
-import time
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -39,7 +39,7 @@ class Command(BaseCommand):
             data['last_bundle_count'] = bundle_count
 
         data['bundle_snapshots'].append({
-            'time': time.mktime(now.timetuple()),
+            'time': calendar.timegm(now.utctimetuple()),
             'unprocessed': unprocessed_count,
             'added': bundle_count - data['last_bundle_count']
         })
@@ -55,13 +55,13 @@ class Command(BaseCommand):
             data['last_point_count'] = point_count
 
         data['point_snapshots'].append({
-            'time': time.mktime(now.timetuple()),
+            'time': calendar.timegm(now.utctimetuple()),
             'added': point_count - data['last_point_count']
         })
 
         data['last_point_count'] = point_count
 
-        start_ts = time.mktime(start.timetuple())
+        start_ts = calendar.timegm(start.utctimetuple())
 
         to_delete = []
 

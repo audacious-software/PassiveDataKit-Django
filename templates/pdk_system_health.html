@@ -2,6 +2,8 @@
 {% load static from staticfiles %}
 {% load passive_data_kit %}
 
+{% block 'page_title' %}System Health | Passive Data Kit{% endblock %}
+
 {% block sidebar %}
 	<ul class="nav nav-sidebar">
 		<li><label>Total Bundles</label></li>
@@ -58,6 +60,7 @@
 				element: document.querySelector("#pdk-data-bundle-chart"), 
 				height: 200, 
 				renderer: 'line',
+				interpolation: 'linear',
 				series: [{
 					name: 'Bundles Added',
 					data: bundleAdds,
@@ -82,7 +85,7 @@
 			var xAxis = new Rickshaw.Graph.Axis.Time( {
 				graph: graph,
 				ticksTreatment: ticksTreatment,
-				timeFixture: new Rickshaw.Fixtures.Time.Local()
+				timeFixture: new Rickshaw.Fixtures.Time()
 			});
 		
 			xAxis.render();
@@ -112,6 +115,7 @@
 				element: document.querySelector("#pdk-data-point-chart"), 
 				height: 200, 
 				renderer: 'line',
+				interpolation: 'linear',
 				series: [{
 					name: 'Points Added',
 					data: pointAdds,
@@ -132,7 +136,7 @@
 			var xAxis = new Rickshaw.Graph.Axis.Time( {
 				graph: graph,
 				ticksTreatment: ticksTreatment,
-				timeFixture: new Rickshaw.Fixtures.Time.Local()
+				timeFixture: new Rickshaw.Fixtures.Time()
 			});
 		
 			xAxis.render();

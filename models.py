@@ -698,9 +698,25 @@ class ReportJobBatchRequest(models.Model):
             else:
                 generator_query = generator_query | Q(generator_identifier=generator)
 
+            for app in settings.INSTALLED_APPS:
+                try:
+                    pdk_api = importlib.import_module(app + '.pdk_api')
+
+                    try:
+                        other_generators = pdk_api.generators_for_extra_generator(generator)
+
+                        for other_generator in other_generators:
+                            generator_query = generator_query | Q(generator_identifier=other_generator)
+                    except TypeError as exception:
+                        print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
+                        raise exception
+                except ImportError:
+                    pass
+                except AttributeError:
+                    pass
+
         requested = timezone.now()
 
-        source_query = None
         report_size = 0
         report_sources = []
 
@@ -711,10 +727,7 @@ class ReportJobBatchRequest(models.Model):
         while sources:
             source = sources.pop()
 
-            if source_query is None:
-                source_query = Q(source=source)
-            else:
-                source_query = source_query | Q(source=source)
+            source_query = Q(source=source)
 
             query_size = DataPoint.objects.filter(generator_query, source_query).count()
 
@@ -740,12 +753,10 @@ class ReportJobBatchRequest(models.Model):
 
                 pending_jobs.append(job)
 
-                source_query = None
-                report_size = 0
-                report_sources = []
+                report_size = query_size
+                report_sources = [source]
 
-
-        if report_sources and source_query is not None:
+        if report_sources:
             job = ReportJob(requester=self.requester, requested=requested)
 
             job_params = {}
@@ -797,3 +808,24 @@ class DataServerApiToken(models.Model):
         self.save()
 
         return self.token
+
+class AppConfiguration(models.Model):
+    name = models.CharField(max_length=1024)
+    id_pattern = models.CharField(max_length=1024)
+    context_pattern = models.CharField(max_length=1024, default='.*')
+
+    if install_supports_jsonfield():
+        configuration_json = JSONField()
+    else:
+        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    evaluate_order = models.IntegerField(default=1)
+
+    is_valid = models.BooleanField(default=False)
+    is_enabled = models.BooleanField(default=True)
+
+    def configuration(self):
+        if install_supports_jsonfield():
+            return self.configuration_json
+
+        return json.loads(self.configuration_json)
