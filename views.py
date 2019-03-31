@@ -275,7 +275,7 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
     source = DataSource.objects.filter(identifier=source_id).first()
 
     if source is None:
-        source = DataSource(identifier=source_id, name='Unknown')
+        source = DataSource(identifier=source_id, name=source_id)
         source.save()
 
     context['source'] = source

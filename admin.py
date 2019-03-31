@@ -35,17 +35,19 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         values = []
-        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
+
+        identifiers = DataPoint.objects.generator_identifiers()
 
         if identifiers is not None:
-            seen_identifiers = json.loads(identifiers.value)
-
-            seen_identifiers.sort()
-
-            for identifier in seen_identifiers:
+            for identifier in identifiers:
                 values.append((identifier, identifier,))
 
-        return values
+            return values
+
+        DataPoint.objects.generator_identifiers()
+
+        return self.lookups(request, model_admin)
+
 
     def queryset(self, request, queryset):
         if self.value():

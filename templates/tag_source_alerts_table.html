@@ -1,5 +1,5 @@
 {% load passive_data_kit %}
-<div id="source_alerts"><h3 style="margin: 0px;"><a name="alerts"></a>Data Alerts</h3></div>
+<div id="source_alerts"><h4 style="margin: 0px;"><a name="alerts"></a>Data Alerts</h4></div>
 <table class="alerts_table table-striped" data-toolbar="#source_alerts" data-toggle="table" data-pagination="true" data-search="true" style="z-index: 10;">
     <thead>
         <tr>
@@ -15,13 +15,13 @@
         	{% if alert.alert_level == 'warning' %}
             	<tr class="warning">
 	                <td>
-	                	<span style="display: none;">3</span>
+	                	<span style="display: none;">2</span>
 	                	<span class="glyphicon glyphicon-alert" aria-hidden="true">
 	                </td>
         	{% elif alert.alert_level == 'critical' %}
             	<tr class="danger">
 	                <td>
-						<span style="display: none;">2</span>
+						<span style="display: none;">3</span>
 	                	<span class="glyphicon glyphicon-alert" aria-hidden="true">
 	                </td>
 	        {% else %}

@@ -24,6 +24,12 @@ class Command(BaseCommand):
                             default='all',
                             help='Specific source to regenerate')
 
+        parser.add_argument('--generator',
+                            type=str,
+                            dest='generator',
+                            default='all',
+                            help='Specific generator to regenerate')
+
         parser.add_argument('--repeat',
                             type=int,
                             dest='repeat',
@@ -49,8 +55,11 @@ class Command(BaseCommand):
         for source in sources:
             source_identifiers = ['pdk-data-frequency']
 
-            for identifier in DataPoint.objects.generator_identifiers_for_source(source):
-                source_identifiers.append(identifier)
+            if options['generator'] == 'all':
+                for identifier in DataPoint.objects.generator_identifiers_for_source(source):
+                    source_identifiers.append(identifier)
+            else:
+                source_identifiers.append(options['generator'])
 
             for identifier in source_identifiers:
                 if DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).count() == 0:
