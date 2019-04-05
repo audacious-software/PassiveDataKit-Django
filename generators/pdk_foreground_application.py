@@ -6,7 +6,6 @@ import datetime
 import json
 import os
 import tempfile
-import time
 
 from zipfile import ZipFile
 
@@ -19,6 +18,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from ..models import DataPoint
+
+DEFAULT_INTERVAL = 600
 
 def extract_secondary_identifier(properties):
     if 'application' in properties:
@@ -47,47 +48,38 @@ def visualization(source, generator):
     return render_to_string('generators/pdk_foreground_application_template.html', context)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    now = timezone.now()
+    now = timezone.now().astimezone(pytz.timezone(settings.TIME_ZONE))
+
+    interval = DEFAULT_INTERVAL
+
+    try:
+        interval = settings.PDK_DATA_FREQUENCY_VISUALIZATION_INTERVAL
+    except AttributeError:
+        pass
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % 10
+    remainder = now.minute % int(interval / 60)
 
     now = now.replace(minute=(now.minute - remainder))
 
     start = now - datetime.timedelta(days=2)
 
-    points = points.filter(created__lte=now, created__gte=start).order_by('created')
-
-    end = start + datetime.timedelta(seconds=600)
-    point_index = 0
-    point_count = points.count()
-
-    point = None
-
-    if point_count > 0:
-        point = points[point_index]
+    end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts = {}
 
     keys = []
 
     while start < now:
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.utctimetuple()))
 
         keys.append(timestamp)
 
-        timestamp_counts[timestamp] = 0
-
-        while point is not None and point.created < end and point_index < (point_count - 1):
-            timestamp_counts[timestamp] += 1
-
-            point_index += 1
-
-            point = points[point_index]
+        timestamp_counts[timestamp] = points.filter(created__gte=start, created__lt=end).count()
 
         start = end
-        end = start + datetime.timedelta(seconds=600)
+        end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts['keys'] = keys
 

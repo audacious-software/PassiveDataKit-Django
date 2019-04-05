@@ -8,6 +8,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+DEFAULT_INTERVAL = 600
+
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Data Frequency'
 
@@ -16,7 +18,14 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % 10
+    interval = DEFAULT_INTERVAL
+
+    try:
+        interval = settings.PDK_DATA_FREQUENCY_VISUALIZATION_INTERVAL
+    except AttributeError:
+        pass
+
+    remainder = now.minute % int(interval / 60)
 
     now = now.replace(minute=(now.minute - remainder))
 
@@ -24,7 +33,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     points = points.filter(created__lte=now, created__gte=start)
 
-    end = start + datetime.timedelta(seconds=600)
+    end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts = {}
 
@@ -38,7 +47,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
         timestamp_counts[timestamp] = points.filter(created__lte=end, created__gte=start).count()
 
         start = end
-        end = start + datetime.timedelta(seconds=600)
+        end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts['keys'] = keys
 
