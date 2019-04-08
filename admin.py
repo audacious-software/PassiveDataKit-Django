@@ -12,7 +12,8 @@ from django.contrib.postgres.fields import JSONField
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
-                    DataFile, AppConfiguration
+                    DataFile, AppConfiguration, DataGeneratorDefinition, \
+                    DataSourceReference
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -205,3 +206,13 @@ class AppConfigurationAdmin(admin.OSMGeoAdmin):
     search_fields = ('name', 'id_pattern', 'context_pattern', 'configuration_json',)
 
     list_filter = ('is_enabled', 'is_valid',)
+
+@admin.register(DataGeneratorDefinition)
+class DataGeneratorDefinitionAdmin(admin.OSMGeoAdmin):
+    list_display = ('name', 'generator_identifier',)
+    search_fields = ('name', 'generator_identifier', 'description',)
+
+@admin.register(DataSourceReference)
+class DataSourceReferenceAdmin(admin.OSMGeoAdmin):
+    list_display = ('source',)
+    search_fields = ('source',)

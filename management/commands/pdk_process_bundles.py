@@ -85,6 +85,9 @@ class Command(BaseCommand):
 
                         point.save()
 
+                        point.fetch_generator_definition()
+                        point.fetch_source_reference()
+
                         if (point.source in seen_sources) is False:
                             seen_sources.append(point.source)
 
