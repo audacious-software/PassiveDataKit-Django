@@ -14,6 +14,7 @@ from distutils.version import LooseVersion # pylint: disable=no-name-in-module, 
 import django
 
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import connection
 from django.db.models import Q, QuerySet
 from django.db.models.signals import post_delete, pre_save
@@ -95,12 +96,64 @@ class DataGeneratorDefinition(models.Model):
     def __unicode__(self):
         return self.generator_identifier
 
+    @classmethod
+    def defintion_for_identifier(cls, generator_identifier):
+        try:
+            return DataGeneratorDefinition.objects.get(generator_identifier=generator_identifier)
+        except MultipleObjectsReturned:
+            first_definition = DataGeneratorDefinition.objects.filter(generator_identifier=generator_identifier).order_by('pk').first()
+
+            other_definitions = DataGeneratorDefinition.objects.filter(generator_identifier=generator_identifier).order_by('pk')[1:]
+
+            to_delete = []
+
+            for definition in other_definitions:
+                DataPoint.objects.filter(generator_definition=definition).update(generator_definition=first_definition)
+
+                to_delete.append(definition)
+
+            for definition in to_delete:
+                definition.delete()
+
+            return first_definition
+        except ObjectDoesNotExist:
+            definition = DataGeneratorDefinition(generator_identifier=generator_identifier)
+            definition.save()
+
+            return definition
+
 
 class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
     def __unicode__(self):
         return self.source
+
+    @classmethod
+    def reference_for_source(cls, source):
+        try:
+            return DataSourceReference.objects.get(source=source)
+        except MultipleObjectsReturned:
+            first_source = DataSourceReference.objects.filter(source=source).order_by('pk').first()
+
+            other_sources = DataSourceReference.objects.filter(source=source).order_by('pk')[1:]
+
+            to_delete = []
+
+            for reference in other_sources:
+                DataPoint.objects.filter(source_reference=reference).update(source_reference=first_source)
+
+                to_delete.append(reference)
+
+            for reference in to_delete:
+                reference.delete()
+
+            return first_source
+        except ObjectDoesNotExist:
+            reference = DataSourceReference(source=source)
+            reference.save()
+
+            return reference
 
 
 class DataPointQuerySet(QuerySet):

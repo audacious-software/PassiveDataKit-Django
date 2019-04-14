@@ -38,11 +38,11 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     start = now - datetime.timedelta(days=2)
 
-    points = points.filter(created__lte=now, created__gte=start).order_by('created')
+    points = list(points.filter(created__lte=now, created__gte=start).order_by('created'))
 
     end = start + datetime.timedelta(seconds=600)
     point_index = 0
-    point_count = points.count()
+    point_count = len(points)
 
     point = None
 
@@ -54,7 +54,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
     keys = []
 
     while start < now: # pylint: disable=too-many-nested-blocks
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.utctimetuple()))
 
         keys.append(timestamp)
 
@@ -91,7 +91,6 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
         json.dump(timestamp_counts, outfile, indent=2)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    context = {}
 
     values = []
 
@@ -128,6 +127,8 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
                 pass
             except TypeError:
                 pass
+
+    context = {}
 
     context['values'] = values
 

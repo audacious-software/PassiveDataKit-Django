@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource
+from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource, DataGeneratorDefinition, DataSourceReference
 
 class Command(BaseCommand):
     help = 'Compiles support files and other resources used for data inspection and visualization.'
@@ -116,10 +116,13 @@ class Command(BaseCommand):
                 'start': timezone.now()
             }
 
+            source_reference = DataSourceReference.reference_for_source(visualization.source)
+
             if visualization.generator_identifier == 'pdk-data-frequency':
-                points = DataPoint.objects.filter(source=visualization.source)
+                points = DataPoint.objects.filter(source_reference=source_reference)
             else:
-                points = DataPoint.objects.filter(source=visualization.source, generator_identifier=visualization.generator_identifier)
+                definition = DataGeneratorDefinition.defintion_for_identifier(visualization.generator_identifier)
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition)
 
             folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + visualization.source + '/' + visualization.generator_identifier
 
