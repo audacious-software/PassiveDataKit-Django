@@ -4,10 +4,15 @@ import calendar
 import csv
 import importlib
 import json
+import os
 import tempfile
+import traceback
+
+import dropbox
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.utils import timezone
 
 from .models import DataPoint
 
@@ -179,3 +184,35 @@ def extract_location_method(identifier):
         pass
 
     return None
+
+def send_to_destination(destination, report_path):
+    file_sent = False
+
+    if destination.destination == 'dropbox':
+        try:
+            parameters = destination.fetch_parameters()
+
+            if 'access_token' in parameters:
+                client = dropbox.Dropbox(parameters['access_token'])
+
+                path = '/'
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                path = path + '/'
+
+                if 'prepend_date' in parameters:
+                    path = path + timezone.now().date().isoformat() + '-'
+
+                path = path + os.path.basename(os.path.normpath(report_path))
+
+                with open(report_path, 'rb') as report_file:
+                    client.files_upload(report_file.read(), path)
+
+                file_sent = True
+        except BaseException:
+            traceback.print_exc()
+
+    if file_sent is False:
+        print 'Unable to transmit report to destination "' + destination.destination + '".'

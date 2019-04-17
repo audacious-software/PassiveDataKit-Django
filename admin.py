@@ -1,7 +1,6 @@
 # pylint: disable=no-member, line-too-long
 
 import datetime
-import json
 
 from prettyjson import PrettyJSONWidget
 
@@ -13,7 +12,7 @@ from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
                     DataFile, AppConfiguration, DataGeneratorDefinition, \
-                    DataSourceReference
+                    DataSourceReference, ReportDestination
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -59,34 +58,19 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
 
 class DataPointSourceFilter(SimpleListFilter):
     title = 'Source'
-    parameter_name = 'source'
+    parameter_name = 'source_reference'
 
     def lookups(self, request, model_admin):
         values = []
 
-        sources = DataServerMetadatum.objects.filter(key="Data Point Sources").first()
-
-        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
-
-        seen_identifiers = []
-
-        if identifiers is not None:
-            seen_identifiers = json.loads(identifiers.value)
-
-        if sources is not None:
-            seen_sources = json.loads(sources.value)
-
-            seen_sources.sort()
-
-            for source in seen_sources:
-                if (source in seen_identifiers) is False:
-                    values.append((source, source,))
+        for reference in DataSourceReference.objects.all().order_by('source'):
+            values.append((reference.pk, reference.source,))
 
         return values
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(source=self.value())
+            return queryset.filter(source_reference=self.value())
 
         return None
 
@@ -100,8 +84,8 @@ class DataPointAdmin(admin.OSMGeoAdmin):
     }
 
     list_display = (
-        'source',
-        'generator_identifier',
+        'source_reference',
+        'generator_definition',
         'secondary_identifier',
         'created',
         'recorded',
@@ -216,3 +200,8 @@ class DataGeneratorDefinitionAdmin(admin.OSMGeoAdmin):
 class DataSourceReferenceAdmin(admin.OSMGeoAdmin):
     list_display = ('source',)
     search_fields = ('source',)
+
+@admin.register(ReportDestination)
+class ReportDestinationAdmin(admin.OSMGeoAdmin):
+    list_display = ('user', 'destination', 'description')
+    search_fields = ('destination', 'user',)

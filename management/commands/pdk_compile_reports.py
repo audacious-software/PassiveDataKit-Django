@@ -185,32 +185,36 @@ class Command(BaseCommand):
             report.completed = timezone.now()
             report.save()
 
+            if report.requester.email is not None:
+                subject = render_to_string('pdk_report_subject.txt', {
+                    'report': report,
+                    'url': settings.SITE_URL
+                })
+
+                message = render_to_string('pdk_report_message.txt', {
+                    'report': report,
+                    'url': settings.SITE_URL
+                })
+
+                tokens = settings.SITE_URL.split('/')
+                host = ''
+
+                while tokens and tokens[-1] == '':
+                    tokens.pop()
+
+                if tokens:
+                    host = tokens[-1]
+
+                send_mail(subject, \
+                          message, \
+                          'Petey Kay <noreply@' + host + '>', \
+                          [report.requester.email], \
+                          fail_silently=False)
+
+            for extra_destination in report.requester.pdk_report_destinations.all():
+                extra_destination.transmit(filename)
+
             os.remove(filename)
-
-            subject = render_to_string('pdk_report_subject.txt', {
-                'report': report,
-                'url': settings.SITE_URL
-            })
-
-            message = render_to_string('pdk_report_message.txt', {
-                'report': report,
-                'url': settings.SITE_URL
-            })
-
-            tokens = settings.SITE_URL.split('/')
-            host = ''
-
-            while tokens and tokens[-1] == '':
-                tokens.pop()
-
-            if tokens:
-                host = tokens[-1]
-
-            send_mail(subject, \
-                      message, \
-                      'Petey Kay <noreply@' + host + '>', \
-                      [report.requester.email], \
-                      fail_silently=False)
         else:
             request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
                           .order_by('requested', 'pk')\

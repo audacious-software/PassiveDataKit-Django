@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-web-extension'
 
@@ -31,7 +31,7 @@ class Command(BaseCommand):
     help = 'Determines if users have successfully installed and used the web extension.'
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         try:
             if (GENERATOR in settings.PDK_ENABLED_CHECKS) is False:
                 DataSourceAlert.objects.filter(generator_identifier=GENERATOR, active=True).update(active=False)
@@ -44,67 +44,75 @@ class Command(BaseCommand):
         event_query = None
 
         for event in GENERATOR_EVENTS:
-            if event_query is None:
-                event_query = Q(generator_identifier=event)
-            else:
-                event_query = event_query | Q(generator_identifier=event)
+            definition = DataGeneratorDefinition.objects.filter(generator_identifier=event).first()
+
+            if definition is not None:
+                if event_query is None:
+                    event_query = Q(generator_definition=definition)
+                else:
+                    event_query = event_query | Q(generator_definition=definition)
 
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
-            if source.should_suppress_alerts():
-                DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
-            else:
-                last_web_event = DataPoint.objects.filter(source=source.identifier).filter(event_query).order_by('-created').first()
-                last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
+            source_reference = DataSourceReference.objects.filter(source=source.identifier).first()
 
-                alert_name = None
-                alert_details = {}
-                alert_level = 'info'
-
-                if last_web_event is None:
-                    alert_name = 'Browser extension not installed'
-                    alert_details['message'] = 'There is no evidence that the browser extension was successfully installed.'
-                    alert_level = 'critical'
+            if source_reference is not None:
+                if source.should_suppress_alerts():
+                    DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
                 else:
-                    last_upload = DataPoint.objects.filter(source=source.identifier, generator_identifier='pdk-web-upload-visit').order_by('-created').first()
+                    last_web_event = DataPoint.objects.filter(source_reference=source_reference).filter(event_query).order_by('-created').first()
+                    last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
-                    if last_upload is None:
-                        alert_name = 'No Web Visits Uploaded'
-                        alert_details['message'] = 'The user has not yet uploaded any web visits from the extension.'
+                    alert_name = None
+                    alert_details = {}
+                    alert_level = 'info'
+
+                    if last_web_event is None:
+                        alert_name = 'Browser extension not installed'
+                        alert_details['message'] = 'There is no evidence that the browser extension was successfully installed.'
                         alert_level = 'critical'
                     else:
-                        days_since = (timezone.now() - last_upload.created).days
+                        definition = DataGeneratorDefinition.objects.filter(generator_identifier='pdk-web-upload-visit').first()
 
-                        if days_since > CRITICAL_DAYS:
-                            alert_name = 'No Recent Web Visits Uploaded'
-                            alert_details['message'] = 'No web visits have been uploaded in the past ' + str(days_since) + ' days.'
+                        last_upload = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).order_by('-created').first()
+
+                        if last_upload is None:
+                            alert_name = 'No Web Visits Uploaded'
+                            alert_details['message'] = 'The user has not yet uploaded any web visits from the extension.'
                             alert_level = 'critical'
-                        elif days_since > WARNING_DAYS:
-                            alert_name = 'No Recent Web Visits Uploaded'
-                            alert_details['message'] = 'No web visits have been uploaded in the past ' + str(days_since) + ' days.'
-                            alert_level = 'warning'
+                        else:
+                            days_since = (timezone.now() - last_upload.created).days
 
-                if alert_name is not None:
-                    if last_alert is None or last_alert.alert_name != alert_name or last_alert.alert_level != alert_level:
-                        if last_alert is not None:
-                            last_alert.active = False
+                            if days_since > CRITICAL_DAYS:
+                                alert_name = 'No Recent Web Visits Uploaded'
+                                alert_details['message'] = 'No web visits have been uploaded in the past ' + str(days_since) + ' days.'
+                                alert_level = 'critical'
+                            elif days_since > WARNING_DAYS:
+                                alert_name = 'No Recent Web Visits Uploaded'
+                                alert_details['message'] = 'No web visits have been uploaded in the past ' + str(days_since) + ' days.'
+                                alert_level = 'warning'
+
+                    if alert_name is not None:
+                        if last_alert is None or last_alert.alert_name != alert_name or last_alert.alert_level != alert_level:
+                            if last_alert is not None:
+                                last_alert.active = False
+                                last_alert.updated = timezone.now()
+                                last_alert.save()
+
+                            new_alert = DataSourceAlert(alert_name=alert_name, data_source=source, generator_identifier=GENERATOR)
+                            new_alert.alert_level = alert_level
+                            new_alert.update_alert_details(alert_details)
+                            new_alert.created = timezone.now()
+                            new_alert.updated = timezone.now()
+                            new_alert.active = True
+
+                            new_alert.save()
+                        else:
                             last_alert.updated = timezone.now()
+                            last_alert.update_alert_details(alert_details)
+
                             last_alert.save()
-
-                        new_alert = DataSourceAlert(alert_name=alert_name, data_source=source, generator_identifier=GENERATOR)
-                        new_alert.alert_level = alert_level
-                        new_alert.update_alert_details(alert_details)
-                        new_alert.created = timezone.now()
-                        new_alert.updated = timezone.now()
-                        new_alert.active = True
-
-                        new_alert.save()
-                    else:
+                    elif last_alert is not None:
                         last_alert.updated = timezone.now()
-                        last_alert.update_alert_details(alert_details)
+                        last_alert.active = False
 
                         last_alert.save()
-                elif last_alert is not None:
-                    last_alert.updated = timezone.now()
-                    last_alert.active = False
-
-                    last_alert.save()

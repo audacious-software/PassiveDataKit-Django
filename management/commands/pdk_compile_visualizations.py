@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from passive_data_kit.decorators import handle_lock
-from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource
+from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource, DataSourceReference, DataGeneratorDefinition
 
 class Command(BaseCommand):
     help = 'Compiles support files and other resources used for data inspection and visualization.'
@@ -53,6 +53,8 @@ class Command(BaseCommand):
         deltas = []
 
         for source in sources:
+            source_reference = source.fetch_source_reference()
+
             source_identifiers = ['pdk-data-frequency']
 
             if options['generator'] == 'all':
@@ -116,10 +118,18 @@ class Command(BaseCommand):
                 'start': timezone.now()
             }
 
+            source_reference = DataSourceReference.objects.filter(source=visualization.source).first()
+
             if visualization.generator_identifier == 'pdk-data-frequency':
-                points = DataPoint.objects.filter(source=visualization.source)
+                points = DataPoint.objects.filter(source_reference=source_reference)
             else:
-                points = DataPoint.objects.filter(source=visualization.source, generator_identifier=visualization.generator_identifier)
+                generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=visualization.generator_identifier).first()
+
+                if generator_definition is None:
+                    generator_definition = DataGeneratorDefinition(generator_identifier=visualization.generator_identifier, name=visualization.generator_identifier)
+                    generator_definition.save()
+
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
             folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + visualization.source + '/' + visualization.generator_identifier
 

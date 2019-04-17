@@ -120,6 +120,8 @@ class DataPointQuerySet(QuerySet):
         else:
             is_filtered = self.query.where or self.query.having
 
+        # print('WHERE: ' + str(self.query.where))
+
         if not is_postgres or is_filtered:
             return super(DataPointQuerySet, self).count()
 
@@ -136,105 +138,72 @@ class DataPointManager(models.Manager):
         return DataPointQuerySet(self.model, using=self._db)
 
     def sources(self): # pylint: disable=no-self-use
-        sources_datum = DataServerMetadatum.objects.filter(key=SOURCES_DATUM).first()
+        sources = []
 
-        if sources_datum is not None:
-            return json.loads(sources_datum.value)
-
-        sources = DataPoint.objects.order_by().values_list('source').distinct()
-
-        source_ids = []
-
-        for source in sources:
-            source_ids.append(source[0])
-
-        sources_datum = DataServerMetadatum(key=SOURCES_DATUM)
-
-        sources_datum.value = json.dumps(source_ids, indent=2)
-
-        sources_datum.save()
+        for reference in DataSourceReference.objects.all():
+            sources.append(reference.source)
 
         return sources
 
-    def generator_identifiers_for_source(self, source): # pylint: disable=invalid-name, no-self-use
-        key = SOURCE_GENERATORS_DATUM + ': ' + source
-        sources_datum = DataServerMetadatum.objects.filter(key=key).first()
+    def generator_identifiers_for_source(self, source, since=None): # pylint: disable=invalid-name, no-self-use
+        identifiers = []
 
-        identifiers = {}
+        source_reference = DataSourceReference.objects.filter(source=source).first()
 
-        if sources_datum is not None:
-            identifiers = json.loads(sources_datum.value)
+        for definition in DataGeneratorDefinition.objects.all():
+            if since is not None:
+                if DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=since).count() > 0:
+                    identifiers.append(definition.generator_identifier)
+            else:
+                if DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).count() > 0:
+                    identifiers.append(definition.generator_identifier)
 
-            return identifiers
-        else:
-            sources_datum = DataServerMetadatum(key=key)
-
-        source_identifiers = DataPoint.objects.filter(source=source).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
-
-        new_identifiers = []
-
-        for identifier in source_identifiers:
-            new_identifiers.append(identifier)
-
-        sources_datum.value = json.dumps(new_identifiers, indent=2)
-
-        sources_datum.save()
-
-        return source_identifiers
+        return identifiers
 
     def generator_identifiers(self): # pylint: disable=invalid-name, no-self-use
-        key = GENERATORS_DATUM
-        generators_datum = DataServerMetadatum.objects.filter(key=key).first()
+        identifiers = []
 
-        identifiers = {}
+        for definition in DataGeneratorDefinition.objects.all():
+            identifiers.append(definition.generator_identifier)
 
-        if generators_datum is not None:
-            identifiers = json.loads(generators_datum.value)
-
-            return identifiers
-        else:
-            generators_datum = DataServerMetadatum(key=key)
-
-        generator_identifiers = DataPoint.objects.all().order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct()
-
-        new_identifiers = []
-
-        for identifier in generator_identifiers:
-            new_identifiers.append(identifier)
-
-        generators_datum.value = json.dumps(new_identifiers, indent=2)
-
-        generators_datum.save()
-
-        return generator_identifiers
+        return identifiers
 
     def latest_point(self, source, identifier): # pylint: disable=no-self-use
         key = LATEST_POINT_DATUM + ': ' + source + '/' + identifier
 
         latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
 
-        latest = None
+        point = None
 
         if latest_point_datum is not None:
-            latest = DataPoint.objects.filter(pk=int(latest_point_datum.value)).first()
-        else:
+            point = DataPoint.objects.get(pk=int(latest_point_datum.value))
+
+        if point is None:
+            source_reference = DataSourceReference.objects.filter(source=source).first()
+
+            if source_reference is None:
+                return None
+
             if identifier == 'pdk-data-frequency':
-                source = DataSource.objects.filter(identifier=source).first()
-
-                if source is not None:
-                    latest = source.latest_point()
-
-                if latest is None:
-                    latest = DataPoint.objects.filter(source=source).order_by('-recorded').first()
+                point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
             else:
-                latest = DataPoint.objects.filter(source=source, generator_identifier=identifier).order_by('-recorded').first()
+                generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier).first()
 
-            if latest is not None:
-                latest_point_datum = DataServerMetadatum(key=key)
-                latest_point_datum.value = str(latest.pk)
+                if generator_definition is None:
+                    return None
+
+                point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-pk').first()
+
+            if point is not None:
+                latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+                if latest_point_datum is None:
+                    latest_point_datum = DataServerMetadatum(key=key)
+
+                latest_point_datum.value = str(point.pk)
                 latest_point_datum.save()
 
-        return latest
+        return point
 
     def set_latest_point(self, source, identifier, new_point):
         latest_point = self.latest_point(source, identifier)
@@ -249,11 +218,6 @@ class DataPointManager(models.Manager):
 
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
-
-    def update_server_generated_status(self, days=1):
-        day_ago = timezone.now() - datetime.timedelta(days=days)
-
-        self.filter(server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
     def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server'): # pylint: disable=no-self-use
         now = timezone.now()
@@ -502,25 +466,38 @@ class DataSource(models.Model):
 
         return False
 
+    def fetch_source_reference(self):
+        source_reference = DataSourceReference.objects.filter(source=self.identifier).first()
+
+        if source_reference is None:
+            source_reference = DataSourceReference(source=self.identifier)
+            source_reference.save()
+
+        return source_reference
+
     def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
+        source_reference = self.fetch_source_reference()
+
         metadata = self.fetch_performance_metadata()
 
         now = timezone.now()
 
         window_start = now - datetime.timedelta(days=METADATA_WINDOW_DAYS)
 
-        DataPoint.objects.update_server_generated_status()
+        day_ago = timezone.now() - datetime.timedelta(days=1)
+
+        DataPoint.objects.filter(source_reference=source_reference, server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
         # Update latest_point
 
         latest_point = self.latest_point()
 
-        query = Q(source=self.identifier)
+        query = Q(source_reference=source_reference)
 
         if latest_point is not None:
             query = query & Q(created__gt=latest_point.created)
         else:
-            latest_point = DataPoint.objects.filter(source=self.identifier).order_by('-created').first()
+            latest_point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
 
         point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
 
@@ -532,21 +509,21 @@ class DataSource(models.Model):
 
                 point = None
             else:
-                point = DataPoint.objects.filter(source=self.identifier, server_generated=False, created__lt=point.created).order_by('-created').first()
+                point = DataPoint.objects.filter(source_reference=source_reference, server_generated=False, created__lt=point.created).order_by('-created').first()
 
                 if point is not None:
                     metadata['latest_point'] = point.pk
 
         # Update point_count
 
-        metadata['point_count'] = DataPoint.objects.filter(source=self.identifier, created__gte=window_start).count()
+        metadata['point_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).count()
 
         # Update point_frequency
 
         metadata['point_frequency'] = 0
 
         if metadata['point_count'] > 1:
-            earliest_point = DataPoint.objects.filter(source=self.identifier, created__gte=window_start).order_by('created').first()
+            earliest_point = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).order_by('created').first()
 
             seconds = (latest_point.created - earliest_point.created).total_seconds()
 
@@ -555,20 +532,26 @@ class DataSource(models.Model):
 
         generators = []
 
-        identifiers = list(DataPoint.objects.filter(source=self.identifier, created__gte=window_start).order_by('generator_identifier').values_list('generator_identifier', flat=True).distinct())
+        identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
 
         for identifier in identifiers:
+            definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier)
+
+            if definition is None:
+                definition = DataGeneratorDefinition(generator_identifier=identifier, name=identifier)
+                definition.save()
+
             generator = {}
 
             generator['identifier'] = identifier
             generator['source'] = self.identifier
             generator['label'] = generator_label(identifier)
 
-            generator['points_count'] = DataPoint.objects.filter(source=self.identifier, created__gte=window_start, generator_identifier=identifier).count()
+            generator['points_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
 
-            first_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('created').first()
-            last_point = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('-created').first()
-            last_recorded = DataPoint.objects.filter(source=self.identifier, generator_identifier=identifier, created__gte=window_start).order_by('-recorded').first()
+            first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
+            last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
+            last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
 
             generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
             generator['first_created'] = calendar.timegm(first_point.created.timetuple())
@@ -715,6 +698,33 @@ class ReportJob(models.Model):
 
     report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
 
+class ReportDestination(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations')
+
+    destination = models.CharField(max_length=4096)
+    description = models.CharField(max_length=4096, null=True, blank=True)
+
+    if install_supports_jsonfield():
+        parameters = JSONField()
+    else:
+        parameters = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    def fetch_parameters(self):
+        if install_supports_jsonfield():
+            return self.parameters
+
+        return json.loads(self.parameters)
+
+    def transmit(self, report_file):
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                pdk_api.send_to_destination(self, report_file)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
 
 @receiver(post_delete, sender=ReportJob)
 def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
