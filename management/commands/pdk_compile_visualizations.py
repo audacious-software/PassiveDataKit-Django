@@ -53,8 +53,6 @@ class Command(BaseCommand):
         deltas = []
 
         for source in sources:
-            source_reference = source.fetch_source_reference()
-
             source_identifiers = ['pdk-data-frequency']
 
             if options['generator'] == 'all':

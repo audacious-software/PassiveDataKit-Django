@@ -155,7 +155,13 @@ class DataPointManager(models.Manager):
                 if DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=since).count() > 0:
                     identifiers.append(definition.generator_identifier)
             else:
-                if DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).count() > 0:
+                key = LATEST_POINT_DATUM + ': ' + source + '/' + definition.generator_identifier
+
+                latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+                if latest_point_datum is not None:
+                    identifiers.append(definition.generator_identifier)
+                elif DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).count() > 0:
                     identifiers.append(definition.generator_identifier)
 
         return identifiers
@@ -185,14 +191,16 @@ class DataPointManager(models.Manager):
                 return None
 
             if identifier == 'pdk-data-frequency':
-                point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
+                if DataPoint.objects.filter(source_reference=source_reference).count() > 0:
+                    point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
             else:
                 generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier).first()
 
                 if generator_definition is None:
                     return None
 
-                point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-pk').first()
+                if DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).count() > 0:
+                    point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-pk').first()
 
             if point is not None:
                 latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
@@ -265,6 +273,10 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
             ['generator_identifier', 'secondary_identifier', 'recorded'],
             ['generator_identifier', 'secondary_identifier', 'created', 'recorded'],
             ['generator_definition', 'source_reference'],
+            ['source_reference', 'created'],
+            ['generator_definition', 'source_reference', 'created'],
+            ['generator_definition', 'source_reference', 'created', 'recorded'],
+            ['generator_definition', 'source_reference', 'recorded'],
         ]
 
     objects = DataPointManager()
@@ -766,67 +778,120 @@ class ReportJobBatchRequest(models.Model):
         else:
             params = json.loads(self.parameters)
 
-        generator_query = None
-
-        for generator in params['generators']: # pylint: disable=too-many-nested-blocks
-            had_extras = False
-
-            for app in settings.INSTALLED_APPS:
-                try:
-                    pdk_api = importlib.import_module(app + '.pdk_api')
-
-                    try:
-                        other_generators = pdk_api.generators_for_extra_generator(generator)
-
-                        for other_generator in other_generators:
-                            definition = DataGeneratorDefinition.objects.filter(generator_identifier=other_generator).first()
-
-                            if definition is not None:
-                                if generator_query is None:
-                                    generator_query = Q(generator_definition=definition)
-                                else:
-                                    generator_query = generator_query |  Q(generator_definition=definition)
-
-                            had_extras = True
-                    except TypeError as exception:
-                        print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
-                        raise exception
-                except ImportError:
-                    pass
-                except AttributeError:
-                    pass
-
-            if had_extras is False:
-                definition = DataGeneratorDefinition.objects.filter(generator_identifier=generator).first()
-
-                if generator_query is None:
-                    generator_query = Q(generator_definition=definition)
-                else:
-                    generator_query = generator_query | Q(generator_definition=definition)
-
-        requested = timezone.now()
-
-        report_size = 0
-        report_sources = []
-
-        pending_jobs = []
-
         sources = sorted(params['sources'], reverse=True)
 
-        while sources:
-            source = sources.pop()
+        pending_jobs = []
+        requested = timezone.now()
 
-            source_reference = DataSourceReference.objects.filter(source=source).first()
+        try:
+            sources_per_job = settings.PDK_SOURCES_PER_REPORT_JOB
 
-            source_query = Q(source_reference=source_reference) & generator_query
+            page = 0
 
-            query_size = DataPoint.objects.filter(generator_query, source_query).count()
+            while page < len(sources):
+                pending_sources = sources[page:(page + sources_per_job)]
 
-            if report_size == 0 or (report_size + query_size) < target_size:
-                report_sources.append(source)
+                job = ReportJob(requester=self.requester, requested=requested)
 
-                report_size += query_size
-            else:
+                job_params = {}
+
+                job_params['sources'] = pending_sources
+                job_params['generators'] = params['generators']
+                job_params['raw_data'] = params['export_raw']
+                job_params['data_start'] = params['data_start']
+                job_params['data_end'] = params['data_end']
+
+                if 'prefix' in params:
+                    job_params['prefix'] = params['prefix']
+
+                if install_supports_jsonfield():
+                    job.parameters = job_params
+                else:
+                    job.parameters = json.dumps(job_params, indent=2)
+
+                pending_jobs.append(job)
+
+                page += sources_per_job
+        except AttributeError:
+            generator_query = None
+
+            for generator in params['generators']: # pylint: disable=too-many-nested-blocks
+                had_extras = False
+
+                for app in settings.INSTALLED_APPS:
+                    try:
+                        pdk_api = importlib.import_module(app + '.pdk_api')
+
+                        try:
+                            other_generators = pdk_api.generators_for_extra_generator(generator)
+
+                            for other_generator in other_generators:
+                                definition = DataGeneratorDefinition.objects.filter(generator_identifier=other_generator).first()
+
+                                if definition is not None:
+                                    if generator_query is None:
+                                        generator_query = Q(generator_definition=definition)
+                                    else:
+                                        generator_query = generator_query |  Q(generator_definition=definition)
+
+                                had_extras = True
+                        except TypeError as exception:
+                            print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
+                            raise exception
+                    except ImportError:
+                        pass
+                    except AttributeError:
+                        pass
+
+                if had_extras is False:
+                    definition = DataGeneratorDefinition.objects.filter(generator_identifier=generator).first()
+
+                    if generator_query is None:
+                        generator_query = Q(generator_definition=definition)
+                    else:
+                        generator_query = generator_query | Q(generator_definition=definition)
+
+            report_size = 0
+
+            report_sources = []
+
+            while sources:
+                source = sources.pop()
+
+                query_size = 0
+
+                source_reference = DataSourceReference.objects.filter(source=source).first()
+
+                if source_reference is not None:
+                    source_query = Q(source_reference=source_reference) & generator_query
+
+                    query_size = DataPoint.objects.filter(source_query).count()
+                if report_size == 0 or (report_size + query_size) < target_size:
+                    report_sources.append(source)
+
+                    report_size += query_size
+                else:
+                    job = ReportJob(requester=self.requester, requested=requested)
+
+                    job_params = {}
+
+                    job_params['sources'] = report_sources
+                    job_params['generators'] = params['generators']
+                    job_params['raw_data'] = params['export_raw']
+                    job_params['data_start'] = params['data_start']
+                    job_params['data_end'] = params['data_end']
+
+                    if install_supports_jsonfield():
+                        job.parameters = job_params
+                    else:
+                        job.parameters = json.dumps(job_params, indent=2)
+
+                    pending_jobs.append(job)
+
+                    report_size = query_size
+                    report_sources = [source]
+
+            if report_sources:
                 job = ReportJob(requester=self.requester, requested=requested)
 
                 job_params = {}
@@ -844,30 +909,9 @@ class ReportJobBatchRequest(models.Model):
 
                 pending_jobs.append(job)
 
-                report_size = query_size
-                report_sources = [source]
-
-        if report_sources:
-            job = ReportJob(requester=self.requester, requested=requested)
-
-            job_params = {}
-
-            job_params['sources'] = report_sources
-            job_params['generators'] = params['generators']
-            job_params['raw_data'] = params['export_raw']
-            job_params['data_start'] = params['data_start']
-            job_params['data_end'] = params['data_end']
-
-            if install_supports_jsonfield():
-                job.parameters = job_params
-            else:
-                job.parameters = json.dumps(job_params, indent=2)
-
-            pending_jobs.append(job)
-
-            source_query = None
-            report_size = 0
-            report_sources = []
+                source_query = None
+                report_size = 0
+                report_sources = []
 
         index = 1
 

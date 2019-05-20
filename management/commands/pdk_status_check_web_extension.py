@@ -12,6 +12,7 @@ from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReferenc
 GENERATOR = 'pdk-web-extension'
 
 GENERATOR_EVENTS = (
+    'pdk-web-visit',
     'pdk-web-added-blacklist-term',
     'pdk-web-delete-visits',
     'pdk-web-deleted-blacklist-term',
@@ -21,7 +22,6 @@ GENERATOR_EVENTS = (
     'pdk-web-show-review-tab',
     'pdk-web-show-settings-tab',
     'pdk-web-upload-visit',
-    'pdk-web-visit',
 )
 
 WARNING_DAYS = 7
@@ -59,7 +59,18 @@ class Command(BaseCommand):
                 if source.should_suppress_alerts():
                     DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
                 else:
-                    last_web_event = DataPoint.objects.filter(source_reference=source_reference).filter(event_query).order_by('-created').first()
+                    last_web_event = None
+
+                    for event in GENERATOR_EVENTS:
+                        definition = DataGeneratorDefinition.objects.filter(generator_identifier=event).first()
+                        web_event = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).order_by('-created').first()
+
+                        if web_event is not None:
+                            if last_web_event is None:
+                                last_web_event = web_event
+                            elif web_event.created > last_web_event.created:
+                                last_web_event = web_event
+
                     last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
                     alert_name = None
