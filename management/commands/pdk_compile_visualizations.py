@@ -116,18 +116,13 @@ class Command(BaseCommand):
                 'start': timezone.now()
             }
 
-            source_reference = DataSourceReference.objects.filter(source=visualization.source).first()
+            source_reference = DataSourceReference.reference_for_source(visualization.source)
 
             if visualization.generator_identifier == 'pdk-data-frequency':
                 points = DataPoint.objects.filter(source_reference=source_reference)
             else:
-                generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=visualization.generator_identifier).first()
-
-                if generator_definition is None:
-                    generator_definition = DataGeneratorDefinition(generator_identifier=visualization.generator_identifier, name=visualization.generator_identifier)
-                    generator_definition.save()
-
-                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+                definition = DataGeneratorDefinition.defintion_for_identifier(visualization.generator_identifier)
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition)
 
             folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + visualization.source + '/' + visualization.generator_identifier
 
