@@ -20,7 +20,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from ...decorators import handle_lock
-from ...models import DataPoint, ReportJob, ReportJobBatchRequest, install_supports_jsonfield
+from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Compiles data reports requested by end users.'
@@ -79,6 +79,10 @@ class Command(BaseCommand):
                                              999999, \
                                              tz_info)
 
+            date_type = 'created'
+
+            if 'date_type' in parameters and parameters['date_type']:
+                date_type = parameters['date_type']
 
             raw_json = False
 
@@ -99,8 +103,13 @@ class Command(BaseCommand):
                     for generator in generators: # pylint: disable=too-many-nested-blocks
                         if raw_json:
                             for source in sources:
-                                first = DataPoint.objects.filter(source=source, generator_identifier=generator).first() # pylint: disable=line-too-long
-                                last = DataPoint.objects.filter(source=source, generator_identifier=generator).last() # pylint: disable=line-too-long
+                                generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+                                source_reference = DataSourceReference.reference_for_source(source)
+
+                                data_query = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('created')
+
+                                first = data_query.first() # pylint: disable=line-too-long
+                                last = data_query.last() # pylint: disable=line-too-long
 
                                 if first is not None:
                                     first_create = first.created
@@ -137,7 +146,7 @@ class Command(BaseCommand):
                                         day_filename = source + '__' + generator + '__' + \
                                                        start.date().isoformat() + '.json'
 
-                                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
+                                        points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
 
                                         out_points = []
 
@@ -157,7 +166,7 @@ class Command(BaseCommand):
                                         pdk_api = importlib.import_module(app + '.pdk_api')
 
                                         try:
-                                            output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+                                            output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
 
                                             if output_file is not None:
                                                 if output_file.lower().endswith('.zip'):

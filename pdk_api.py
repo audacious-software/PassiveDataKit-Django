@@ -92,16 +92,16 @@ def data_table(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None):
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
         output_file = None
 
         try:
-            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print 'TODO: Update ' + generator + '.compile_report to support data_start and data_end parameters!'
+            print 'TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!'
 
             output_file = generator_module.compile_report(generator, sources)
 

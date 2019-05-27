@@ -97,10 +97,23 @@
 				<div class="form-group">
 					<input type="text" class="form-control" id="data_start" name="data_start" placeholder="Start Date (Optional)">
 				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="date_type" id="date_type_created" value="created" checked>
+						Created
+					</label>
+				</div>
             </div>
             <div class="col-md-3">
 				<div class="form-group">
 					<input type="text" class="form-control" id="data_end" name="data_end" placeholder="End Date (Optional)">
+				</div>
+
+				<div class="radio">
+					<label>
+						<input type="radio" name="date_type" id="date_type_recorded" value="recorded">
+						Recorded
+					</label>
 				</div>
             </div>
             <div class="col-md-3">
@@ -112,6 +125,8 @@
                   <button type="submit" class="btn btn-default pull-right">Export Data</button>
             </div>
         </div>
+        
+        <div class>
     </form>
             
     <script data-main="{% static  'pdk/js/export.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
