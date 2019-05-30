@@ -357,7 +357,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     else:
         properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    def fetch_secondary_identifier(self):
+    def fetch_secondary_identifier(self, skip_save=False):
         if self.secondary_identifier is not None:
             return self.secondary_identifier
         else:
@@ -371,7 +371,9 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
                     if identifier is not None:
                         self.secondary_identifier = identifier
-                        self.save()
+
+                        if skip_save is False:
+                            self.save()
 
                     return self.secondary_identifier
                 except ImportError:
@@ -402,7 +404,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return self.user_agent
 
-    def fetch_generator_definition(self):
+    def fetch_generator_definition(self, skip_save=False):
         if self.generator_identifier in CACHED_GENERATOR_DEFINITIONS:
             generator_definition = CACHED_GENERATOR_DEFINITIONS[self.generator_identifier]
         else:
@@ -416,11 +418,13 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         if self.generator_definition_id is None:
             self.generator_definition = CACHED_GENERATOR_DEFINITIONS[self.generator_identifier]
-            self.save()
+
+            if skip_save is False:
+                self.save()
 
         return CACHED_GENERATOR_DEFINITIONS[self.generator_identifier]
 
-    def fetch_source_reference(self):
+    def fetch_source_reference(self, skip_save=False):
         if self.source in CACHED_SOURCE_REFERENCES:
             source_reference = CACHED_SOURCE_REFERENCES[self.source]
         else:
@@ -434,7 +438,9 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         if self.source_reference_id is None:
             self.source_reference = CACHED_SOURCE_REFERENCES[self.source]
-            self.save()
+
+            if skip_save is False:
+                self.save()
 
         return CACHED_SOURCE_REFERENCES[self.source]
 
