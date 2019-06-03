@@ -1,5 +1,7 @@
 # pylint: disable=no-member, line-too-long
 
+import sys
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -21,16 +23,30 @@ class Command(BaseCommand):
         while page > 0:
             with transaction.atomic():
                 for point in DataPoint.objects.filter(pk__gt=(page - PAGE_SIZE), pk__lte=page):
-                    reference = point.fetch_source_reference(skip_save=True)
-                    definition = point.fetch_generator_definition(skip_save=True)
-                    
-                    point.save()
+                    updated = False
+
+                    reference = point.source_reference
+
+                    if point.source_reference is None:
+                        reference = point.fetch_source_reference(skip_save=True)
+                        updated = True
+
+                    definition = point.generator_definition
+
+                    if point.generator_definition is None:
+                        definition = point.fetch_generator_definition(skip_save=True)
+                        updated = True
+
+                    if updated:
+                        point.save()
 
                     if (point.pk % 5000) == 0:
                         print str(point.pk) + ': ' + str(reference) + ' -- ' + str(definition) + ' -- ' + str(len(CACHED_GENERATOR_DEFINITIONS)) + ' -- ' + str(len(CACHED_SOURCE_REFERENCES))
+                        sys.stdout.flush()
 
             page = (page - PAGE_SIZE)
             now = timezone.now()
 
             print 'ELAPSED: ' + str((now - last_check).total_seconds())
+            sys.stdout.flush()
             last_check = now
