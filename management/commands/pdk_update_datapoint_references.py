@@ -21,8 +21,10 @@ class Command(BaseCommand):
         while page > 0:
             with transaction.atomic():
                 for point in DataPoint.objects.filter(pk__gt=(page - PAGE_SIZE), pk__lte=page):
-                    reference = point.fetch_source_reference()
-                    definition = point.fetch_generator_definition()
+                    reference = point.fetch_source_reference(skip_save=True)
+                    definition = point.fetch_generator_definition(skip_save=True)
+                    
+                    point.save()
 
                     if (point.pk % 5000) == 0:
                         print str(point.pk) + ': ' + str(reference) + ' -- ' + str(definition) + ' -- ' + str(len(CACHED_GENERATOR_DEFINITIONS)) + ' -- ' + str(len(CACHED_SOURCE_REFERENCES))
