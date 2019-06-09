@@ -6,7 +6,6 @@ import datetime
 import json
 import os
 import tempfile
-import time
 
 from zipfile import ZipFile
 
@@ -18,7 +17,9 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 
-from ..models import DataPoint
+from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
+
+DEFAULT_INTERVAL = 600
 
 def extract_secondary_identifier(properties):
     if 'application' in properties:
@@ -47,47 +48,38 @@ def visualization(source, generator):
     return render_to_string('generators/pdk_foreground_application_template.html', context)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    now = timezone.now()
+    now = timezone.now().astimezone(pytz.timezone(settings.TIME_ZONE))
+
+    interval = DEFAULT_INTERVAL
+
+    try:
+        interval = settings.PDK_DATA_FREQUENCY_VISUALIZATION_INTERVAL
+    except AttributeError:
+        pass
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % 10
+    remainder = now.minute % int(interval / 60)
 
     now = now.replace(minute=(now.minute - remainder))
 
     start = now - datetime.timedelta(days=2)
 
-    points = points.filter(created__lte=now, created__gte=start).order_by('created')
-
-    end = start + datetime.timedelta(seconds=600)
-    point_index = 0
-    point_count = points.count()
-
-    point = None
-
-    if point_count > 0:
-        point = points[point_index]
+    end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts = {}
 
     keys = []
 
     while start < now:
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.utctimetuple()))
 
         keys.append(timestamp)
 
-        timestamp_counts[timestamp] = 0
-
-        while point is not None and point.created < end and point_index < (point_count - 1):
-            timestamp_counts[timestamp] += 1
-
-            point_index += 1
-
-            point = points[point_index]
+        timestamp_counts[timestamp] = points.filter(created__gte=start, created__lt=end).count()
 
         start = end
-        end = start + datetime.timedelta(seconds=600)
+        end = start + datetime.timedelta(seconds=interval)
 
     timestamp_counts['keys'] = keys
 
@@ -152,7 +144,7 @@ def data_table(source, generator): # pylint: disable=too-many-locals
 
     return render_to_string('pdk_foreground_application_table_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
@@ -176,13 +168,22 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
 
                 writer.writerow(columns)
 
-                points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+                source_reference = DataSourceReference.reference_for_source(source)
+                generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
                 if data_start is not None:
-                    points = points.filter(created__gte=data_start)
+                    if date_type == 'recorded':
+                        points = points.filter(recorded__gte=data_start)
+                    else:
+                        points = points.filter(created__gte=data_start)
 
                 if data_end is not None:
-                    points = points.filter(created__lte=data_end)
+                    if date_type == 'recorded':
+                        points = points.filter(recorded__lte=data_end)
+                    else:
+                        points = points.filter(created__lte=data_end)
 
                 points = points.order_by('source', 'created')
 

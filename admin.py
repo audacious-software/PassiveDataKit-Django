@@ -1,7 +1,6 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, line-too-long
 
 import datetime
-import json
 
 from prettyjson import PrettyJSONWidget
 
@@ -12,7 +11,8 @@ from django.contrib.postgres.fields import JSONField
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
-                    DataFile
+                    DataFile, AppConfiguration, DataGeneratorDefinition, \
+                    DataSourceReference, ReportDestination
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -34,16 +34,12 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
     parameter_name = 'generator_identifier'
 
     def lookups(self, request, model_admin):
-        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
+        values = []
+
+        identifiers = DataPoint.objects.generator_identifiers()
 
         if identifiers is not None:
-            values = []
-
-            seen_identifiers = json.loads(identifiers.value)
-
-            seen_identifiers.sort()
-
-            for identifier in seen_identifiers:
+            for identifier in identifiers:
                 values.append((identifier, identifier,))
 
             return values
@@ -62,34 +58,19 @@ class DataPointGeneratorIdentifierFilter(SimpleListFilter):
 
 class DataPointSourceFilter(SimpleListFilter):
     title = 'Source'
-    parameter_name = 'source'
+    parameter_name = 'source_reference'
 
     def lookups(self, request, model_admin):
         values = []
 
-        sources = DataServerMetadatum.objects.filter(key="Data Point Sources").first()
-
-        identifiers = DataServerMetadatum.objects.filter(key="Data Point Generators").first()
-
-        seen_identifiers = []
-
-        if identifiers is not None:
-            seen_identifiers = json.loads(identifiers.value)
-
-        if sources is not None:
-            seen_sources = json.loads(sources.value)
-
-            seen_sources.sort()
-
-            for source in seen_sources:
-                if (source in seen_identifiers) is False:
-                    values.append((source, source,))
+        for reference in DataSourceReference.objects.all().order_by('source'):
+            values.append((reference.pk, reference.source,))
 
         return values
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(source=self.value())
+            return queryset.filter(source_reference=self.value())
 
         return None
 
@@ -103,8 +84,8 @@ class DataPointAdmin(admin.OSMGeoAdmin):
     }
 
     list_display = (
-        'source',
-        'generator_identifier',
+        'source_reference',
+        'generator_definition',
         'secondary_identifier',
         'created',
         'recorded',
@@ -202,3 +183,25 @@ class DataSourceAlertAdmin(admin.OSMGeoAdmin):
 class DataServerApiTokenAdmin(admin.OSMGeoAdmin):
     list_display = ('user', 'expires',)
     list_filter = ('expires', 'user',)
+
+@admin.register(AppConfiguration)
+class AppConfigurationAdmin(admin.OSMGeoAdmin):
+    list_display = ('name', 'evaluate_order', 'id_pattern', 'context_pattern', 'is_valid', 'is_enabled',)
+    search_fields = ('name', 'id_pattern', 'context_pattern', 'configuration_json',)
+
+    list_filter = ('is_enabled', 'is_valid',)
+
+@admin.register(DataGeneratorDefinition)
+class DataGeneratorDefinitionAdmin(admin.OSMGeoAdmin):
+    list_display = ('name', 'generator_identifier',)
+    search_fields = ('name', 'generator_identifier', 'description',)
+
+@admin.register(DataSourceReference)
+class DataSourceReferenceAdmin(admin.OSMGeoAdmin):
+    list_display = ('source',)
+    search_fields = ('source',)
+
+@admin.register(ReportDestination)
+class ReportDestinationAdmin(admin.OSMGeoAdmin):
+    list_display = ('user', 'destination', 'description')
+    search_fields = ('destination', 'user',)

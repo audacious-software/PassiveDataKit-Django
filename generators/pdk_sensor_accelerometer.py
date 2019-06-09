@@ -19,7 +19,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 
-from ..models import DataPoint
+from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 
 
 SPLIT_SIZE = 10000
@@ -38,11 +38,11 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     start = now - datetime.timedelta(days=2)
 
-    points = points.filter(created__lte=now, created__gte=start).order_by('created')
+    points = list(points.filter(created__lte=now, created__gte=start).order_by('created'))
 
     end = start + datetime.timedelta(seconds=600)
     point_index = 0
-    point_count = points.count()
+    point_count = len(points)
 
     point = None
 
@@ -54,7 +54,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
     keys = []
 
     while start < now: # pylint: disable=too-many-nested-blocks
-        timestamp = str(time.mktime(start.timetuple()))
+        timestamp = str(calendar.timegm(start.utctimetuple()))
 
         keys.append(timestamp)
 
@@ -91,8 +91,6 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
         json.dump(timestamp_counts, outfile, indent=2)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    context = {}
-
     values = []
 
     now = timezone.now()
@@ -128,6 +126,8 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
                 pass
             except TypeError:
                 pass
+
+    context = {}
 
     context['values'] = values
 
@@ -172,19 +172,28 @@ def data_table(source, generator): # pylint: disable=unused-argument
 
     return None
 
-def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
-            points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+            source_reference = DataSourceReference.reference_for_source(source)
+            generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
+            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
             if data_start is not None:
-                points = points.filter(created__gte=data_start)
+                if date_type == 'recorded':
+                    points = points.filter(recorded__gte=data_start)
+                else:
+                    points = points.filter(created__gte=data_start)
 
             if data_end is not None:
-                points = points.filter(created__lte=data_end)
+                if date_type == 'recorded':
+                    points = points.filter(recorded__lte=data_end)
+                else:
+                    points = points.filter(created__lte=data_end)
 
             points = points.order_by('source', 'created')
 

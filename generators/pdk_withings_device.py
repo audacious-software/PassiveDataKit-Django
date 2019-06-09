@@ -13,7 +13,7 @@ import arrow
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from ..models import DataPoint
+from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 
 SECONDARY_IDENTIFIER_ACTIVITY = 'activity-measures'
 SECONDARY_IDENTIFIER_INTRADAY = 'intraday-activity'
@@ -71,7 +71,7 @@ def extract_secondary_identifier(properties):
 # def extra_generators(generator): # pylint: disable=unused-argument
 #    return [('pdk-withings-device-full', 'Full Withings Server Data')]
 
-def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
@@ -96,13 +96,22 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
                     writer.writerow(columns)
 
                     for source in sources:
-                        points = DataPoint.objects.filter(source=source, generator_identifier=generator, secondary_identifier=secondary_identifier)
+                        source_reference = DataSourceReference.reference_for_source(source)
+                        generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
+                        points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
                         if data_start is not None:
-                            points = points.filter(created__gte=data_start)
+                            if date_type == 'recorded':
+                                points = points.filter(recorded__gte=data_start)
+                            else:
+                                points = points.filter(created__gte=data_start)
 
                         if data_end is not None:
-                            points = points.filter(created__lte=data_end)
+                            if date_type == 'recorded':
+                                points = points.filter(recorded__lte=data_end)
+                            else:
+                                points = points.filter(created__lte=data_end)
 
                         points = points.order_by('source', 'created')
 

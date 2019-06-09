@@ -4,10 +4,15 @@ import calendar
 import csv
 import importlib
 import json
+import os
 import tempfile
+import traceback
+
+import dropbox
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.utils import timezone
 
 from .models import DataPoint
 
@@ -87,16 +92,16 @@ def data_table(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None):
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
         output_file = None
 
         try:
-            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end)
+            output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print 'TODO: Update ' + generator + '.compile_report to support data_start and data_end parameters!'
+            print 'TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!'
 
             output_file = generator_module.compile_report(generator, sources)
 
@@ -179,3 +184,35 @@ def extract_location_method(identifier):
         pass
 
     return None
+
+def send_to_destination(destination, report_path):
+    file_sent = False
+
+    if destination.destination == 'dropbox':
+        try:
+            parameters = destination.fetch_parameters()
+
+            if 'access_token' in parameters:
+                client = dropbox.Dropbox(parameters['access_token'])
+
+                path = '/'
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                path = path + '/'
+
+                if 'prepend_date' in parameters:
+                    path = path + timezone.now().date().isoformat() + '-'
+
+                path = path + os.path.basename(os.path.normpath(report_path))
+
+                with open(report_path, 'rb') as report_file:
+                    client.files_upload(report_file.read(), path)
+
+                file_sent = True
+        except BaseException:
+            traceback.print_exc()
+
+    if file_sent is False:
+        print 'Unable to transmit report to destination "' + destination.destination + '".'

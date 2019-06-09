@@ -4,11 +4,12 @@ from django.conf.urls import url
 from django.contrib.auth.views import logout
 from django.conf import settings
 
-from .views import pdk_add_data_point, pdk_add_data_bundle
+from .views import pdk_add_data_point, pdk_add_data_bundle, pdk_app_config
 
 urlpatterns = [
     url(r'^add-point.json$', pdk_add_data_point, name='pdk_add_data_point'),
     url(r'^add-bundle.json$', pdk_add_data_bundle, name='pdk_add_data_bundle'),
+    url(r'^app-config.json$', pdk_app_config, name='pdk_app_config'),
 ]
 
 try:

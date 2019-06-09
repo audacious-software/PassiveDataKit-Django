@@ -1,12 +1,18 @@
 # pylint: disable=no-member,line-too-long
 
+import base64
 import datetime
 import json
 import logging
 
+import six
+
+from nacl.public import PublicKey, PrivateKey, Box
+
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
 from ...decorators import handle_lock
@@ -26,7 +32,7 @@ class Command(BaseCommand):
         parser.add_argument('--count',
                             type=int,
                             dest='bundle_count',
-                            default=25,
+                            default=50,
                             help='Number of bundles to process in a single run')
 
     @handle_lock
@@ -53,61 +59,91 @@ class Command(BaseCommand):
 
         for bundle in DataBundle.objects.filter(processed=False).order_by('-recorded')[:options['bundle_count']]:
             if new_point_count < process_limit:
-                if supports_json is False:
-                    bundle.properties = json.loads(bundle.properties)
+                with transaction.atomic():
+                    if supports_json is False:
+                        bundle.properties = json.loads(bundle.properties)
 
-                for bundle_point in bundle.properties:
-                    if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
-                        point = DataPoint(recorded=timezone.now())
-                        point.source = bundle_point['passive-data-metadata']['source']
-                        point.generator = bundle_point['passive-data-metadata']['generator']
+                    if bundle.encrypted:
+                        if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
+                            payload = base64.b64decode(bundle.properties['encrypted'])
+                            nonce = base64.b64decode(bundle.properties['nonce'])
 
-                        if 'generator-id' in bundle_point['passive-data-metadata']:
-                            point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+                            private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
+                            public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
 
-                        if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
-                            point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
+                            box = Box(private_key, public_key)
 
-                        point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
+                            decrypted_message = box.decrypt(payload, nonce)
 
-                        if supports_json:
-                            point.properties = bundle_point
-                        else:
-                            point.properties = json.dumps(bundle_point, indent=2)
+                            decrypted = six.text_type(decrypted_message, encoding='utf8')
 
-                        point.fetch_secondary_identifier()
+                            bundle.properties = json.loads(decrypted)
+                        elif 'encrypted' in bundle.properties:
+                            print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            break
+                        elif 'nonce' in bundle.properties:
+                            print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            break
 
-                        point.fetch_user_agent(skip_save=True)
+                    for bundle_point in bundle.properties:
+                        if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
+                            point = DataPoint(recorded=timezone.now())
+                            bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
 
-                        point.save()
+                            point.source = bundle_point['passive-data-metadata']['source']
 
-                        if (point.source in seen_sources) is False:
-                            seen_sources.append(point.source)
+                            if point.source is None:
+                                point.source = '-'
 
-                        if (point.source in source_identifiers) is False:
-                            source_identifiers[point.source] = []
+                            point.generator = bundle_point['passive-data-metadata']['generator']
 
-                        latest_key = point.source + '--' + point.generator_identifier
+                            if 'generator-id' in bundle_point['passive-data-metadata']:
+                                point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
 
-                        if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
-                            latest_points[latest_key] = point
+                            if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
+                                point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
 
-                        if (point.generator_identifier in seen_generators) is False:
-                            seen_generators.append(point.generator_identifier)
+                            point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
 
-                        if (point.generator_identifier in source_identifiers[point.source]) is False:
-                            source_identifiers[point.source].append(point.generator_identifier)
+                            if supports_json:
+                                point.properties = bundle_point
+                            else:
+                                point.properties = json.dumps(bundle_point, indent=2)
 
-                        new_point_count += 1
+                            point.fetch_secondary_identifier(skip_save=True)
+                            point.fetch_user_agent(skip_save=True)
+                            point.fetch_generator_definition(skip_save=True)
+                            point.fetch_source_reference(skip_save=True)
 
-                if supports_json is False:
-                    bundle.properties = json.dumps(bundle.properties, indent=2)
+                            point.save()
 
-                bundle.processed = True
-                bundle.save()
+                            if (point.source in seen_sources) is False:
+                                seen_sources.append(point.source)
 
-                if options['delete']:
-                    to_delete.append(bundle)
+                            if (point.source in source_identifiers) is False:
+                                source_identifiers[point.source] = []
+
+                            latest_key = point.source + '--' + point.generator_identifier
+
+                            if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+                                latest_points[latest_key] = point
+
+                            if (point.generator_identifier in seen_generators) is False:
+                                seen_generators.append(point.generator_identifier)
+
+                            if (point.generator_identifier in source_identifiers[point.source]) is False:
+                                source_identifiers[point.source].append(point.generator_identifier)
+
+                            new_point_count += 1
+
+                    if bundle.encrypted is False and supports_json is False:
+                        bundle.properties = json.dumps(bundle.properties, indent=2)
+
+                    bundle.processed = True
+                    bundle.save()
+
+                    if options['delete']:
+                        to_delete.append(bundle)
 
         for bundle in to_delete:
             bundle.delete()
