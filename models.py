@@ -469,6 +469,7 @@ class DataBundle(models.Model):
         properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
     processed = models.BooleanField(default=False, db_index=True)
+    encrypted = models.BooleanField(default=False, db_index=True)
 
 
 class DataFile(models.Model):

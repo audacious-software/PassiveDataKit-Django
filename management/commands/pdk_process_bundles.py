@@ -1,8 +1,13 @@
 # pylint: disable=no-member,line-too-long
 
+import base64
 import datetime
 import json
 import logging
+
+import six
+
+from nacl.public import PublicKey, PrivateKey, Box
 
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
@@ -58,9 +63,33 @@ class Command(BaseCommand):
                     if supports_json is False:
                         bundle.properties = json.loads(bundle.properties)
 
+                    if bundle.encrypted:
+                        if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
+                            payload = base64.b64decode(bundle.properties['encrypted'])
+                            nonce = base64.b64decode(bundle.properties['nonce'])
+
+                            private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
+                            public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
+
+                            box = Box(private_key, public_key)
+
+                            decrypted_message = box.decrypt(payload, nonce)
+
+                            decrypted = six.text_type(decrypted_message, encoding='utf8')
+
+                            bundle.properties = json.loads(decrypted)
+                        elif 'encrypted' in bundle.properties:
+                            print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            break
+                        elif 'nonce' in bundle.properties:
+                            print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            break
+
                     for bundle_point in bundle.properties:
                         if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                             point = DataPoint(recorded=timezone.now())
+                            bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
+
                             point.source = bundle_point['passive-data-metadata']['source']
 
                             if point.source is None:
@@ -107,7 +136,7 @@ class Command(BaseCommand):
 
                             new_point_count += 1
 
-                    if supports_json is False:
+                    if bundle.encrypted is False and supports_json is False:
                         bundle.properties = json.dumps(bundle.properties, indent=2)
 
                     bundle.processed = True
