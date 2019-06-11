@@ -88,6 +88,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         'Source',
                         'Created Timestamp',
                         'Created Date',
+                        'Recorded Timestamp',
+                        'Recorded Date',
                     ]
 
                     for column in SECONDARY_FIELDS[secondary_identifier]:
@@ -125,6 +127,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                                 row.append(point.source)
                                 row.append(calendar.timegm(point.created.utctimetuple()))
                                 row.append(point.created.isoformat())
+                                row.append(calendar.timegm(point.recorded.utctimetuple()))
+                                row.append(point.recorded.isoformat())
 
                                 properties = point.fetch_properties()
 
