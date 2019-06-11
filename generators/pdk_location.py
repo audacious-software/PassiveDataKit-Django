@@ -156,7 +156,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     try:
                         row.append(properties['observed'])
-                    except IndexError:
+                    except KeyError:
                         row.append('')
 
                     try:

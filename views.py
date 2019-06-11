@@ -85,7 +85,7 @@ def pdk_add_data_point(request):
 
 
 @csrf_exempt
-def pdk_add_data_bundle(request): # pylint: disable=too-many-statements
+def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches
     response = {'message': 'Data bundle added successfully, and ready for processing.'}
 
     if request.method == 'CREATE':
@@ -132,14 +132,28 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
         try:
-            points = json.loads(request.POST['payload'])
+            bundle = DataBundle(recorded=timezone.now(), encrypted=False)
 
-            bundle = DataBundle(recorded=timezone.now())
+            if 'encrypted' in request.POST:
+                bundle.encrypted = (request.POST['encrypted'] == 'true')
 
-            if install_supports_jsonfield():
-                bundle.properties = points
+            if bundle.encrypted:
+                payload = {
+                    'encrypted': request.POST['payload'],
+                    'nonce': request.POST['nonce']
+                }
+
+                if install_supports_jsonfield():
+                    bundle.properties = payload
+                else:
+                    bundle.properties = json.dumps(payload, indent=2)
             else:
-                bundle.properties = json.dumps(points, indent=2)
+                points = json.loads(request.POST['payload'])
+
+                if install_supports_jsonfield():
+                    bundle.properties = points
+                else:
+                    bundle.properties = json.dumps(points, indent=2)
 
             bundle.save()
         except ValueError:

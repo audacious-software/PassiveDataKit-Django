@@ -1,13 +1,22 @@
 # pylint: disable=line-too-long, no-member
 
-import datetime
-
+import calendar
 import collections
+import csv
+import datetime
+import json
+import os
 import re
+import tempfile
+
+from zipfile import ZipFile
+
+import arrow
 
 from django.contrib.gis.geos import GEOSGeometry
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.text import slugify
 
 from passive_data_kit.models import DataPoint
 
@@ -55,3 +64,105 @@ def data_table(source, generator):
     context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gte=start).order_by('-created')
 
     return render_to_string('generators/pdk_geofence_event_table_template.html', context)
+
+
+def compile_report(generator, sources, data_start=None, data_end=None): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    now = arrow.get()
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+
+    with ZipFile(filename, 'w', allowZip64=True) as export_file:
+        for source in sources:
+            points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+
+            if data_start is not None:
+                points = points.filter(created__gte=data_start)
+
+            if data_end is not None:
+                points = points.filter(created__lte=data_end)
+
+            points = points.order_by('source', 'created')
+
+            identifier = slugify(generator + '__' + source)
+
+            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+
+            with open(secondary_filename, 'w') as outfile:
+                writer = csv.writer(outfile, delimiter='\t')
+
+                columns = [
+                    'Source',
+                    'Created Timestamp',
+                    'Created Date',
+                    'Recorded Timestamp',
+                    'Recorded Date',
+                    'Observed',
+                    'Fence ID',
+                    'Fence Name',
+                    'Transition',
+                    'Center Latitude',
+                    'Center Longitude',
+                    'Radius',
+                    'Details',
+                ]
+
+                writer.writerow(columns)
+
+                for point in points:
+                    properties = point.fetch_properties()
+
+                    row = []
+
+                    row.append(point.source)
+                    row.append(calendar.timegm(point.created.utctimetuple()))
+                    row.append(point.created.isoformat())
+
+                    row.append(calendar.timegm(point.recorded.utctimetuple()))
+                    row.append(point.recorded.isoformat())
+
+                    try:
+                        row.append(properties['observed'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['fence_details']['identifier'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['fence_details']['name'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['transition'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['fence_details']['center_latitude'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['fence_details']['center_longitude'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(properties['fence_details']['radius'])
+                    except KeyError:
+                        row.append('')
+
+                    try:
+                        row.append(json.dumps(properties['fence_details']))
+                    except KeyError:
+                        row.append('')
+
+                    writer.writerow(row)
+
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+
+            os.remove(secondary_filename)
+
+    return filename
