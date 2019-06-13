@@ -165,6 +165,8 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Source',
                     'Created Timestamp',
                     'Created Date',
+                    'Recorded Timestamp',
+                    'Recorded Date',
                     'Level',
                     'Scale',
                     'Plugged',
@@ -202,10 +204,14 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row = []
 
                     created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
+                    recorded = point.recorded.astimezone(pytz.timezone(settings.TIME_ZONE))
 
                     row.append(point.source)
                     row.append(calendar.timegm(point.created.utctimetuple()))
                     row.append(created.isoformat())
+
+                    row.append(calendar.timegm(point.recorded.utctimetuple()))
+                    row.append(recorded.isoformat())
 
                     row.append(properties['level'])
                     row.append(properties['scale'])
