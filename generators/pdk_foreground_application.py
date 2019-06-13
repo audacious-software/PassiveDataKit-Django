@@ -6,20 +6,26 @@ import datetime
 import json
 import os
 import tempfile
+import time
 
 from zipfile import ZipFile
 
 import arrow
 import pytz
+import requests
+
+from bs4 import BeautifulSoup
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.text import slugify
 
-from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
+from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition, DataServerMetadatum
 
 DEFAULT_INTERVAL = 600
+APP_GENRE_PREFIX = 'Foreground App Genre: '
+SLEEP_DELAY = 5
 
 def extract_secondary_identifier(properties):
     if 'application' in properties:
@@ -164,6 +170,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Application',
                     'Duration',
                     'Screen Active',
+                    'Play Store Category',
                 ]
 
                 writer.writerow(columns)
@@ -215,6 +222,11 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     else:
                         row.append('')
 
+                    if 'application' in properties:
+                        row.append(fetch_app_genre(properties['application']))
+                    else:
+                        row.append('')
+
                     writer.writerow(row)
 
             export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
@@ -222,3 +234,31 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             os.remove(secondary_filename)
 
     return filename
+
+def fetch_app_genre(package_name):
+    key = APP_GENRE_PREFIX + str(package_name)
+
+    cached_metadata = DataServerMetadatum.objects.filter(key=key).first()
+
+    if cached_metadata is not None:
+        return cached_metadata.value
+
+    time.sleep(SLEEP_DELAY)
+
+    req = requests.get('https://play.google.com/store/apps/details?id=' + package_name)
+
+    if req.status_code == 200:
+        soup = BeautifulSoup(req.text, "lxml")
+
+        matches = soup.find_all('a', itemprop='genre')
+
+        for match in matches:
+            cached_metadata = DataServerMetadatum(key=key, value=match.string)
+            cached_metadata.save()
+
+            return cached_metadata.value
+
+    cached_metadata = DataServerMetadatum(key=key, value='Unknown')
+    cached_metadata.save()
+
+    return cached_metadata.value
