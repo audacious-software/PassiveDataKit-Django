@@ -105,7 +105,11 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     points = points.filter(created__gte=start)
 
-    for point in points.order_by('-created'):
+    point_ids = points.values_list('pk', flat=True).order_by('created')
+
+    for point_id in point_ids:
+        point = DataPoint.objects.get(pk=point_id)
+
         properties = point.fetch_properties()
 
         if 'sensor_data' in properties:

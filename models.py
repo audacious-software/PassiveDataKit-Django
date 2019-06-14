@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import connection
 from django.db.models import Q, QuerySet
-from django.db.models.signals import post_delete, pre_save
+from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from django.utils.text import slugify
@@ -384,10 +384,17 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         return None
 
     def fetch_properties(self):
-        if install_supports_jsonfield():
-            return self.properties
+        try:
+            return self.cached_properties # pylint: disable=access-member-before-definition
+        except AttributeError:
+            pass
 
-        return json.loads(self.properties)
+        if install_supports_jsonfield():
+            self.cached_properties = self.properties # pylint: disable=attribute-defined-outside-init
+        else:
+            self.cached_properties = json.loads(self.properties) # pylint: disable=attribute-defined-outside-init
+
+        return self.cached_properties
 
     def fetch_user_agent(self, skip_save=False):
         if self.user_agent is None:
@@ -443,6 +450,10 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
                 self.save()
 
         return CACHED_SOURCE_REFERENCES[self.source]
+
+@receiver(post_save, sender=DataPoint)
+def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
+    del instance.cached_properties
 
 class DataServerMetadatum(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods

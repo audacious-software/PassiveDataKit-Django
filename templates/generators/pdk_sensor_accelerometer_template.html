@@ -20,6 +20,23 @@
             zs.push({ x: {{ value.ts }}, y: {{ value.z_mean }} });
         {% endfor %}
         
+        function tsCompare(a, b) {
+        	var aX = a['x'];
+        	var bX = b['x'];
+        	
+        	if (aX > bX) {
+        		return 1;
+        	} else if (aX < bX) {
+        		return -1;
+        	}
+        	
+        	return 0;
+        }
+        
+        xs = xs.sort(tsCompare);
+        ys = ys.sort(tsCompare);
+        zs = zs.sort(tsCompare);
+        
         var graph = new Rickshaw.Graph({
             element: document.querySelector("#accelerometer-chart"), 
             renderer: 'multi',
