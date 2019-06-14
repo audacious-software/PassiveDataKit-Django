@@ -205,7 +205,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 identifier = slugify(generator + '__' + source)
 
                 if splits > 1:
-                    identifier += '__' + str(split_index)
+                    identifier += '__' + str(split_index) + '_of_' + str(splits)
 
                 secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
@@ -231,7 +231,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     index = split_index * SPLIT_SIZE
 
                     while index < (split_index + 1) * SPLIT_SIZE and index < points_count:
-                        for point in points[index:(index + 500)]:
+                        for point in points[index:(index + 1000)]:
                             properties = point.fetch_properties()
 
                             if 'observed' in properties['sensor_data']:
@@ -277,7 +277,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                                     writer.writerow(row)
 
-                        index += 500
+                        index += 1000
 
                 source_name = source
 

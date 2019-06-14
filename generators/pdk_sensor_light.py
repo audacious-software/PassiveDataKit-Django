@@ -20,7 +20,7 @@ from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 
 WINDOW_SIZE = 300
 
-SPLIT_SIZE = 10000
+SPLIT_SIZE = 25000
 
 def fetch_values(source, generator, start, end):
     values = []
@@ -121,9 +121,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 else:
                     points = points.filter(created__lte=data_end)
 
-            points = points.order_by('created')
+            point_ids = points.values_list('pk', flat=True).order_by('created')
 
-            points_count = float(points.count())
+            points_count = len(point_ids)
 
             splits = int(math.ceil(points_count / SPLIT_SIZE))
 
@@ -131,7 +131,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 identifier = slugify(generator + '__' + source)
 
                 if splits > 1:
-                    identifier += '__' + str(split_index)
+                    identifier += '__' + str(split_index) + '_of_' + str(splits)
 
                 secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
@@ -155,7 +155,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     index = split_index * SPLIT_SIZE
 
                     while index < (split_index + 1) * SPLIT_SIZE and index < points_count:
-                        for point in points[index:(index + 500)]:
+                        for point_id in point_ids[index:(index + 1000)]:
+                            point = DataPoint.objects.get(pk=point_id)
+
                             properties = point.fetch_properties()
 
                             if 'observed' in properties['sensor_data']:
@@ -191,7 +193,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                                     writer.writerow(row)
 
-                        index += 500
+                        index += 1000
 
                 source_name = source
 
