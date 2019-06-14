@@ -236,7 +236,7 @@ class DataPointManager(models.Manager):
         point = None
 
         if latest_point_datum is not None:
-            point = DataPoint.objects.get(pk=int(latest_point_datum.value))
+            point = DataPoint.objects.filter(pk=int(latest_point_datum.value)).first()
 
         if point is None:
             source_reference = DataSourceReference.objects.filter(source=source).first()
