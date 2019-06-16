@@ -453,7 +453,10 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
 @receiver(post_save, sender=DataPoint)
 def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
-    del instance.cached_properties
+    try:
+        del instance.cached_properties
+    except AttributeError:
+        pass
 
 class DataServerMetadatum(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods

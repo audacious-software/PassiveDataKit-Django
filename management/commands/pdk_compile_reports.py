@@ -106,10 +106,24 @@ class Command(BaseCommand):
                                 generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
                                 source_reference = DataSourceReference.reference_for_source(source)
 
-                                data_query = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('created')
+                                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
-                                first = data_query.first() # pylint: disable=line-too-long
-                                last = data_query.last() # pylint: disable=line-too-long
+                                if data_start is not None:
+                                    if date_type == 'recorded':
+                                        points = points.filter(recorded__gte=data_start)
+                                    else:
+                                        points = points.filter(created__gte=data_start)
+
+                                if data_end is not None:
+                                    if date_type == 'recorded':
+                                        points = points.filter(recorded__lte=data_end)
+                                    else:
+                                        points = points.filter(created__lte=data_end)
+
+                                points = points.order_by('created')
+
+                                first = points.first() # pylint: disable=line-too-long
+                                last = points.last() # pylint: disable=line-too-long
 
                                 if first is not None:
                                     first_create = first.created
@@ -151,7 +165,7 @@ class Command(BaseCommand):
                                         out_points = []
 
                                         for point in points:
-                                            out_points.append(point.properties)
+                                            out_points.append(point.fetch_properties())
 
                                         if out_points:
                                             export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long

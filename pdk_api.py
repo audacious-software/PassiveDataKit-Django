@@ -14,7 +14,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .models import DataPoint
+from .models import DataPoint, DataGeneratorDefinition, DataSourceReference
 
 # def name_for_generator(identifier):
 #    if identifier == 'web-historian':
@@ -92,7 +92,7 @@ def data_table(source, generator):
 
     return render_to_string('pdk_generic_viz_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')
 
@@ -130,8 +130,26 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             'Properties'
         ])
 
+        generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
         for source in sources:
-            points = DataPoint.objects.filter(source=source, generator_identifier=generator).order_by('created') # pylint: disable=no-member,line-too-long
+            source_reference = DataSourceReference.reference_for_source(source)
+
+            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+
+            if data_start is not None:
+                if date_type == 'recorded':
+                    points = points.filter(recorded__gte=data_start)
+                else:
+                    points = points.filter(created__gte=data_start)
+
+            if data_end is not None:
+                if date_type == 'recorded':
+                    points = points.filter(recorded__lte=data_end)
+                else:
+                    points = points.filter(created__lte=data_end)
+
+            points = points.order_by('source', 'created')
 
             index = 0
             count = points.count()
@@ -155,7 +173,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     row.append(calendar.timegm(point.recorded.utctimetuple()))
                     row.append(point.recorded.isoformat())
-                    row.append(json.dumps(point.properties))
+                    row.append(json.dumps(point.fetch_properties()))
 
                     writer.writerow(row)
 
