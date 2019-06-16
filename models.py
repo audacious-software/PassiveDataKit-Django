@@ -740,6 +740,19 @@ class DataSourceAlert(models.Model):
         else:
             self.alert_details = json.dumps(details, indent=2)
 
+@receiver(pre_save, sender=DataSourceAlert)
+def data_source_alert_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+    alert = kwargs['instance']
+
+    alert_details = alert.alert_details
+
+    while isinstance(alert_details, dict) is False:
+        alert_details = json.loads(alert_details)
+
+    if install_supports_jsonfield():
+        alert.alert_details = alert_details
+    else:
+        alert.alert_details = json.dumps(alert_details, indent=2)
 
 class DataPointVisualization(models.Model):
     source = models.CharField(max_length=1024, db_index=True)
@@ -853,6 +866,9 @@ class ReportJobBatchRequest(models.Model):
             params = self.parameters
         else:
             params = json.loads(self.parameters)
+
+        if ('sources' in params) is False:
+            params['sources'] = sorted(DataPoint.objects.sources())
 
         sources = sorted(params['sources'], reverse=True)
 
@@ -1002,6 +1018,19 @@ class ReportJobBatchRequest(models.Model):
         self.completed = timezone.now()
         self.save()
 
+@receiver(pre_save, sender=ReportJobBatchRequest)
+def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+    job = kwargs['instance']
+
+    parameters = job.parameters
+
+    while isinstance(parameters, dict) is False:
+        parameters = json.loads(parameters)
+
+    if install_supports_jsonfield():
+        job.parameters = parameters
+    else:
+        job.parameters = json.dumps(parameters, indent=2)
 
 class DataServerApiToken(models.Model):
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods

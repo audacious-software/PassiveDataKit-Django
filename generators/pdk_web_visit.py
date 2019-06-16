@@ -2,8 +2,11 @@
 
 import csv
 import calendar
+import datetime
+import json
 import os
 import tempfile
+import time
 
 from zipfile import ZipFile
 
@@ -11,9 +14,11 @@ import arrow
 import pytz
 
 from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.text import slugify
 
-from ..models import DataPoint
+from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Web Visit'
@@ -24,6 +29,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:
+            source_reference = DataSourceReference.reference_for_source(source)
+            generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
             identifier = slugify(generator + '__' + source)
 
             secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
@@ -48,7 +56,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 writer.writerow(columns)
 
-                points = DataPoint.objects.filter(source=source, generator_identifier=generator)
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
                 if data_start is not None:
                     if date_type == 'recorded':
@@ -93,3 +101,78 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             os.remove(secondary_filename)
 
     return filename
+
+def data_table(source, generator):
+    context = {}
+    context['source'] = source
+    context['generator_identifier'] = generator
+
+    source_reference = DataSourceReference.reference_for_source(source.identifier)
+    generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+
+    context['values'] = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created')
+
+    return render_to_string('pdk_web_visit_table_template.html', context)
+
+
+def visualization(source, generator): # pylint: disable=unused-argument
+    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-web-visit/timestamp-counts.json'
+
+    try:
+        with open(filename) as infile:
+            data = json.load(infile)
+
+            context = {}
+
+            context['data'] = data
+
+            return render_to_string('pdk_web_visit_viz_template.html', context)
+    except IOError:
+        pass
+
+    return None
+
+def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument, too-many-locals
+    now = timezone.now()
+
+    points = list(points.order_by('-created'))
+    points.reverse()
+
+    first = points[0]
+
+    start = first.created.replace(minute=0, second=0, microsecond=0)
+
+    end = start + datetime.timedelta(hours=1)
+    point_index = 0
+    point_count = len(points)
+
+    point = None
+
+    if point_count > 0:
+        point = points[point_index]
+
+    timestamp_counts = {}
+
+    keys = []
+
+    while start < now:
+        timestamp = str(time.mktime(start.timetuple()))
+
+        keys.append(timestamp)
+
+        timestamp_counts[timestamp] = 0
+
+        while point is not None and point.created < end and point_index < (point_count - 1):
+            timestamp_counts[timestamp] += 1
+
+            point_index += 1
+
+            point = points[point_index]
+
+        start = end
+        end = start + datetime.timedelta(hours=1)
+
+    timestamp_counts['keys'] = keys
+
+    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+        json.dump(timestamp_counts, outfile, indent=2)

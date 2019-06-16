@@ -32,8 +32,8 @@
 		            </td>
 	        {% endif %}
                 <td>
-                	<span style="display: none;">{{ alert.data_source.name }}</span>
-                	<a href="{% url 'pdk_source' alert.data_source.identifier %}">{{ alert.data_source.name }}</a>
+                	<span style="display: none;">{{ alert.generator_identifier }}</span>
+                	<a href="{% url 'pdk_source_generator' alert.data_source.identifier alert.generator_identifier %}">{{ alert.generator_identifier }}</a>
                 </td>
                 <td>
 					{% date_ago alert.created %}

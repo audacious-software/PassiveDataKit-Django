@@ -8,6 +8,7 @@ import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
 
+from ..models import install_supports_jsonfield
 
 class Migration(migrations.Migration):
 
@@ -15,17 +16,33 @@ class Migration(migrations.Migration):
         ('passive_data_kit', '0016_datapoint_secondary_identifier'),
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='DataSourceAlert',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('alert_name', models.CharField(max_length=1024)),
-                ('alert_details', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('generator_identifier', models.CharField(blank=True, max_length=1024, null=True)),
-                ('created', models.DateTimeField()),
-                ('active', models.BooleanField(default=True)),
-                ('data_source', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='passive_data_kit.DataSource')),
-            ],
-        ),
-    ]
+    if install_supports_jsonfield():
+        operations = [
+            migrations.CreateModel(
+                name='DataSourceAlert',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('alert_name', models.CharField(max_length=1024)),
+                    ('alert_details', django.contrib.postgres.fields.jsonb.JSONField()),
+                    ('generator_identifier', models.CharField(blank=True, max_length=1024, null=True)),
+                    ('created', models.DateTimeField()),
+                    ('active', models.BooleanField(default=True)),
+                    ('data_source', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='passive_data_kit.DataSource')),
+                ],
+            ),
+        ]
+    else:
+        operations = [
+            migrations.CreateModel(
+                name='DataSourceAlert',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('alert_name', models.CharField(max_length=1024)),
+                    ('alert_details', models.TextField(max_length=(32 * 1024 * 1024 * 1024))),
+                    ('generator_identifier', models.CharField(blank=True, max_length=1024, null=True)),
+                    ('created', models.DateTimeField()),
+                    ('active', models.BooleanField(default=True)),
+                    ('data_source', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='alerts', to='passive_data_kit.DataSource')),
+                ],
+            ),
+        ]

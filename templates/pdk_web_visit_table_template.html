@@ -1,0 +1,46 @@
+{% load passive_data_kit %}
+<table id="visits_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-search="true" data-sort-order="desc" data-pagination="true" style="z-index: 10;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Recorded</th>
+            <th data-sortable="true">Visit ID</th>
+            <th data-sortable="true">URL</th>
+            <th data-sortable="true">Title</th>
+            <th data-sortable="true">Transition</th>
+            <th data-sortable="true">Referrer Visit ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+            {% with props=row.fetch_properties %}
+                <tr>
+                    <td>
+                        <span style="display: none;">
+                            {{ row.created.isoformat }}
+                        </span>
+                        {{ row.created }}
+                    </td>
+                    <td>
+                        <span style="display: none;">
+                            {{ row.recorded.isoformat }}
+                        </span>
+                        {{ row.recorded }}
+                    </td>
+                    <td>{{ props.visitId }}</td>
+                    <td><a href="{{ props.url }}" target="_blank">{{ props.host }}</a></td>
+                    
+                    <td>{{ props.title }}</td>
+                    <td>{{ props.transition }}</td>
+                    <td>{{ props.referringVisitId }}</td>
+                </tr>
+            {% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    window.showValues = function() {
+
+    };
+</script>
