@@ -799,6 +799,17 @@ class ReportJob(models.Model):
 
     report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
 
+@receiver(post_delete, sender=ReportJob)
+def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
+    job = kwargs['instance']
+
+    try:
+        storage, path = job.report.storage, job.report.path
+        storage.delete(path)
+    except ValueError:
+        pass
+
+
 class ReportDestination(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations')
 
@@ -827,15 +838,19 @@ class ReportDestination(models.Model):
             except AttributeError:
                 pass
 
-@receiver(post_delete, sender=ReportJob)
-def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
-    job = kwargs['instance']
+@receiver(pre_save, sender=ReportDestination)
+def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+    destination = kwargs['instance']
 
-    try:
-        storage, path = job.report.storage, job.report.path
-        storage.delete(path)
-    except ValueError:
-        pass
+    parameters = destination.parameters
+
+    while isinstance(parameters, dict) is False:
+        parameters = json.loads(parameters)
+
+    if install_supports_jsonfield():
+        destination.parameters = parameters
+    else:
+        destination.parameters = json.dumps(parameters, indent=2)
 
 class ReportJobBatchRequest(models.Model):
     requester = models.ForeignKey(settings.AUTH_USER_MODEL)
