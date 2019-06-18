@@ -1,0 +1,31 @@
+<table id="text_message_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" data-search="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Direction</th>
+            <th data-sortable="true">Length</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+        	{% with props=row.fetch_properties %}
+				<tr>
+					<td>
+						<span style="display: none;">
+							{{ row.created.isoformat }}
+						</span>
+						{{ row.created }}
+					</td>
+					<td>{{ props.direction }}</td>
+					<td>{{ props.length }}</td>
+				</tr>
+			{% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#text_message_values_table").show();
+	};
+</script>
