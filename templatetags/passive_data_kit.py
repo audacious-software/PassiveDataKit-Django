@@ -11,7 +11,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from ..models import DataSourceAlert
+from ..models import DataSourceAlert, DataServerApiToken
 
 register = template.Library()
 
@@ -662,3 +662,29 @@ class CustomHomeHeaderNode(template.Node):
                 pass
 
         return output
+
+
+@register.tag(name='pdk_user_token')
+def pdk_user_token(parser, args): # pylint: disable=unused-argument
+    try:
+        tag_name, user = args.split_contents() # pylint: disable=unused-variable
+    except ValueError:
+        raise template.TemplateSyntaxError('%r tag requires a single argument' %
+                                           args.contents.split()[0])
+
+    return PDKUserToken(user)
+
+class PDKUserToken(template.Node):
+    def __init__(self, user):
+        self.user = template.Variable(user)
+
+    def render(self, context):
+        user = self.user.resolve(context)
+
+        token = user.pdk_api_tokens.all().first()
+
+        if token is None:
+            token = DataServerApiToken(user=user)
+            token.save()
+
+        return token.fetch_token()

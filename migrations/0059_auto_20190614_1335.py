@@ -13,24 +13,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='appconfiguration',
-            name='configuration_json',
-            field=models.TextField(max_length=34359738368),
-        ),
-        migrations.AlterField(
-            model_name='datasourcealert',
-            name='alert_details',
-            field=models.TextField(max_length=34359738368),
-        ),
-        migrations.AlterField(
-            model_name='reportdestination',
-            name='parameters',
-            field=models.TextField(max_length=34359738368),
-        ),
-        migrations.AlterField(
-            model_name='reportjobbatchrequest',
-            name='parameters',
-            field=models.TextField(max_length=34359738368),
-        ),
+    	# Removed migrations that would convert JSON fields to text fields.
     ]
