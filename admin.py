@@ -30,28 +30,20 @@ class DataPointVisualizationAdmin(admin.OSMGeoAdmin):
     actions = [reset_visualizations]
 
 class DataPointGeneratorIdentifierFilter(SimpleListFilter):
-    title = 'Generator Identifier'
-    parameter_name = 'generator_identifier'
+    title = 'Generator'
+    parameter_name = 'generator_definition'
 
     def lookups(self, request, model_admin):
         values = []
 
-        identifiers = DataPoint.objects.generator_identifiers()
+        for generator_definition in DataGeneratorDefinition.objects.all().order_by('name'):
+            values.append((generator_definition.pk, generator_definition.name,))
 
-        if identifiers is not None:
-            for identifier in identifiers:
-                values.append((identifier, identifier,))
-
-            return values
-
-        DataPoint.objects.generator_identifiers()
-
-        return self.lookups(request, model_admin)
-
+        return values
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(generator_identifier=self.value())
+            return queryset.filter(generator_definition=self.value())
 
         return None
 
