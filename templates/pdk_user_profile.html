@@ -14,23 +14,26 @@
 	<form action="" method="post">
 		{% csrf_token %}
 		<div class="row">
-			<div class="col-md-6">
-				<h5>Username</h5>
+			<div class="col-md-8">
+				<h5 style="margin-bottom: 0;">Username</h5>
 				{{ user.username }}
 
-				<h5 style="margin-top: 2em;">E-Mail Address</h5>
+				<h5 style="margin-top: 2em; margin-bottom: 0;">E-Mail Address</h5>
 				{{ user.email }}
 
-				<h5 style="margin-top: 2em;">Name</h5>
+				<h5 style="margin-top: 2em; margin-bottom: 0;">Name</h5>
 				{{ user.first_name }} {{ user.last_name }}
 
-				<h5 style="margin-top: 2em;"><label>Created</h5>
+				<h5 style="margin-top: 2em; margin-bottom: 0;"><label>Created</h5>
 				{{ user.date_joined.date }}
 
-				<h5 style="margin-top: 2em;"><label>Last Login</h5>
+				<h5 style="margin-top: 2em; margin-bottom: 0;"><label>Last Login</h5>
 				{{ user.last_login.date }}
+
+				<h5 style="margin-top: 2em; margin-bottom: 0;"><label>API Token</h5>
+				{% pdk_user_token user %}
 			</div>
-			<div class="col-md-6">
+			<div class="col-md-4">
 				<div style="border-color: #ddd; border-width: 1px; border-radius: 4px; border-style: solid; padding: 10px; -webkit-box-shadow: none; box-shadow: none;">
 		            <h3 style="margin-top: 0px; margin-bottom: 1em;">Change Password</h1> 
 					<div class="form-group">

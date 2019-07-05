@@ -12,7 +12,8 @@ from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
                     DataFile, AppConfiguration, DataGeneratorDefinition, \
-                    DataSourceReference, ReportDestination
+                    DataSourceReference, ReportDestination, DataServerAccessRequest, \
+                    DataServerAccessRequestPending
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -197,3 +198,17 @@ class DataSourceReferenceAdmin(admin.OSMGeoAdmin):
 class ReportDestinationAdmin(admin.OSMGeoAdmin):
     list_display = ('user', 'destination', 'description')
     search_fields = ('destination', 'user',)
+
+@admin.register(DataServerAccessRequestPending)
+class DataServerAccessRequestPendingAdmin(admin.OSMGeoAdmin):
+    list_display = ('user_identifier', 'request_type', 'request_time', 'successful', 'processed',)
+
+    search_fields = ('user_identifier', 'request_metadata',)
+    list_filter = ('request_time', 'request_type', 'successful', 'processed',)
+
+@admin.register(DataServerAccessRequest)
+class DataServerAccessRequestAdmin(admin.OSMGeoAdmin):
+    list_display = ('user_identifier', 'request_type', 'request_time', 'successful',)
+
+    search_fields = ('user_identifier', 'request_metadata',)
+    list_filter = ('request_time', 'request_type', 'successful',)

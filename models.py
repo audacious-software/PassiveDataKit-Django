@@ -1047,24 +1047,6 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
     else:
         job.parameters = json.dumps(parameters, indent=2)
 
-class DataServerApiToken(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
-        verbose_name = "data server API token"
-        verbose_name_plural = "data server API tokens"
-
-    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens')
-    token = models.CharField(max_length=1024, null=True, blank=True)
-    expires = models.DateTimeField(null=True, blank=True)
-
-    def fetch_token(self):
-        if (self.token is not None) and (self.token.strip() != ''):
-            return self.token
-
-        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
-        self.save()
-
-        return self.token
-
 class AppConfiguration(models.Model):
     name = models.CharField(max_length=1024)
     id_pattern = models.CharField(max_length=1024)
@@ -1085,3 +1067,52 @@ class AppConfiguration(models.Model):
             return self.configuration_json
 
         return json.loads(self.configuration_json)
+
+class DataServerApiToken(models.Model):
+    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+        verbose_name = "data server API token"
+        verbose_name_plural = "data server API tokens"
+
+    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens')
+    token = models.CharField(max_length=1024, null=True, blank=True)
+    expires = models.DateTimeField(null=True, blank=True)
+
+    def fetch_token(self):
+        if (self.token is not None) and (self.token.strip() != ''):
+            return self.token
+
+        self.token = ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64))
+        self.save()
+
+        return self.token
+
+class DataServerAccessRequest(models.Model):
+    user_identifier = models.CharField(max_length=4096, db_index=True)
+    request_type = models.CharField(max_length=4096, db_index=True)
+    request_time = models.DateTimeField(db_index=True)
+    request_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+    successful = models.BooleanField(default=True, db_index=True)
+
+class DataServerAccessRequestPending(models.Model):
+    user_identifier = models.CharField(max_length=4096)
+    request_type = models.CharField(max_length=4096)
+    request_time = models.DateTimeField()
+    request_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+    successful = models.BooleanField(default=True)
+
+    processed = models.BooleanField(default=False)
+
+    def process(self):
+        request = DataServerAccessRequest()
+
+        request.user_identifier = self.user_identifier
+        request.request_type = self.request_type
+        request.request_type = self.request_type
+        request.request_time = self.request_time
+        request.request_metadata = self.request_metadata
+        request.successful = self.successful
+
+        request.save()
+
+        self.processed = True
+        self.save()

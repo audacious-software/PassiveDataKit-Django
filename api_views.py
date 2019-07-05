@@ -7,13 +7,14 @@ import arrow
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseNotAllowed
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate
 
-from passive_data_kit.models import DataServerApiToken, DataPoint
+from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending
 
 
 def valid_pdk_token_required(function):
@@ -22,7 +23,9 @@ def valid_pdk_token_required(function):
 
         now = timezone.now()
 
-        if DataServerApiToken.objects.filter(token=token, expires__gte=now).count() > 0:
+        expires = Q(expires__gte=now) | Q(expires=None)
+
+        if DataServerApiToken.objects.filter(token=token).filter(expires).count() > 0:
             return function(request, *args, **kwargs)
         else:
             raise PermissionDenied('Invalid Token')
@@ -133,6 +136,21 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
             matches.append(item.fetch_properties())
 
         payload['matches'] = matches
+
+        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+
+        access_request = DataServerAccessRequestPending()
+
+        if token is not None:
+            access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
+        else:
+            access_request.user_identifier = 'api_token: ' + request.POST['token']
+
+        access_request.request_type = 'api-data-points-request'
+        access_request.request_time = timezone.now()
+        access_request.request_metadata = json.dumps(request.POST, indent=2)
+        access_request.successful = True
+        access_request.save()
 
         return HttpResponse(json.dumps(payload), content_type='application/json')
 
