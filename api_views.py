@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, line-too-long
 
 import datetime
 import json
@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate
 
-from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending
+from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource
 
 
 def valid_pdk_token_required(function):
@@ -147,6 +147,95 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
             access_request.user_identifier = 'api_token: ' + request.POST['token']
 
         access_request.request_type = 'api-data-points-request'
+        access_request.request_time = timezone.now()
+        access_request.request_metadata = json.dumps(request.POST, indent=2)
+        access_request.successful = True
+        access_request.save()
+
+        return HttpResponse(json.dumps(payload), content_type='application/json')
+
+    return HttpResponseNotAllowed(['POST'])
+
+@csrf_exempt
+@valid_pdk_token_required
+def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches
+    if request.method == 'POST':
+        page_size = int(request.POST['page_size'])
+        page_index = int(request.POST['page_index'])
+
+        filters = json.loads(request.POST['filters'])
+        excludes = json.loads(request.POST['excludes'])
+        order_bys = json.loads(request.POST['order_by'])
+
+        query = None
+
+        for filter_obj in filters:
+            processed_filter = {}
+
+            for field, value in filter_obj.iteritems():
+                if value is not None:
+                    if field == 'created' or field == 'recorded':
+                        value = arrow.get(value).datetime
+
+                processed_filter[field] = value
+
+            if query is None:
+                query = DataSource.objects.filter(**processed_filter)
+            else:
+                query = query.filter(**processed_filter)
+
+        for exclude in excludes:
+            processed_exclude = {}
+
+            for field, value in exclude.iteritems():
+                if value is not None:
+                    if field == 'created' or field == 'recorded':
+                        value = arrow.get(value).datetime
+
+                processed_exclude[field] = value
+
+            if query is None:
+                query = DataSource.objects.exclude(**processed_exclude)
+            else:
+                query = query.exclude(**processed_exclude)
+
+        if query is None:
+            query = DataSource.objects.all()
+
+        query = query.order_by('identifier')
+
+        payload = {
+            'count': query.count(),
+            'page_index': page_index,
+            'page_size': page_size,
+        }
+
+        processed_order_by = []
+
+        for order_by in order_bys:
+            for item in order_by:
+                processed_order_by.append(item)
+
+        if processed_order_by:
+            query = query.order_by(*processed_order_by)
+
+        matches = []
+
+        for item in query[(page_index * page_size):((page_index + 1) * page_size)]:
+            matches.append(item.fetch_definition())
+
+        payload['matches'] = matches
+
+        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+
+        access_request = DataServerAccessRequestPending()
+
+        if token is not None:
+            access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
+        else:
+            access_request.user_identifier = 'api_token: ' + request.POST['token']
+
+        access_request.request_type = 'api-data-source-request'
         access_request.request_time = timezone.now()
         access_request.request_metadata = json.dumps(request.POST, indent=2)
         access_request.successful = True

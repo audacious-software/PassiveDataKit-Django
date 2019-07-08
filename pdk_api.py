@@ -234,3 +234,13 @@ def send_to_destination(destination, report_path):
 
     if file_sent is False:
         print 'Unable to transmit report to destination "' + destination.destination + '".'
+
+def annotate_source_definition(source, definition):
+    active_alerts = []
+
+    for alert in source.alerts.filter(active=True):
+        active_alerts.append(alert.fetch_definition())
+
+    definition['active_alerts'] = active_alerts
+
+    return definition

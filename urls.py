@@ -43,8 +43,9 @@ except AttributeError:
 
 try:
     if settings.PDK_API_ENABLED:
-        from .api_views import pdk_request_token, pdk_data_point_query
+        from .api_views import pdk_request_token, pdk_data_point_query, pdk_data_source_query
         urlpatterns.append(url(r'^api/request-token.json$', pdk_request_token, name='pdk_request_token'))
         urlpatterns.append(url(r'^api/data-points.json$', pdk_data_point_query, name='pdk_data_point_query'))
+        urlpatterns.append(url(r'^api/data-sources.json$', pdk_data_source_query, name='pdk_data_source_query'))
 except AttributeError:
     pass
