@@ -86,7 +86,10 @@ def pdk_add_data_point(request):
 
 @csrf_exempt
 def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches
-    response = {'message': 'Data bundle added successfully, and ready for processing.'}
+    response = {
+        'message': 'Data bundle added successfully, and ready for processing.',
+        'added': True
+    }
 
     if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), \
