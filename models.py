@@ -127,7 +127,7 @@ class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
     def __unicode__(self):
-        return self.source
+        return unicode(self.source)
 
     @classmethod
     def reference_for_source(cls, source):
@@ -695,6 +695,30 @@ class DataSource(models.Model):
 
         if 'latest_point' in metadata:
             return DataPoint.objects.filter(pk=metadata['latest_point']).first()
+
+        return None
+
+    def earliest_point(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'earliest_point' in metadata:
+            return DataPoint.objects.filter(pk=metadata['earliest_point']).first()
+
+        source_reference = DataSourceReference.reference_for_source(self.identifier)
+
+        point = DataPoint.objects.filter(source_reference=source_reference).order_by('created').first()
+
+        if point is not None:
+            metadata['earliest_point'] = point.pk
+
+            if install_supports_jsonfield():
+                self.performance_metadata = metadata
+            else:
+                self.performance_metadata = json.dumps(metadata, indent=2)
+
+            self.save()
+
+            return point
 
         return None
 

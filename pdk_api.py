@@ -243,4 +243,28 @@ def annotate_source_definition(source, definition):
 
     definition['active_alerts'] = active_alerts
 
+    earliest_point = source.earliest_point()
+
+    if earliest_point is not None:
+        definition['earliest_point'] = {
+            'pk': earliest_point.pk,
+            'generator_identifier': earliest_point.generator_identifier,
+            'created': earliest_point.created.isoformat(),
+            'recorded': earliest_point.recorded.isoformat()
+        }
+    else:
+        definition['earliest_point'] = None
+
+    latest_point = source.latest_point()
+
+    if latest_point is not None:
+        definition['latest_point'] = {
+            'pk': latest_point.pk,
+            'generator_identifier': latest_point.generator_identifier,
+            'created': latest_point.created.isoformat(),
+            'recorded': latest_point.recorded.isoformat()
+        }
+    else:
+        definition['latest_point'] = None
+
     return definition
