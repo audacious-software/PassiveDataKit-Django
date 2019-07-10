@@ -127,7 +127,7 @@ class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
     def __unicode__(self):
-        return self.source
+        return unicode(self.source)
 
     @classmethod
     def reference_for_source(cls, source):
@@ -534,6 +534,32 @@ class DataSource(models.Model):
     def __unicode__(self):
         return self.name + ' (' + self.identifier + ')'
 
+    def fetch_definition(self):
+        definition = {
+            'name': self.name,
+            'identifier': self.identifier,
+            'latest_user_agent': self.latest_user_agent(),
+            'suppresses_alerts': self.should_suppress_alerts(),
+            'point_count': self.point_count(),
+        }
+
+        if self.group is not None:
+            definition['group'] = self.group.name
+        else:
+            definition['group'] = None
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                definition = pdk_api.annotate_source_definition(self, definition)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
+        return definition
+
     def fetch_performance_metadata(self):
         if self.performance_metadata is not None:
             if install_supports_jsonfield():
@@ -672,6 +698,30 @@ class DataSource(models.Model):
 
         return None
 
+    def earliest_point(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'earliest_point' in metadata:
+            return DataPoint.objects.filter(pk=metadata['earliest_point']).first()
+
+        source_reference = DataSourceReference.reference_for_source(self.identifier)
+
+        point = DataPoint.objects.filter(source_reference=source_reference).order_by('created').first()
+
+        if point is not None:
+            metadata['earliest_point'] = point.pk
+
+            if install_supports_jsonfield():
+                self.performance_metadata = metadata
+            else:
+                self.performance_metadata = json.dumps(metadata, indent=2)
+
+            self.save()
+
+            return point
+
+        return None
+
     def point_count(self):
         metadata = self.fetch_performance_metadata()
 
@@ -739,6 +789,21 @@ class DataSourceAlert(models.Model):
             self.alert_details = details
         else:
             self.alert_details = json.dumps(details, indent=2)
+
+    def fetch_definition(self):
+        definition = {
+            'name': self.alert_name,
+            'level': self.alert_level,
+            'source': self.data_source.identifier,
+            'generator': self.generator_identifier,
+            'created': self.created.isoformat(),
+            'updated': self.updated.isoformat(),
+            'active': self.active
+        }
+
+        definition['details'] = self.fetch_alert_details()
+
+        return definition
 
 @receiver(pre_save, sender=DataSourceAlert)
 def data_source_alert_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
