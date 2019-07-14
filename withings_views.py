@@ -13,8 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import DataPoint, install_supports_jsonfield
 
-AUTHORIZE_URL = 'https://account.withings.com/oauth2_user/authorize2'
-ACCESS_TOKEN_URL = 'https://account.withings.com/oauth2/token'
+AUTHORIZE_URL = 'https://account.withings.com/oauth2_user/authorize2' # nosec
+ACCESS_TOKEN_URL = 'https://account.withings.com/oauth2/token' # nosec
 
 @csrf_exempt
 def pdk_withings_start(request, source_id): # pylint: disable=unused-argument

@@ -19,7 +19,7 @@ from ...models import DataPoint, install_supports_jsonfield
 
 GENERATOR_NAME = 'pdk-withings-device: Passive Data Kit Server'
 
-REFRESH_TOKEN_URL = 'https://account.withings.com/oauth2/token'
+REFRESH_TOKEN_URL = 'https://account.withings.com/oauth2/token' # nosec
 
 def refresh_access_token(properties):
     params = {
