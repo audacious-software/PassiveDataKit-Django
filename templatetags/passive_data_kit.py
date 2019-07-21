@@ -688,3 +688,12 @@ class PDKUserToken(template.Node):
             token.save()
 
         return token.fetch_token()
+
+@register.filter
+def pdk_percentage(value):
+    try:
+        return '{0:.0%}'.format(float(value))
+    except ValueError:
+        pass
+
+    return value
