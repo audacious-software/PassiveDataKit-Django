@@ -304,6 +304,10 @@ class DataPointManager(models.Manager):
 
         point.save()
 
+        point.fetch_generator_definition()
+        point.fetch_source_reference()
+        point.fetch_secondary_identifier()
+
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
