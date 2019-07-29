@@ -13,6 +13,8 @@ from django.core.management.base import BaseCommand
 from ...decorators import handle_lock
 from ...models import DataPoint, DataBundle, install_supports_jsonfield, DataSourceReference, DataSource, DataSourceAlert
 
+PAGE_SIZE = 5000
+
 class Command(BaseCommand):
     help = 'Remove data associated with a specific source identifier.'
 
@@ -36,45 +38,53 @@ class Command(BaseCommand):
 
         to_delete = []
 
-        for bundle in DataBundle.objects.all():
-            if supports_json is False:
-                bundle.properties = json.loads(bundle.properties)
+        index = 0
+        total = DataBundle.objects.all().count()
 
-            if bundle.encrypted:
-                if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
-                    payload = base64.b64decode(bundle.properties['encrypted'])
-                    nonce = base64.b64decode(bundle.properties['nonce'])
+        while index < total:
+            print 'Inspecting DataBundle ' + str(index) + ' of ' + str(total)
 
-                    private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
-                    public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
+            for bundle in DataBundle.objects.all().order_by('recorded')[index:(index + PAGE_SIZE)]:
+                if supports_json is False:
+                    bundle.properties = json.loads(bundle.properties)
 
-                    box = Box(private_key, public_key)
+                if bundle.encrypted:
+                    if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
+                        payload = base64.b64decode(bundle.properties['encrypted'])
+                        nonce = base64.b64decode(bundle.properties['nonce'])
 
-                    decrypted_message = box.decrypt(payload, nonce)
+                        private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
+                        public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
 
-                    decrypted = six.text_type(decrypted_message, encoding='utf8')
+                        box = Box(private_key, public_key)
 
-                    bundle.properties = json.loads(decrypted)
-                elif 'encrypted' in bundle.properties:
-                    print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
-                    break
-                elif 'nonce' in bundle.properties:
-                    print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
-                    break
+                        decrypted_message = box.decrypt(payload, nonce)
 
-            total_points = len(bundle.properties)
+                        decrypted = six.text_type(decrypted_message, encoding='utf8')
 
-            for data_point in bundle.properties:
-                if source == data_point['passive-data-metadata']['source']:
-                    total_points -= 1
+                        bundle.properties = json.loads(decrypted)
+                    elif 'encrypted' in bundle.properties:
+                        print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                        break
+                    elif 'nonce' in bundle.properties:
+                        print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                        break
 
-            if total_points == 0:
-                to_delete.append(bundle)
-            elif total_points != len(bundle.properties):
-                partial_bundles += 1
+                total_points = len(bundle.properties)
 
-        for bundle in to_delete:
-            bundle.delete()
+                for data_point in bundle.properties:
+                    if source == data_point['passive-data-metadata']['source']:
+                        total_points -= 1
+
+                if total_points == 0:
+                    to_delete.append(bundle.pk)
+                elif total_points != len(bundle.properties):
+                    partial_bundles += 1
+
+            index += PAGE_SIZE
+
+        for bundle_pk in to_delete:
+            DataBundle.objects.get(pk=bundle_pk).delete()
 
         print 'Removed ' + str(len(to_delete)) + ' DataBundle objects.'
         print 'Found ' + str(partial_bundles) + ' partial DataBundle objects (not removed).'
@@ -82,24 +92,50 @@ class Command(BaseCommand):
         source_reference = DataSourceReference.reference_for_source(source)
 
         if source_reference is not None:
-            deleted = DataPoint.objects.filter(source_reference=source_reference)
+            deleted = DataPoint.objects.filter(source_reference=source_reference).delete()
 
-            print 'Removed ' + str(deleted) + ' DataPoint objects by source reference.'
+            print 'Removed ' + str(deleted[0]) + ' DataPoint objects by source reference.'
 
         source_reference.delete()
 
         print 'Removed DataSourceReference object.'
 
-        deleted = DataPoint.objects.filter(source=source)
+        points_query = DataPoint.objects.filter(source=source)
 
-        print 'Removed ' + str(deleted) + ' DataPoint objects by source match.'
+        index = 0
+        total = points_query.count()
+
+        print 'Matching DataPoint objects by source identifier: ' + str(total)
+
+        to_delete = []
+
+        while index < total:
+            print 'Queuing DataPoint objects for deletion: ' + str(index) + ' of ' + str(total)
+
+            for point in points_query.order_by('pk')[index:(index + PAGE_SIZE)]:
+                to_delete.append(point.pk)
+
+            index += PAGE_SIZE
+
+        index = 0
+        total = len(to_delete)
+
+        while index < total:
+            print 'Removing DataPoint objects: ' + str(index) + ' of ' + str(total)
+
+            for point_pk in to_delete[index:(index + PAGE_SIZE)]:
+                DataPoint.objects.get(pk=point_pk).delete()
+
+            index += PAGE_SIZE
+
+        print 'Removed ' + str(len(to_delete)) + ' DataPoint objects by source match.'
 
         source_obj = DataSource.objects.filter(identifier=source).first()
 
         if source_obj is not None:
             deleted = DataSourceAlert.objects.filter(data_source=source_obj).delete()
 
-            print 'Removed ' + str(deleted) + ' DataSourceAlert objects by source match.'
+            print 'Removed ' + str(deleted[0]) + ' DataSourceAlert objects by source match.'
 
             source_obj.delete()
 
