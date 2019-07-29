@@ -7,6 +7,7 @@
 			<th data-sortable="true">Identifier</th>
 			<th data-sortable="true">User Agent</th>
 			<th data-sortable="true">Latest</th>
+			<th data-sortable="true">Last Check</th>
 			<th data-sortable="true">Points</th>
 			<th data-sortable="true">Frequency</th>
 			<th><center>Actions</center></th>
@@ -19,6 +20,14 @@
 				<td><a href="{% url 'pdk_source' source.identifier %}">{{ source.identifier }}</a></td>
 				<td>{{ source.latest_user_agent }}</td>
 				<td>{% latest_point source %} ago</td>
+				<td>
+					{% if source.performance_metadata_updated %}
+						<span style="display: none;">{{ source.performance_metadata_updated.isoformat }}</span>
+						{{ source.performance_metadata_updated }}
+					{% else %}
+						Never
+					{% endif %}
+				</td>
 				<td>{% point_count source %}</td>
 				<td>{% point_hz source %}</td>
 				<td>{% additional_home_actions source %}</td>
