@@ -2,8 +2,11 @@
 
 import base64
 import datetime
+import gzip
 import json
 import logging
+
+import StringIO
 
 import six
 
@@ -57,7 +60,7 @@ class Command(BaseCommand):
         except AttributeError:
             pass
 
-        for bundle in DataBundle.objects.filter(processed=False).order_by('-recorded')[:options['bundle_count']]:
+        for bundle in DataBundle.objects.filter(processed=False).order_by('-compression', '-recorded')[:options['bundle_count']]:
             if new_point_count < process_limit:
                 with transaction.atomic():
                     if supports_json is False:
@@ -77,6 +80,17 @@ class Command(BaseCommand):
 
                             decrypted = six.text_type(decrypted_message, encoding='utf8')
 
+                            if bundle.compression != 'none':
+                                compressed = base64.b64decode(decrypted)
+
+                                if bundle.compression == 'gzip':
+                                    fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                                    gzip_file_obj = gzip.GzipFile(fileobj=fio)
+                                    payload = gzip_file_obj.read()
+                                    gzip_file_obj.close()
+
+                                    decrypted = payload
+
                             bundle.properties = json.loads(decrypted)
                         elif 'encrypted' in bundle.properties:
                             print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
@@ -84,6 +98,16 @@ class Command(BaseCommand):
                         elif 'nonce' in bundle.properties:
                             print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
                             break
+                    elif bundle.compression != 'none':
+                        compressed = base64.b64decode(bundle.properties['payload'])
+
+                        if bundle.compression == 'gzip':
+                            fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                            gzip_file_obj = gzip.GzipFile(fileobj=fio)
+                            payload = gzip_file_obj.read()
+                            gzip_file_obj.close()
+
+                            bundle.properties = json.loads(payload)
 
                     for bundle_point in bundle.properties:
                         if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:

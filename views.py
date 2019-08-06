@@ -140,6 +140,9 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
             if 'encrypted' in request.POST:
                 bundle.encrypted = (request.POST['encrypted'] == 'true')
 
+            if 'compression' in request.POST:
+                bundle.compression = request.POST['compression']
+
             if bundle.encrypted:
                 payload = {
                     'encrypted': request.POST['payload'],
@@ -151,12 +154,22 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
                 else:
                     bundle.properties = json.dumps(payload, indent=2)
             else:
-                points = json.loads(request.POST['payload'])
+                if bundle.compression == 'none':
+                    points = json.loads(request.POST['payload'])
 
-                if install_supports_jsonfield():
-                    bundle.properties = points
+                    if install_supports_jsonfield():
+                        bundle.properties = points
+                    else:
+                        bundle.properties = json.dumps(points, indent=2)
                 else:
-                    bundle.properties = json.dumps(points, indent=2)
+                    properties = {
+                        'payload': request.POST['payload']
+                    }
+
+                    if install_supports_jsonfield():
+                        bundle.properties = properties
+                    else:
+                        bundle.properties = json.dumps(properties, indent=2)
 
             bundle.save()
         except ValueError:

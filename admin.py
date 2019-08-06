@@ -97,8 +97,8 @@ class DataBundleAdmin(admin.OSMGeoAdmin):
         JSONField: {'widget': PrettyJSONWidget}
     }
 
-    list_display = ('recorded', 'processed',)
-    list_filter = ('processed', 'recorded',)
+    list_display = ('recorded', 'processed', 'compression',)
+    list_filter = ('processed', 'recorded', 'compression',)
 
 @admin.register(DataFile)
 class DataFileAdmin(admin.OSMGeoAdmin):
