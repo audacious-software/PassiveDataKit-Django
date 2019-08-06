@@ -114,6 +114,7 @@ class DataSourceGroupAdmin(admin.OSMGeoAdmin):
 class DataSourceAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'identifier', 'group', 'suppress_alerts',)
     list_filter = ('group', 'suppress_alerts',)
+    search_fields = ['name', 'identifier']
 
 
 def reset_report_jobs(modeladmin, request, queryset): # pylint: disable=unused-argument
