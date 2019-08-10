@@ -460,6 +460,12 @@ def to_datetime_from_ms(value):
 
     return arrow.get(float(value) / 1000).datetime
 
+@register.filter('to_datetime_from_iso')
+def to_datetime_from_iso(value):
+    if value is None or value == '':
+        return None
+
+    return arrow.get(value).datetime
 
 @register.tag(name='hour_minute_to_time')
 def hour_minute_to_time(parser, token): # pylint: disable=unused-argument
