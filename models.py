@@ -49,6 +49,11 @@ except AttributeError:
 CACHED_GENERATOR_DEFINITIONS = {}
 CACHED_SOURCE_REFERENCES = {}
 
+COMPRESSION_CHOICES = (
+    ('none', 'None'),
+    ('gzip', 'Gzip'),
+)
+
 def generator_label(identifier):
     for app in settings.INSTALLED_APPS:
         try:
@@ -488,6 +493,7 @@ class DataBundle(models.Model):
 
     processed = models.BooleanField(default=False, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
+    compression = models.CharField(max_length=128, choices=COMPRESSION_CHOICES, default='none', db_index=True)
 
 
 class DataFile(models.Model):

@@ -97,8 +97,8 @@ class DataBundleAdmin(admin.OSMGeoAdmin):
         JSONField: {'widget': PrettyJSONWidget}
     }
 
-    list_display = ('recorded', 'processed',)
-    list_filter = ('processed', 'recorded',)
+    list_display = ('recorded', 'processed', 'compression',)
+    list_filter = ('processed', 'recorded', 'compression',)
 
 @admin.register(DataFile)
 class DataFileAdmin(admin.OSMGeoAdmin):
@@ -114,6 +114,7 @@ class DataSourceGroupAdmin(admin.OSMGeoAdmin):
 class DataSourceAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'identifier', 'group', 'suppress_alerts',)
     list_filter = ('group', 'suppress_alerts',)
+    search_fields = ['name', 'identifier']
 
 
 def reset_report_jobs(modeladmin, request, queryset): # pylint: disable=unused-argument
