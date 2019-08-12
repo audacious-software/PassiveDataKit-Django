@@ -9,7 +9,7 @@ import re
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse, UnreadablePostError, Http404
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -300,6 +300,9 @@ def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
 
 @staff_member_required
 def pdk_source(request, source_id): # pylint: disable=unused-argument
+    if '/' in source_id:
+        return redirect('pdk_source', source_id=source_id.replace('/', ''))
+
     context = {}
 
     source = DataSource.objects.filter(identifier=source_id).first()
@@ -317,6 +320,9 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
 
 @staff_member_required
 def pdk_source_generator(request, source_id, generator_id): # pylint: disable=unused-argument
+    if ('/' in source_id) or ('/' in generator_id):
+        return redirect('pdk_source_generator', source_id=source_id.replace('/', ''), generator_id=generator_id.replace('/', ''))
+
     context = {}
 
     source = DataSource.objects.filter(identifier=source_id).first()
