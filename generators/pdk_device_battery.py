@@ -14,7 +14,6 @@ import pytz
 
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.utils.text import slugify
 
 from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
@@ -53,15 +52,15 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     values = []
 
-    now = timezone.now()
+    latest = points.order_by('-created').first()
 
-    now = now.replace(second=0, microsecond=0)
+    now = latest.created.replace(second=0, microsecond=0)
 
-    remainder = now.minute % 10
+    remainder = 10 - (now.minute % 10)
 
-    now = now.replace(minute=(now.minute - remainder))
+    now = now.replace(minute=((now.minute + remainder) % 60))
 
-    start = now - datetime.timedelta(days=2)
+    start = now - datetime.timedelta(days=7)
 
     for point in points.filter(created__gte=start).order_by('created'):
         properties = point.fetch_properties()
@@ -84,15 +83,15 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     compile_frequency_visualization(identifier, points, folder)
 
 def compile_frequency_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    now = timezone.now()
+    latest = points.order_by('-created').first()
 
-    now = now.replace(second=0, microsecond=0)
+    now = latest.created.replace(second=0, microsecond=0)
 
-    remainder = now.minute % 10
+    remainder = 10 - (now.minute % 10)
 
-    now = now.replace(minute=(now.minute - remainder))
+    now = now.replace(minute=((now.minute + remainder) % 60))
 
-    start = now - datetime.timedelta(days=2)
+    start = now - datetime.timedelta(days=7)
 
     points = points.filter(created__lte=now, created__gte=start).order_by('created')
 
