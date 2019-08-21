@@ -17,7 +17,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
                     generator_label, install_supports_jsonfield, DataSourceAlert, \
-                    DataServerMetadatum, AppConfiguration
+                    DataServerMetadatum, AppConfiguration, DeviceIssue, Device
 
 
 @csrf_exempt
@@ -574,3 +574,90 @@ def pdk_app_config(request): # pylint: disable=too-many-statements
             raise Http404('"id" or "context" parameter not provided.')
 
     raise Http404('Matching configuration not found.')
+
+@staff_member_required
+def pdk_issues(request):
+    context = {}
+
+    return render(request, 'pdk_issues.html', context=context)
+
+@staff_member_required
+def pdk_issues_json(request): # pylint: disable=too-many-statements
+    payload = []
+
+    if request.method == 'POST':
+        payload = {
+            'success': False,
+            'message': ''
+        }
+
+        if 'source' in request.POST:
+            source = DataSource.objects.filter(identifier=request.POST['source']).first()
+
+            if source is not None:
+                device = Device.objects.filter(source=source).first()
+
+                if device is not None:
+                    device.populate_device()
+                else:
+                    device = Device(source=source)
+                    device.populate_device()
+
+                issue = DeviceIssue(device=device)
+                issue.description = request.POST['description']
+                issue.created = timezone.now()
+                issue.last_updated = timezone.now()
+
+                issue.stability_related = (request.POST['app_stability'] == 'true')
+                issue.uptime_related = (request.POST['app_uptime'] == 'true')
+                issue.responsiveness_related = (request.POST['app_responsiveness'] == 'true')
+                issue.battery_use_related = (request.POST['battery'] == 'true')
+                issue.power_management_related = (request.POST['power'] == 'true')
+                issue.data_volume_related = (request.POST['data_volume'] == 'true')
+                issue.data_quality_related = (request.POST['data_quality'] == 'true')
+                issue.bandwidth_related = (request.POST['bandwidth'] == 'true')
+                issue.storage_related = (request.POST['storage'] == 'true')
+                issue.configuration_related = (request.POST['app_configuration'] == 'true')
+                issue.location_related = (request.POST['location'] == 'true')
+
+                issue.save()
+
+                payload['message'] = 'New issue created successfully.'
+                payload['success'] = True
+            else:
+                payload['message'] = 'Unable to locate data source with identifier: ' + request.POST['source'] + '.'
+        else:
+            payload['message'] = 'Source identifier not provided.'
+    else:
+        payload = []
+
+        for issue in DeviceIssue.objects.all():
+            issue_obj = {}
+
+            issue_obj['source'] = issue.device.source.identifier
+            issue_obj['model'] = issue.device.model.__unicode__()
+            issue_obj['state'] = issue.state
+            issue_obj['created'] = issue.created.isoformat()
+
+            if issue.last_updated is not None:
+                issue_obj['updated'] = issue.last_updated.isoformat()
+
+            issue_obj['platform'] = issue.platform
+            issue_obj['user_agent'] = issue.user_agent
+            issue_obj['description'] = issue.description
+
+            issue_obj['stability_related'] = issue.stability_related
+            issue_obj['uptime_related'] = issue.uptime_related
+            issue_obj['responsiveness_related'] = issue.responsiveness_related
+            issue_obj['battery_use_related'] = issue.battery_use_related
+            issue_obj['power_management_related'] = issue.power_management_related
+            issue_obj['data_volume_related'] = issue.data_volume_related
+            issue_obj['data_quality_related'] = issue.data_quality_related
+            issue_obj['bandwidth_related'] = issue.bandwidth_related
+            issue_obj['storage_related'] = issue.storage_related
+            issue_obj['configuration_related'] = issue.configuration_related
+            issue_obj['location_related'] = issue.location_related
+
+            payload.append(issue_obj)
+
+    return JsonResponse(payload, safe=False, json_dumps_params={'indent': 2})

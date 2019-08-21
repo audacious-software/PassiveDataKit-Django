@@ -1,0 +1,108 @@
+{% extends "pdk_base.html" %}
+{% load static from staticfiles %}
+{% load passive_data_kit %}
+
+{% block 'page_title' %}Device Issues | Passive Data Kit{% endblock %}
+
+{% block sidebar %}
+	(Filters coming soon...)
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="sub-header">Issues</h1> 
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+        	<table id="issues-table" data-url="{% url 'pdk_issues_json'%}"></table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="sub-header">Add Issue</h3> 
+        </div>
+    </div>
+    
+	<div class="row">
+		<div class="col-md-3">
+			<div class="form-group">
+				<label for="source">Data Source</label>
+				<input type="text" class="form-control typeahead" name="source" id="source" placeholder="Identifier">
+			</div>
+
+			<label>Affected</label>
+			<div class="checkbox" style="margin-top: 0;">
+				<label>
+					<input type="checkbox" id="issue_location"> Location
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_battery"> Battery Usage
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_power"> Power Management
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_storage"> Device Storage
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_data_quality"> Data Quality
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_data_volume"> Data Volume
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_bandwidth"> Bandwidth
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_app_uptime"> App Uptime
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_app_stability"> App Stability
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_app_configuration"> App Configuration
+				</label>
+			</div>
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" id="issue_app_responsiveness"> App Responsiveness
+				</label>
+			</div>
+		</div>
+		<div class="col-md-9">
+			<div class="form-group">
+				<label for="issue_description">Issue Description</label>
+				<textarea class="form-control" name="issue_description" id="issue_description" placeholder="Enter issue description here&#8230;" rows="18"></textarea>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+			<button type="submit" class="btn btn-default" id="add_issue_button">Add Issue</button>
+		</div>
+	</div>
+    
+    <script data-main="{% static  'pdk/js/issues.js' %}" src="{% static 'pdk/js/lib/require.js' %}"></script>
+{% endblock %}

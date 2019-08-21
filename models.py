@@ -39,6 +39,13 @@ ALERT_LEVEL_CHOICES = (
     ('critical', 'Critical'),
 )
 
+DEVICE_ISSUE_STATE_CHOICES = (
+    ('opened', 'Opened'),
+    ('in-progress', 'In Progress'),
+    ('resolved', 'Resolved'),
+    ('wont-fix', 'Won\'t Fix'),
+)
+
 METADATA_WINDOW_DAYS = 60
 
 try:
@@ -1191,3 +1198,87 @@ class DataServerAccessRequestPending(models.Model):
 
         self.processed = True
         self.save()
+
+class DeviceModel(models.Model):
+    model = models.CharField(max_length=1024, unique=True)
+    manufacturer = models.CharField(max_length=1024)
+
+    reference = models.URLField(max_length=(1024 * 1024), null=True, blank=True)
+
+    notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+
+    def __unicode__(self):
+        return unicode(self.model + ' (' + self.manufacturer + ')')
+
+class Device(models.Model):
+    source = models.ForeignKey(DataSource, related_name='devices')
+
+    model = models.ForeignKey(DeviceModel, related_name='devices')
+    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+
+    notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+
+    def __unicode__(self):
+        return unicode(self.source.identifier + ' - ' + self.model.__unicode__())
+
+    def populate_device(self):
+        user_agent = self.source.latest_user_agent()
+
+        if user_agent is not None:
+            tokens = user_agent.split('(')[1].split(';')
+
+            self.platform = tokens[0]
+
+            model_name = tokens[1][1:-1]
+
+            model = DeviceModel.objects.filter(model=model_name).first()
+
+            if model is None:
+                model = DeviceModel(model=model_name, manufacturer='Unknown')
+                model.save()
+
+            self.model = model
+        else:
+            model = DeviceModel.objects.filter(model='Unknown').first()
+
+            if model is None:
+                model = DeviceModel(model='Unknown', manufacturer='Unknown')
+                model.save()
+
+            self.model = model
+
+        self.save()
+
+class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
+    device = models.ForeignKey(Device, related_name='issues')
+
+    state = models.CharField(max_length=1024, choices=DEVICE_ISSUE_STATE_CHOICES, default='opened')
+    created = models.DateTimeField()
+    last_updated = models.DateTimeField()
+
+    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    user_agent = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+
+    description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+
+    stability_related = models.BooleanField(default=False)
+    uptime_related = models.BooleanField(default=False)
+    responsiveness_related = models.BooleanField(default=False)
+    battery_use_related = models.BooleanField(default=False)
+    power_management_related = models.BooleanField(default=False)
+    data_volume_related = models.BooleanField(default=False)
+    data_quality_related = models.BooleanField(default=False)
+    bandwidth_related = models.BooleanField(default=False)
+    storage_related = models.BooleanField(default=False)
+    configuration_related = models.BooleanField(default=False)
+    location_related = models.BooleanField(default=False)
+
+@receiver(pre_save, sender=DeviceIssue)
+def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
+    issue = kwargs['instance']
+
+    if issue.platform is None:
+        issue.platform = issue.device.platform
+
+    if issue.user_agent is None:
+        issue.user_agent = issue.device.source.latest_user_agent()
