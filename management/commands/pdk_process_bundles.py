@@ -38,6 +38,12 @@ class Command(BaseCommand):
                             default=50,
                             help='Number of bundles to process in a single run')
 
+        parser.add_argument('--skip-stats',
+                            action='store_true',
+                            dest='skip_stats',
+                            default=False,
+                            help='Skips statistic updates for improved speeds')
+
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         to_delete = []
@@ -53,6 +59,7 @@ class Command(BaseCommand):
         latest_points = {}
 
         new_point_count = 0
+        processed_bundle_count = 0
         process_limit = 1000
 
         try:
@@ -60,8 +67,10 @@ class Command(BaseCommand):
         except AttributeError:
             pass
 
-        for bundle in DataBundle.objects.filter(processed=False).order_by('-compression', '-recorded')[:options['bundle_count']]:
+        for bundle in DataBundle.objects.filter(processed=False)[:options['bundle_count']]:
             if new_point_count < process_limit:
+                processed_bundle_count += 1
+
                 with transaction.atomic():
                     if supports_json is False:
                         bundle.properties = json.loads(bundle.properties)
@@ -172,91 +181,92 @@ class Command(BaseCommand):
         for bundle in to_delete:
             bundle.delete()
 
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+        if options['skip_stats'] is False:
+            data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
-        if data_point_count is None:
-            count = DataPoint.objects.all().count()
+            if data_point_count is None:
+                count = DataPoint.objects.all().count()
 
-            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
+                data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
 
-            data_point_count.value = str(count)
-            data_point_count.save()
-        else:
-            count = int(data_point_count.value)
-
-            count += new_point_count
-
-            data_point_count.value = str(count)
-            data_point_count.save()
-
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
-
-        sources = DataServerMetadatum.objects.filter(key=SOURCES_DATUM).first()
-
-        if sources is not None:
-            updated = False
-
-            source_list = json.loads(sources.value)
-
-            for seen_source in seen_sources:
-                if (seen_source in source_list) is False:
-                    source_list.append(seen_source)
-
-                    updated = True
-
-            if updated:
-                sources.value = json.dumps(source_list, indent=2)
-                sources.save()
-        else:
-            DataPoint.objects.sources()
-
-        for source, identifiers in source_identifiers.iteritems():
-            datum_key = SOURCE_GENERATORS_DATUM + ': ' + source
-            source_id_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
-
-            source_ids = []
-
-            if source_id_datum is not None:
-                source_ids = json.loads(source_id_datum.value)
+                data_point_count.value = str(count)
+                data_point_count.save()
             else:
-                source_id_datum = DataServerMetadatum(key=datum_key)
+                count = int(data_point_count.value)
+
+                count += new_point_count
+
+                data_point_count.value = str(count)
+                data_point_count.save()
+
+            data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+
+            sources = DataServerMetadatum.objects.filter(key=SOURCES_DATUM).first()
+
+            if sources is not None:
+                updated = False
+
+                source_list = json.loads(sources.value)
+
+                for seen_source in seen_sources:
+                    if (seen_source in source_list) is False:
+                        source_list.append(seen_source)
+
+                        updated = True
+
+                if updated:
+                    sources.value = json.dumps(source_list, indent=2)
+                    sources.save()
+            else:
+                DataPoint.objects.sources()
+
+            for source, identifiers in source_identifiers.iteritems():
+                datum_key = SOURCE_GENERATORS_DATUM + ': ' + source
+                source_id_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
+
+                source_ids = []
+
+                if source_id_datum is not None:
+                    source_ids = json.loads(source_id_datum.value)
+                else:
+                    source_id_datum = DataServerMetadatum(key=datum_key)
+
+                updated = False
+
+                for identifier in identifiers:
+                    if (identifier in source_ids) is False:
+                        source_ids.append(identifier)
+
+                        updated = True
+
+                if updated:
+                    source_id_datum.value = json.dumps(source_ids, indent=2)
+                    source_id_datum.save()
+
+            datum_key = SOURCE_GENERATORS_DATUM
+            generators_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
+
+            generator_ids = []
+
+            if generators_datum is not None:
+                generator_ids = json.loads(generators_datum.value)
+            else:
+                generators_datum = DataServerMetadatum(key=datum_key)
 
             updated = False
 
-            for identifier in identifiers:
-                if (identifier in source_ids) is False:
-                    source_ids.append(identifier)
+            for identifier in seen_generators:
+                if (identifier in generator_ids) is False:
+                    generator_ids.append(identifier)
 
                     updated = True
 
             if updated:
-                source_id_datum.value = json.dumps(source_ids, indent=2)
-                source_id_datum.save()
+                generators_datum.value = json.dumps(generator_ids, indent=2)
+                generators_datum.save()
 
-        datum_key = SOURCE_GENERATORS_DATUM
-        generators_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
+            for identifier, point in latest_points.iteritems():
+                DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
+                DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
-        generator_ids = []
-
-        if generators_datum is not None:
-            generator_ids = json.loads(generators_datum.value)
-        else:
-            generators_datum = DataServerMetadatum(key=datum_key)
-
-        updated = False
-
-        for identifier in seen_generators:
-            if (identifier in generator_ids) is False:
-                generator_ids.append(identifier)
-
-                updated = True
-
-        if updated:
-            generators_datum.value = json.dumps(generator_ids, indent=2)
-            generators_datum.save()
-
-        for identifier, point in latest_points.iteritems():
-            DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
-            DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
-
-        logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
+            logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
