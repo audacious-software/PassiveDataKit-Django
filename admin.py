@@ -13,7 +13,7 @@ from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
                     DataFile, AppConfiguration, DataGeneratorDefinition, \
                     DataSourceReference, ReportDestination, DataServerAccessRequest, \
-                    DataServerAccessRequestPending
+                    DataServerAccessRequestPending, DeviceModel, Device, DeviceIssue
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -213,3 +213,24 @@ class DataServerAccessRequestAdmin(admin.OSMGeoAdmin):
 
     search_fields = ('user_identifier', 'request_metadata',)
     list_filter = ('request_time', 'request_type', 'successful',)
+
+@admin.register(DeviceModel)
+class DeviceModelAdmin(admin.OSMGeoAdmin):
+    list_display = ('model', 'manufacturer',)
+
+    search_fields = ('model', 'manufacturer', 'reference', 'notes',)
+    list_filter = ('manufacturer',)
+
+@admin.register(Device)
+class DeviceAdmin(admin.OSMGeoAdmin):
+    list_display = ('source', 'model', 'platform',)
+
+    search_fields = ('source', 'model', 'platform', 'notes',)
+    list_filter = ('platform', 'model',)
+
+@admin.register(DeviceIssue)
+class DeviceIssueAdmin(admin.OSMGeoAdmin):
+    list_display = ('device', 'state', 'created', 'last_updated',)
+
+    search_fields = ('device', 'description',)
+    list_filter = ('state', 'created', 'last_updated', 'stability_related', 'uptime_related', 'responsiveness_related', 'battery_use_related', 'power_management_related', 'data_volume_related', 'data_quality_related', 'bandwidth_related', 'storage_related', 'configuration_related', 'location_related',)
