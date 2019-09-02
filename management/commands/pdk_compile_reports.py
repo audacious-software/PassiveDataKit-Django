@@ -32,221 +32,224 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         os.umask(000)
 
-        report = ReportJob.objects.filter(started=None, completed=None)\
-                                  .order_by('requested', 'pk')\
-                                  .first()
+        pending = ReportJob.objects.filter(started=None, completed=None)
 
-        if report is not None:
-            report.started = timezone.now()
-            report.save()
+        while pending.count() > 0:
+            report = ReportJob.objects.filter(started=None, completed=None)\
+                                      .order_by('requested', 'pk')\
+                                      .first()
 
-            parameters = {}
+            if report is not None:
+                report.started = timezone.now()
+                report.save()
 
-            if install_supports_jsonfield():
-                parameters = report.parameters
-            else:
-                parameters = json.loads(report.parameters)
+                parameters = {}
 
-            sources = parameters['sources']
-            generators = parameters['generators']
+                if install_supports_jsonfield():
+                    parameters = report.parameters
+                else:
+                    parameters = json.loads(report.parameters)
 
-            data_start = None
-            data_end = None
+                sources = parameters['sources']
+                generators = parameters['generators']
 
-            tz_info = pytz.timezone(settings.TIME_ZONE)
+                data_start = None
+                data_end = None
 
-            if 'data_start' in parameters and parameters['data_start']:
-                tokens = parameters['data_start'].split('/')
+                tz_info = pytz.timezone(settings.TIME_ZONE)
 
-                data_start = datetime.datetime(int(tokens[2]), \
-                                               int(tokens[0]), \
-                                               int(tokens[1]), \
-                                               0, \
-                                               0, \
-                                               0, \
-                                               0, \
-                                               tz_info)
+                if 'data_start' in parameters and parameters['data_start']:
+                    tokens = parameters['data_start'].split('/')
 
-            if 'data_end' in parameters and parameters['data_end']:
-                tokens = parameters['data_end'].split('/')
+                    data_start = datetime.datetime(int(tokens[2]), \
+                                                   int(tokens[0]), \
+                                                   int(tokens[1]), \
+                                                   0, \
+                                                   0, \
+                                                   0, \
+                                                   0, \
+                                                   tz_info)
 
-                data_end = datetime.datetime(int(tokens[2]), \
-                                             int(tokens[0]), \
-                                             int(tokens[1]), \
-                                             23, \
-                                             59, \
-                                             59, \
-                                             999999, \
-                                             tz_info)
+                if 'data_end' in parameters and parameters['data_end']:
+                    tokens = parameters['data_end'].split('/')
 
-            date_type = 'created'
+                    data_end = datetime.datetime(int(tokens[2]), \
+                                                 int(tokens[0]), \
+                                                 int(tokens[1]), \
+                                                 23, \
+                                                 59, \
+                                                 59, \
+                                                 999999, \
+                                                 tz_info)
 
-            if 'date_type' in parameters and parameters['date_type']:
-                date_type = parameters['date_type']
+                date_type = 'created'
 
-            raw_json = False
+                if 'date_type' in parameters and parameters['date_type']:
+                    date_type = parameters['date_type']
 
-            if ('raw_data' in parameters) and parameters['raw_data'] is True:
-                raw_json = True
+                raw_json = False
 
-            prefix = 'pdk_export_final'
+                if ('raw_data' in parameters) and parameters['raw_data'] is True:
+                    raw_json = True
 
-            if 'prefix' in parameters:
-                prefix = parameters['prefix']
+                prefix = 'pdk_export_final'
 
-            filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + report.started.date().isoformat() + '.zip'
+                if 'prefix' in parameters:
+                    prefix = parameters['prefix']
 
-            with open(filename, 'wb') as final_output_file:
-                with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
-                    to_delete = []
+                filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + report.started.date().isoformat() + '.zip'
 
-                    for generator in generators: # pylint: disable=too-many-nested-blocks
-                        if raw_json:
-                            for source in sources:
-                                generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
-                                source_reference = DataSourceReference.reference_for_source(source)
+                with open(filename, 'wb') as final_output_file:
+                    with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
+                        to_delete = []
 
-                                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+                        for generator in generators: # pylint: disable=too-many-nested-blocks
+                            if raw_json:
+                                for source in sources:
+                                    generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+                                    source_reference = DataSourceReference.reference_for_source(source)
 
-                                if data_start is not None:
-                                    if date_type == 'recorded':
-                                        points = points.filter(recorded__gte=data_start)
-                                    else:
-                                        points = points.filter(created__gte=data_start)
+                                    points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
-                                if data_end is not None:
-                                    if date_type == 'recorded':
-                                        points = points.filter(recorded__lte=data_end)
-                                    else:
-                                        points = points.filter(created__lte=data_end)
+                                    if data_start is not None:
+                                        if date_type == 'recorded':
+                                            points = points.filter(recorded__gte=data_start)
+                                        else:
+                                            points = points.filter(created__gte=data_start)
 
-                                points = points.order_by('created')
+                                    if data_end is not None:
+                                        if date_type == 'recorded':
+                                            points = points.filter(recorded__lte=data_end)
+                                        else:
+                                            points = points.filter(created__lte=data_end)
 
-                                first = points.first() # pylint: disable=line-too-long
-                                last = points.last() # pylint: disable=line-too-long
+                                    points = points.order_by('created')
 
-                                if first is not None:
-                                    first_create = first.created
-                                    last_create = last.created
+                                    first = points.first() # pylint: disable=line-too-long
+                                    last = points.last() # pylint: disable=line-too-long
 
-                                    start = datetime.datetime(first_create.year, \
-                                                              first_create.month, \
-                                                              first_create.day, \
-                                                              0, \
-                                                              0, \
-                                                              0, \
-                                                              0, \
-                                                              first_create.tzinfo)
+                                    if first is not None:
+                                        first_create = first.created
+                                        last_create = last.created
 
-                                    end = datetime.datetime(last_create.year, \
-                                                            last_create.month, \
-                                                            last_create.day, \
-                                                            0, \
-                                                            0, \
-                                                            0, \
-                                                            0, \
-                                                            first_create.tzinfo) + \
-                                                            datetime.timedelta(days=1)
+                                        start = datetime.datetime(first_create.year, \
+                                                                  first_create.month, \
+                                                                  first_create.day, \
+                                                                  0, \
+                                                                  0, \
+                                                                  0, \
+                                                                  0, \
+                                                                  first_create.tzinfo)
 
-                                    if data_start is not None and data_start > start:
-                                        start = data_start
+                                        end = datetime.datetime(last_create.year, \
+                                                                last_create.month, \
+                                                                last_create.day, \
+                                                                0, \
+                                                                0, \
+                                                                0, \
+                                                                0, \
+                                                                first_create.tzinfo) + \
+                                                                datetime.timedelta(days=1)
 
-                                    if data_end is not None and data_end < data_end:
-                                        end = data_end
+                                        if data_start is not None and data_start > start:
+                                            start = data_start
 
-                                    while start <= end:
-                                        day_end = start + datetime.timedelta(days=1)
+                                        if data_end is not None and data_end < data_end:
+                                            end = data_end
 
-                                        day_filename = source + '__' + generator + '__' + \
-                                                       start.date().isoformat() + '.json'
+                                        while start <= end:
+                                            day_end = start + datetime.timedelta(days=1)
 
-                                        points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
+                                            day_filename = source + '__' + generator + '__' + \
+                                                           start.date().isoformat() + '.json'
 
-                                        out_points = []
+                                            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
 
-                                        for point in points:
-                                            out_points.append(point.fetch_properties())
+                                            out_points = []
 
-                                        if out_points:
-                                            export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+                                            for point in points:
+                                                out_points.append(point.fetch_properties())
 
-                                        start = day_end
-                        else:
-                            output_file = None
+                                            if out_points:
+                                                export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
 
-                            for app in settings.INSTALLED_APPS:
-                                if output_file is None:
-                                    try:
-                                        pdk_api = importlib.import_module(app + '.pdk_api')
+                                            start = day_end
+                            else:
+                                output_file = None
 
+                                for app in settings.INSTALLED_APPS:
+                                    if output_file is None:
                                         try:
-                                            output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
+                                            pdk_api = importlib.import_module(app + '.pdk_api')
 
-                                            if output_file is not None:
-                                                if output_file.lower().endswith('.zip'):
-                                                    with zipfile.ZipFile(output_file, 'r') as source_file:
-                                                        for name in source_file.namelist():
-                                                            data_file = source_file.open(name)
+                                            try:
+                                                output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
 
-                                                            export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
-                                                else:
-                                                    name = os.path.basename(os.path.normpath(output_file))
+                                                if output_file is not None:
+                                                    if output_file.lower().endswith('.zip'):
+                                                        with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                            for name in source_file.namelist():
+                                                                data_file = source_file.open(name)
 
-                                                    export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
+                                                                export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                    else:
+                                                        name = os.path.basename(os.path.normpath(output_file))
 
-                                                to_delete.append(output_file)
-                                        except TypeError as exception:
-                                            print 'Verify that ' + app + '.' + generator + ' implements all compile_report arguments!'
-                                            raise exception
-                                    except ImportError:
-                                        output_file = None
-                                    except AttributeError:
-                                        output_file = None
+                                                        export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
 
-                    for data in export_stream:
-                        final_output_file.write(data)
+                                                    to_delete.append(output_file)
+                                            except TypeError as exception:
+                                                print 'Verify that ' + app + '.' + generator + ' implements all compile_report arguments!'
+                                                raise exception
+                                        except ImportError:
+                                            output_file = None
+                                        except AttributeError:
+                                            output_file = None
 
-                    for output_file in to_delete:
-                        os.remove(output_file)
+                        for data in export_stream:
+                            final_output_file.write(data)
 
-            report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
-            report.completed = timezone.now()
-            report.save()
+                        for output_file in to_delete:
+                            os.remove(output_file)
 
-            if report.requester.email is not None:
-                subject = render_to_string('pdk_report_subject.txt', {
-                    'report': report,
-                    'url': settings.SITE_URL
-                })
+                report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
+                report.completed = timezone.now()
+                report.save()
 
-                message = render_to_string('pdk_report_message.txt', {
-                    'report': report,
-                    'url': settings.SITE_URL
-                })
+                if report.requester.email is not None:
+                    subject = render_to_string('pdk_report_subject.txt', {
+                        'report': report,
+                        'url': settings.SITE_URL
+                    })
 
-                tokens = settings.SITE_URL.split('/')
-                host = ''
+                    message = render_to_string('pdk_report_message.txt', {
+                        'report': report,
+                        'url': settings.SITE_URL
+                    })
 
-                while tokens and tokens[-1] == '':
-                    tokens.pop()
+                    tokens = settings.SITE_URL.split('/')
+                    host = ''
 
-                if tokens:
-                    host = tokens[-1]
+                    while tokens and tokens[-1] == '':
+                        tokens.pop()
 
-                send_mail(subject, \
-                          message, \
-                          'Petey Kay <noreply@' + host + '>', \
-                          [report.requester.email], \
-                          fail_silently=False)
+                    if tokens:
+                        host = tokens[-1]
 
-            for extra_destination in report.requester.pdk_report_destinations.all():
-                extra_destination.transmit(filename)
+                    send_mail(subject, \
+                              message, \
+                              'Petey Kay <noreply@' + host + '>', \
+                              [report.requester.email], \
+                              fail_silently=False)
 
-            os.remove(filename)
-        else:
-            request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
-                          .order_by('requested', 'pk')\
-                          .first()
+                for extra_destination in report.requester.pdk_report_destinations.all():
+                    extra_destination.transmit(filename)
 
-            if request is not None:
-                request.process()
+                os.remove(filename)
+
+        request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
+                      .order_by('requested', 'pk')\
+                      .first()
+
+        if request is not None:
+            request.process()
