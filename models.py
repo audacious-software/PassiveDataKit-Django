@@ -310,7 +310,7 @@ class DataPointManager(models.Manager):
         else:
             point.properties = json.dumps(payload, indent=2)
 
-        point.user_agent = 'Passive Data Kit Server'
+        point.user_agent = user_agent
         point.created = now
         point.recorded = now
 
