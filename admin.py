@@ -13,7 +13,8 @@ from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataServerMetadatum, ReportJobBatchRequest, DataServerApiToken, \
                     DataFile, AppConfiguration, DataGeneratorDefinition, \
                     DataSourceReference, ReportDestination, DataServerAccessRequest, \
-                    DataServerAccessRequestPending, DeviceModel, Device, DeviceIssue
+                    DataServerAccessRequestPending, DeviceModel, Device, DeviceIssue, \
+                    DataServer
 
 def reset_visualizations(modeladmin, request, queryset): # pylint: disable=unused-argument
     for visualization in queryset:
@@ -234,3 +235,10 @@ class DeviceIssueAdmin(admin.OSMGeoAdmin):
 
     search_fields = ('device', 'description',)
     list_filter = ('state', 'created', 'last_updated', 'stability_related', 'uptime_related', 'responsiveness_related', 'battery_use_related', 'power_management_related', 'data_volume_related', 'data_quality_related', 'bandwidth_related', 'storage_related', 'configuration_related', 'location_related',)
+
+
+@admin.register(DataServer)
+class DataServerAdmin(admin.OSMGeoAdmin):
+    list_display = ('name', 'upload_url',)
+
+    search_fields = ('name', 'upload_url',)

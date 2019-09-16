@@ -520,6 +520,13 @@ class DataSourceGroup(models.Model):
     def __unicode__(self):
         return self.name
 
+class DataServer(models.Model):
+    name = models.CharField(max_length=1024, db_index=True, unique=True)
+    upload_url = models.URLField(max_length=1024, db_index=True, unique=True)
+
+    def __unicode__(self):
+        return unicode(self.name)
+
 class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
     def sources(self): # pylint: disable=no-self-use
         source_list = []
@@ -547,6 +554,8 @@ class DataSource(models.Model):
         performance_metadata = models.TextField(max_length=(32 * 1024 * 1024 * 1024), null=True, blank=True)
 
     performance_metadata_updated = models.DateTimeField(db_index=True, null=True, blank=True)
+
+    server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.name + ' (' + self.identifier + ')'

@@ -8,6 +8,7 @@ import logging
 
 import StringIO
 
+import requests
 import six
 
 from nacl.public import PublicKey, PrivateKey, Box
@@ -19,8 +20,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from ...decorators import handle_lock
-from ...models import DataServerMetadatum, DataPoint, DataBundle, install_supports_jsonfield, \
-                      TOTAL_DATA_POINT_COUNT_DATUM, SOURCES_DATUM, SOURCE_GENERATORS_DATUM
+from ...models import DataServerMetadatum, DataPoint, DataBundle, DataSource, \
+                      install_supports_jsonfield, TOTAL_DATA_POINT_COUNT_DATUM, \
+                      SOURCES_DATUM, SOURCE_GENERATORS_DATUM
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -66,6 +68,8 @@ class Command(BaseCommand):
             process_limit = settings.PDK_BUNDLE_PROCESS_LIMIT
         except AttributeError:
             pass
+
+        sources = {}
 
         for bundle in DataBundle.objects.filter(processed=False)[:options['bundle_count']]:
             if new_point_count < process_limit:
@@ -118,61 +122,109 @@ class Command(BaseCommand):
 
                             bundle.properties = json.loads(payload)
 
+                    xmit_points = {}
+
                     for bundle_point in bundle.properties:
                         if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
-                            point = DataPoint(recorded=timezone.now())
-                            bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
 
-                            point.source = bundle_point['passive-data-metadata']['source']
+                            source = bundle_point['passive-data-metadata']['source']
 
-                            if point.source is None:
-                                point.source = '-'
+                            server_url = None
 
-                            point.generator = bundle_point['passive-data-metadata']['generator']
-
-                            if 'generator-id' in bundle_point['passive-data-metadata']:
-                                point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
-
-                            if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
-                                point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
-
-                            point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
-
-                            if supports_json:
-                                point.properties = bundle_point
+                            if source in sources:
+                                server_url = sources[source]
                             else:
-                                point.properties = json.dumps(bundle_point, indent=2)
+                                source_obj = DataSource.objects.filter(identifier=source).first()
 
-                            point.fetch_secondary_identifier(skip_save=True)
-                            point.fetch_user_agent(skip_save=True)
-                            point.fetch_generator_definition(skip_save=True)
-                            point.fetch_source_reference(skip_save=True)
+                                if source_obj is not None:
+                                    if source_obj.server is not None:
+                                        server_url = source_obj.server.upload_url
 
-                            point.save()
+                                if server_url is None:
+                                    server_url = ''
 
-                            if (point.source in seen_sources) is False:
-                                seen_sources.append(point.source)
+                                sources[source] = server_url
 
-                            if (point.source in source_identifiers) is False:
-                                source_identifiers[point.source] = []
+                            if server_url == '':
+                                point = DataPoint(recorded=timezone.now())
+                                bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
 
-                            latest_key = point.source + '--' + point.generator_identifier
+                                point.source = bundle_point['passive-data-metadata']['source']
 
-                            if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
-                                latest_points[latest_key] = point
+                                if point.source is None:
+                                    point.source = '-'
 
-                            if (point.generator_identifier in seen_generators) is False:
-                                seen_generators.append(point.generator_identifier)
+                                point.generator = bundle_point['passive-data-metadata']['generator']
 
-                            if (point.generator_identifier in source_identifiers[point.source]) is False:
-                                source_identifiers[point.source].append(point.generator_identifier)
+                                if 'generator-id' in bundle_point['passive-data-metadata']:
+                                    point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+
+                                if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
+                                    point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
+
+                                point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
+
+                                if supports_json:
+                                    point.properties = bundle_point
+                                else:
+                                    point.properties = json.dumps(bundle_point, indent=2)
+
+                                point.fetch_secondary_identifier(skip_save=True)
+                                point.fetch_user_agent(skip_save=True)
+                                point.fetch_generator_definition(skip_save=True)
+                                point.fetch_source_reference(skip_save=True)
+
+                                point.save()
+
+                                if (point.source in seen_sources) is False:
+                                    seen_sources.append(point.source)
+
+                                if (point.source in source_identifiers) is False:
+                                    source_identifiers[point.source] = []
+
+                                latest_key = point.source + '--' + point.generator_identifier
+
+                                if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+                                    latest_points[latest_key] = point
+
+                                if (point.generator_identifier in seen_generators) is False:
+                                    seen_generators.append(point.generator_identifier)
+
+                                if (point.generator_identifier in source_identifiers[point.source]) is False:
+                                    source_identifiers[point.source].append(point.generator_identifier)
+                            else:
+                                if (server_url in xmit_points) is False:
+                                    xmit_points[server_url] = []
+
+                                xmit_points[server_url].append(bundle_point)
 
                             new_point_count += 1
+
+                    if len(xmit_points) == 0: # pylint: disable=len-as-condition
+                        bundle.processed = True
+                    else:
+                        failed = False
+
+                        for server_url in xmit_points:
+                            points = xmit_points[server_url]
+
+                            payload = {
+                                'payload': json.dumps(points, indent=2)
+                            }
+
+                            bundle_post = requests.post(server_url, data=payload)
+
+                            if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
+                                failed = True
+
+                        if failed is False:
+                            bundle.processed = True
+                        else:
+                            print 'Error encountered uploading contents of ' + str(bundle.pk) + '.'
 
                     if bundle.encrypted is False and supports_json is False:
                         bundle.properties = json.dumps(bundle.properties, indent=2)
 
-                    bundle.processed = True
                     bundle.save()
 
                     if options['delete']:
