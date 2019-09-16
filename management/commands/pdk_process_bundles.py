@@ -126,7 +126,6 @@ class Command(BaseCommand):
 
                     for bundle_point in bundle.properties:
                         if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
-
                             source = bundle_point['passive-data-metadata']['source']
 
                             server_url = None
@@ -139,6 +138,11 @@ class Command(BaseCommand):
                                 if source_obj is not None:
                                     if source_obj.server is not None:
                                         server_url = source_obj.server.upload_url
+                                else:
+                                    source_obj = DataSource(name=source, identifier=source)
+                                    source_obj.save()
+
+                                    source_obj.join_default_group()
 
                                 if server_url is None:
                                     server_url = ''

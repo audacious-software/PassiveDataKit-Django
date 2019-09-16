@@ -786,6 +786,21 @@ class DataSource(models.Model):
 
         return None
 
+    def join_default_group(self):
+        try:
+            if settings.PDK_DEFAULT_GROUP_NAME is not None:
+                group = DataSourceGroup.objects.filter(name=settings.PDK_DEFAULT_GROUP_NAME).first()
+
+                if group is None:
+                    group = DataSourceGroup(name=settings.PDK_DEFAULT_GROUP_NAME)
+                    group.save()
+
+                self.group = group
+
+                self.save()
+        except AttributeError:
+            pass
+
 
 class DataSourceAlert(models.Model):
     alert_name = models.CharField(max_length=1024)
