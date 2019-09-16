@@ -7,6 +7,7 @@ import datetime
 import json
 import random
 import string
+import urlparse
 
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
@@ -19,6 +20,7 @@ from django.db import connection
 from django.db.models import Q, QuerySet
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -560,6 +562,16 @@ class DataSource(models.Model):
     def __unicode__(self):
         return self.name + ' (' + self.identifier + ')'
 
+    def details_url(self):
+        url = reverse('pdk_source', args=[self.identifier])
+
+        if self.server is None:
+            return url
+
+        components = urlparse.urlparse(self.server.upload_url)
+
+        return urlparse.urlunsplit((components.scheme, components.netloc, url, '', ''))
+
     def fetch_definition(self):
         definition = {
             'name': self.name,
@@ -598,6 +610,9 @@ class DataSource(models.Model):
 
     def should_suppress_alerts(self):
         if self.suppress_alerts:
+            return True
+
+        if self.server is not None:
             return True
 
         if self.group and self.group.suppress_alerts:
