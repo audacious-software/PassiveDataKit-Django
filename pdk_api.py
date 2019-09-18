@@ -8,7 +8,10 @@ import os
 import tempfile
 import traceback
 
+import StringIO
+
 import dropbox
+import paramiko
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -227,6 +230,34 @@ def send_to_destination(destination, report_path):
 
                 with open(report_path, 'rb') as report_file:
                     client.files_upload(report_file.read(), path)
+
+                file_sent = True
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 'sftp':
+        try:
+            parameters = destination.fetch_parameters()
+
+            if ('username' in parameters) and ('host' in parameters) and ('key' in parameters):
+                path = ''
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                if 'prepend_date' in parameters:
+                    path = path + timezone.now().date().isoformat() + '-'
+
+                path = path + os.path.basename(os.path.normpath(report_path))
+
+                key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
+
+                ssh_client = paramiko.SSHClient()
+                ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+
+                ftp_client = ssh_client.open_sftp()
+                ftp_client.put(report_path, path)
+                ftp_client.close()
 
                 file_sent = True
         except BaseException:
