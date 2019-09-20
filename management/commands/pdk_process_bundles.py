@@ -128,6 +128,9 @@ class Command(BaseCommand):
                         if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                             source = bundle_point['passive-data-metadata']['source']
 
+                            if source == '':
+                                source = 'missing-source'
+
                             server_url = None
 
                             if source in sources:
