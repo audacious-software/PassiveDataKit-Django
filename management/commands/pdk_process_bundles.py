@@ -142,10 +142,11 @@ class Command(BaseCommand):
                                     if source_obj.server is not None:
                                         server_url = source_obj.server.upload_url
                                 else:
-                                    source_obj = DataSource(name=source, identifier=source)
-                                    source_obj.save()
+                                    if source is not None:
+                                        source_obj = DataSource(name=source, identifier=source)
+                                        source_obj.save()
 
-                                    source_obj.join_default_group()
+                                        source_obj.join_default_group()
 
                                 if server_url is None:
                                     server_url = ''
