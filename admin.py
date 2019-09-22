@@ -239,6 +239,6 @@ class DeviceIssueAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataServer)
 class DataServerAdmin(admin.OSMGeoAdmin):
-    list_display = ('name', 'upload_url',)
+    list_display = ('name', 'upload_url', 'source_metadata_url',)
 
-    search_fields = ('name', 'upload_url',)
+    search_fields = ('name', 'upload_url', 'source_metadata_url',)

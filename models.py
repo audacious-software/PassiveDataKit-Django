@@ -12,6 +12,8 @@ import urlparse
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
 
+import requests
+
 import django
 
 from django.conf import settings
@@ -523,8 +525,11 @@ class DataSourceGroup(models.Model):
         return self.name
 
 class DataServer(models.Model):
-    name = models.CharField(max_length=1024, db_index=True, unique=True)
-    upload_url = models.URLField(max_length=1024, db_index=True, unique=True)
+    name = models.CharField(max_length=1024, unique=True)
+    upload_url = models.URLField(max_length=1024, unique=True)
+    source_metadata_url = models.URLField(max_length=1024, null=True, blank=True)
+
+    request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
 
     def __unicode__(self):
         return unicode(self.name)
@@ -630,106 +635,128 @@ class DataSource(models.Model):
         return source_reference
 
     def update_performance_metadata(self): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
-        source_reference = self.fetch_source_reference()
+        if self.server is None:
+            source_reference = self.fetch_source_reference()
 
-        metadata = self.fetch_performance_metadata()
+            metadata = self.fetch_performance_metadata()
 
-        now = timezone.now()
+            now = timezone.now()
 
-        window_start = now - datetime.timedelta(days=METADATA_WINDOW_DAYS)
+            window_start = now - datetime.timedelta(days=METADATA_WINDOW_DAYS)
 
-        day_ago = timezone.now() - datetime.timedelta(days=1)
+            day_ago = timezone.now() - datetime.timedelta(days=1)
 
-        DataPoint.objects.filter(source_reference=source_reference, server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
+            DataPoint.objects.filter(source_reference=source_reference, server_generated=False, user_agent__icontains='Passive Data Kit Server', created__gte=day_ago).update(server_generated=True)
 
-        # Update latest_point
+            # Update latest_point
 
-        latest_point = self.latest_point()
+            latest_point = self.latest_point()
 
-        query = Q(source_reference=source_reference)
+            query = Q(source_reference=source_reference)
 
-        if latest_point is not None:
-            query = query & Q(created__gt=latest_point.created)
-        else:
-            latest_point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
-
-        point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
-
-        while point is not None:
-            if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
-                metadata['latest_point'] = point.pk
-
-                latest_point = point
-
-                point = None
+            if latest_point is not None:
+                query = query & Q(created__gt=latest_point.created)
             else:
-                point = DataPoint.objects.filter(source_reference=source_reference, server_generated=False, created__lt=point.created).order_by('-created').first()
+                latest_point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
 
-                if point is not None:
+            point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
+
+            while point is not None:
+                if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
                     metadata['latest_point'] = point.pk
 
-        # Update point_count
+                    latest_point = point
 
-        metadata['point_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).count()
+                    point = None
+                else:
+                    point = DataPoint.objects.filter(source_reference=source_reference, server_generated=False, created__lt=point.created).order_by('-created').first()
 
-        # Update point_frequency
+                    if point is not None:
+                        metadata['latest_point'] = point.pk
 
-        metadata['point_frequency'] = 0
+            # Update point_count
 
-        if metadata['point_count'] > 1:
-            earliest_point = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).order_by('created').first()
+            metadata['point_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).count()
 
-            seconds = (latest_point.created - earliest_point.created).total_seconds()
+            # Update point_frequency
 
-            if seconds > 0:
-                metadata['point_frequency'] = metadata['point_count'] / seconds
+            metadata['point_frequency'] = 0
 
-        generators = []
+            if metadata['point_count'] > 1:
+                earliest_point = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).order_by('created').first()
 
-        identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
+                seconds = (latest_point.created - earliest_point.created).total_seconds()
 
-        for identifier in identifiers:
-            definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier)
+                if seconds > 0:
+                    metadata['point_frequency'] = metadata['point_count'] / seconds
 
-            if definition is None:
-                definition = DataGeneratorDefinition(generator_identifier=identifier, name=identifier)
-                definition.save()
+            generators = []
 
-            generator = {}
+            identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
 
-            generator['identifier'] = identifier
-            generator['source'] = self.identifier
-            generator['label'] = generator_label(identifier)
+            for identifier in identifiers:
+                definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier)
 
-            generator['points_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
+                if definition is None:
+                    definition = DataGeneratorDefinition(generator_identifier=identifier, name=identifier)
+                    definition.save()
 
-            first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
-            last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
-            last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
+                generator = {}
 
-            generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
-            generator['first_created'] = calendar.timegm(first_point.created.timetuple())
-            generator['last_created'] = calendar.timegm(last_point.created.timetuple())
+                generator['identifier'] = identifier
+                generator['source'] = self.identifier
+                generator['label'] = generator_label(identifier)
 
-            duration = (last_point.created - first_point.created).total_seconds()
+                generator['points_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
 
-            if generator['points_count'] > 1 and duration > 0:
-                generator['frequency'] = float(generator['points_count']) / duration
+                first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
+                last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
+                last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
+
+                generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
+                generator['first_created'] = calendar.timegm(first_point.created.timetuple())
+                generator['last_created'] = calendar.timegm(last_point.created.timetuple())
+
+                duration = (last_point.created - first_point.created).total_seconds()
+
+                if generator['points_count'] > 1 and duration > 0:
+                    generator['frequency'] = float(generator['points_count']) / duration
+                else:
+                    generator['frequency'] = 0
+
+                generators.append(generator)
+
+            metadata['generator_statistics'] = generators
+
+            if install_supports_jsonfield():
+                self.performance_metadata = metadata
             else:
-                generator['frequency'] = 0
+                self.performance_metadata = json.dumps(metadata, indent=2)
 
-            generators.append(generator)
+            self.performance_metadata_updated = timezone.now()
 
-        metadata['generator_statistics'] = generators
+            self.save()
+        elif self.server.source_metadata_url is not None:
+            payload = {
+                'identifier': self.identifier,
+                'request-key': self.server.request_key
+            }
 
-        if install_supports_jsonfield():
-            self.performance_metadata = metadata
-        else:
-            self.performance_metadata = json.dumps(metadata, indent=2)
+            identifier_post = requests.post(self.server.source_metadata_url, data=payload)
 
-        self.performance_metadata_updated = timezone.now()
+            if identifier_post.status_code >= 200 and identifier_post.status_code < 300:
+                metadata = identifier_post.json()
 
-        self.save()
+                if install_supports_jsonfield():
+                    self.performance_metadata = metadata
+                else:
+                    self.performance_metadata = json.dumps(metadata, indent=2)
+            else:
+                print 'Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url
+
+            self.performance_metadata_updated = timezone.now()
+
+            self.save()
 
     def latest_point(self):
         metadata = self.fetch_performance_metadata()

@@ -661,3 +661,19 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
             payload.append(issue_obj)
 
     return JsonResponse(payload, safe=False, json_dumps_params={'indent': 2})
+
+@csrf_exempt
+def pdk_fetch_metadata_json(request):
+    metadata = {}
+
+    if 'identifier' in request.POST and 'request-key' in request.POST:
+        try:
+            if request.POST['request-key'] == settings.PDK_REQUEST_KEY:
+                source = DataSource.objects.filter(identifier=request.POST['identifier']).first()
+
+                if source is not None:
+                    metadata = source.fetch_performance_metadata()
+        except AttributeError:
+            pass
+
+    return JsonResponse(metadata, safe=False, json_dumps_params={'indent': 2})

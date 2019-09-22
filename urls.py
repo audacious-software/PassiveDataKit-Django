@@ -5,7 +5,7 @@ from django.contrib.auth.views import logout
 from django.conf import settings
 
 from .views import pdk_add_data_point, pdk_add_data_bundle, pdk_app_config, pdk_issues, \
-                   pdk_issues_json
+                   pdk_issues_json, pdk_fetch_metadata_json
 
 urlpatterns = [
     url(r'^add-point.json$', pdk_add_data_point, name='pdk_add_data_point'),
@@ -37,6 +37,7 @@ try:
         urlpatterns.append(url(r'^system-health$', pdk_system_health, name='pdk_system_health'))
         urlpatterns.append(url(r'^profile$', pdk_profile, name='pdk_profile'))
         urlpatterns.append(url(r'^issues.json$', pdk_issues_json, name='pdk_issues_json'))
+        urlpatterns.append(url(r'^fetch-metadata.json$', pdk_fetch_metadata_json, name='pdk_fetch_metadata_json'))
         urlpatterns.append(url(r'^issues$', pdk_issues, name='pdk_issues'))
         urlpatterns.append(url(r'^unmatched-sources.json$', pdk_unmatched_sources, name='pdk_unmatched_sources'))
         urlpatterns.append(url(r'^logout$', logout, name='pdk_logout'))
