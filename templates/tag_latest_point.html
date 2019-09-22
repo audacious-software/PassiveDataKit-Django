@@ -1,6 +1,6 @@
 {% load passive_data_kit %}
-{% if latest_point != None %}
-	{% date_ago latest_point.created %}
+{% if latest_point_created != None %}
+	{% date_ago latest_point_created %}
 {% else %}
 	None
 {% endif %}

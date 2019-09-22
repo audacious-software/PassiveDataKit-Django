@@ -662,7 +662,9 @@ class DataSource(models.Model):
             point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
 
             while point is not None:
-                if ('Passive Data Kit Server' in point.fetch_user_agent()) is False:
+                user_agent = point.fetch_user_agent()
+
+                if ('Passive Data Kit Server' in user_agent) is False:
                     metadata['latest_point'] = point.pk
 
                     latest_point = point
@@ -673,6 +675,10 @@ class DataSource(models.Model):
 
                     if point is not None:
                         metadata['latest_point'] = point.pk
+
+            if latest_point is not None:
+                metadata['user_agent'] = latest_point.fetch_user_agent()
+                metadata['latest_point_created'] = calendar.timegm(latest_point.created.timetuple())
 
             # Update point_count
 
@@ -825,6 +831,24 @@ class DataSource(models.Model):
                     tokens = properties['passive-data-metadata']['generator'].split(':')
 
                     return tokens[-1].strip()
+        else:
+            metadata = self.fetch_performance_metadata()
+
+            if 'user_agent' in metadata:
+                return metadata['user_agent']
+
+        return None
+
+    def latest_point_created(self):
+        latest_point = self.latest_point()
+
+        if latest_point is not None:
+            return latest_point.created
+        else:
+            metadata = self.fetch_performance_metadata()
+
+            if 'latest_point_created' in metadata:
+                return datetime.utcfromtimestamp(metadata['latest_point_created'])
 
         return None
 

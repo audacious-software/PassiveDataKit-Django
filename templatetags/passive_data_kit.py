@@ -54,7 +54,9 @@ class LatestPointNode(template.Node):
     def render(self, context):
         source = self.source.resolve(context)
 
-        context['latest_point'] = source.latest_point()
+        metadata = source.fetch_performance_metadata()
+
+        context['metadata'] = metadata
 
         return render_to_string('tag_latest_point.html', context.flatten())
 
