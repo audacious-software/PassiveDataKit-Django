@@ -1,7 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+import bz2
 import calendar
 import csv
+import gc
 import importlib
 import json
 import os
@@ -14,10 +16,13 @@ import dropbox
 import paramiko
 
 from django.conf import settings
+from django.core import management
+from django.db.models import Q
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.text import slugify
 
-from .models import DataPoint, DataGeneratorDefinition, DataSourceReference
+from .models import DataPoint, DataBundle, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
 
 # def name_for_generator(identifier):
 #    if identifier == 'web-historian':
@@ -299,3 +304,142 @@ def annotate_source_definition(source, definition):
         definition['latest_point'] = None
 
     return definition
+
+def load_backup(filename, content):
+    prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
+
+    if filename.startswith(prefix) is False:
+        return
+
+    if 'json-dumpdata' in filename:
+        filename = filename.replace('.json-dumpdata.bz2.encrypted', '.json')
+
+        path = os.path.join(tempfile.gettempdir(), filename)
+
+        with open(path, 'wb') as fixture_file:
+            fixture_file.write(content)
+
+        management.call_command('loaddata', path)
+
+        os.remove(path)
+    elif 'pdk-bundle' in filename:
+        bundle = DataBundle(recorded=timezone.now())
+
+        if install_supports_jsonfield():
+            bundle.properties = json.loads(content)
+        else:
+            bundle.properties = content
+
+        bundle.save()
+    else:
+        print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
+
+def incremental_backup(parameters): # pylint: disable=too-many-locals
+    to_transmit = []
+    to_clear = []
+
+    # Dump full content of these models. No incremental backup here.
+
+    dumpdata_apps = (
+        'auth',
+        'passive_data_kit.AppConfiguration',
+        'passive_data_kit.DataServerApiToken',
+        'passive_data_kit.DataServerAccessRequest',
+        'passive_data_kit.DataServer',
+        'passive_data_kit.DataSourceGroup',
+        'passive_data_kit.DataSource',
+        'passive_data_kit.DeviceIssue',
+        'passive_data_kit.DeviceModel',
+        'passive_data_kit.Device',
+        'passive_data_kit.ReportDestination',
+    )
+
+    prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
+
+    if 'start_date' in parameters:
+        prefix += '_' + parameters['start_date'].isoformat()
+
+    if 'end_date' in parameters:
+        prefix += '_' + parameters['end_date'].isoformat()
+
+    for app in dumpdata_apps:
+        print '[passive_data_kit] Backing up ' + app + '...'
+        buf = StringIO.StringIO()
+        management.call_command('dumpdata', app, stdout=buf)
+        buf.seek(0)
+
+        database_dump = buf.read()
+
+        buf = None
+
+        gc.collect()
+
+        compressed_str = bz2.compress(database_dump)
+
+        database_dump = None
+
+        gc.collect()
+
+        filename = prefix + '_' + slugify(app) + '.json-dumpdata.bz2'
+
+        path = os.path.join(tempfile.gettempdir(), filename)
+
+        with open(path, 'wb') as fixture_file:
+            fixture_file.write(compressed_str)
+
+        to_transmit.append(path)
+
+    # Using parameters, only backup matching DataPoint objects. Add PKs to to_clear for
+    # optional deletion.
+
+    bundle_size = 500
+
+    query = Q(generator__startswith='pdk-')
+
+    if 'start_date' in parameters:
+        query = query & Q(recorded__gte=parameters['start_date'])
+
+    if 'end_date' in parameters:
+        query = query & Q(recorded__lt=parameters['end_date'])
+
+    log_recorded = False
+
+    if 'clear_archived' in parameters and parameters['clear_archived']:
+        log_recorded = True
+
+    count = DataPoint.objects.filter(query).count()
+
+    index = 0
+
+    while index < count:
+        filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
+
+        print '[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...'
+
+        bundle = []
+
+        for point in DataPoint.objects.filter(query).order_by('recorded')[index:(index + bundle_size)]:
+            bundle.append(point.fetch_properties())
+
+            if log_recorded:
+                to_clear.append('pdk:' + str(point.pk))
+
+        index += bundle_size
+
+        compressed_str = bz2.compress(json.dumps(bundle))
+
+        path = os.path.join(tempfile.gettempdir(), filename)
+
+        with open(path, 'wb') as compressed_file:
+            compressed_file.write(compressed_str)
+
+        to_transmit.append(path)
+
+    return to_transmit, to_clear
+
+
+def clear_points(to_clear):
+    for point_id in to_clear:
+        point_pk = int(point_id.replace('pdk:', ''))
+
+        DataPoint.objects.filter(pk=point_pk).delete()
