@@ -143,6 +143,11 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
     now = timezone.now()
 
+    latest = points.order_by('-created').first()
+
+    if latest is not None:
+        now = latest.created
+
     now = now.replace(second=0, microsecond=0)
 
     remainder = now.minute % 10
