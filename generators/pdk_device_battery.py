@@ -147,7 +147,7 @@ def data_table(source, generator):
     return render_to_string('generators/pdk_device_battery_table_template.html', context)
 
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
@@ -213,7 +213,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row.append(recorded.isoformat())
 
                     row.append(properties['level'])
-                    
+
                     if 'scale' in properties:
                         row.append(properties['scale'])
                     else:
