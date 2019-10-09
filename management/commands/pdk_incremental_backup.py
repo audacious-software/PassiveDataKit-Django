@@ -4,6 +4,7 @@ import base64
 import datetime
 import importlib
 import os
+import sys
 
 import pytz
 
@@ -57,7 +58,23 @@ class Command(BaseCommand):
 
         parameters['clear_archived'] = options['clear_archived']
 
-        key = base64.b64decode(settings.PDK_BACKUP_KEY)
+        key = None
+
+        try:
+            key = base64.b64decode(settings.PDK_BACKUP_KEY)
+        except AttributeError:
+            print 'Please define PDK_BACKUP_KEY in the settings.'
+
+            sys.exit(1)
+
+        destinations = None
+
+        try:
+            destinations = settings.PDK_BACKUP_DESTINATIONS
+        except AttributeError:
+            print 'Please define PDK_BACKUP_DESTINATIONS in the settings.'
+
+            sys.exit(1)
 
         for app in settings.INSTALLED_APPS:
             try:
@@ -65,7 +82,7 @@ class Command(BaseCommand):
 
                 to_transmit, to_clear = pdk_api.incremental_backup(parameters)
 
-                for destination in settings.PDK_BACKUP_DESTINATIONS:
+                for destination in destinations:
                     if destination.startswith('file://'):
                         dest_path = destination.replace('file://', '')
 

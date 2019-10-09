@@ -334,7 +334,7 @@ def load_backup(filename, content):
     else:
         print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
 
-def incremental_backup(parameters): # pylint: disable=too-many-locals
+def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements
     to_transmit = []
     to_clear = []
 
@@ -393,6 +393,11 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals
     # optional deletion.
 
     bundle_size = 500
+
+    try:
+        bundle_size = settings.PDK_BACKUP_BUNDLE_SIZE
+    except AttributeError:
+        print 'Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.'
 
     query = Q(generator__startswith='pdk-')
 
