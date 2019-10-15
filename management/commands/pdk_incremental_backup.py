@@ -5,7 +5,11 @@ import datetime
 import importlib
 import os
 import sys
+import urlparse
 
+import StringIO
+
+import dropbox
 import pytz
 
 from nacl.secret import SecretBox
@@ -37,7 +41,7 @@ class Command(BaseCommand):
                             help='Delete backed-up content after successful transmission')
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-locals
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-statements
         here_tz = pytz.timezone(settings.TIME_ZONE)
 
         parameters = {}
@@ -83,8 +87,10 @@ class Command(BaseCommand):
                 to_transmit, to_clear = pdk_api.incremental_backup(parameters)
 
                 for destination in destinations:
-                    if destination.startswith('file://'):
-                        dest_path = destination.replace('file://', '')
+                    destination_url = urlparse.urlparse(destination)
+
+                    if destination_url.scheme == 'file':
+                        dest_path = destination_url.path
 
                         for path in to_transmit:
                             box = SecretBox(key)
@@ -98,6 +104,26 @@ class Command(BaseCommand):
 
                                 with open(encrypted_path, 'wb') as encrypted_file:
                                     encrypted_file.write(encrypted_str)
+
+                            os.remove(path)
+                    elif destination_url.scheme == 'dropbox':
+                        access_token = destination_url.netloc
+
+                        client = dropbox.Dropbox(access_token)
+
+                        for path in to_transmit:
+                            box = SecretBox(key)
+
+                            with open(path, 'rb') as backup_file:
+                                encrypted_io = StringIO.StringIO()
+                                encrypted_io.write(backup_file.read())
+                                encrypted_io.seek(0)
+
+                                filename = os.path.basename(path) + '.encrypted'
+
+                                dropbox_path = os.path.join(destination_url.path, filename)
+
+                                client.files_upload(encrypted_io.read(), dropbox_path)
 
                             os.remove(path)
 
