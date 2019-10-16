@@ -361,6 +361,13 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals
 
     if 'end_date' in parameters:
         prefix += '_' + parameters['end_date'].isoformat()
+        
+    backup_staging = tempfile.gettempdir()
+    
+    try:
+    	backup_staging = settings.PDK_BACKUP_STAGING_DESTINATION
+    except AttributeError:
+    	pass
 
     for app in dumpdata_apps:
         print '[passive_data_kit] Backing up ' + app + '...'
@@ -382,7 +389,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals
 
         filename = prefix + '_' + slugify(app) + '.json-dumpdata.bz2'
 
-        path = os.path.join(tempfile.gettempdir(), filename)
+        path = os.path.join(backup_staging, filename)
 
         with open(path, 'wb') as fixture_file:
             fixture_file.write(compressed_str)
@@ -394,7 +401,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals
 
     bundle_size = 500
 
-    query = Q(generator__startswith='pdk-')
+    query = Q(generator_identifier__startswith='pdk-')
 
     if 'start_date' in parameters:
         query = query & Q(recorded__gte=parameters['start_date'])
@@ -428,7 +435,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals
 
         compressed_str = bz2.compress(json.dumps(bundle))
 
-        path = os.path.join(tempfile.gettempdir(), filename)
+        path = os.path.join(backup_staging, filename)
 
         with open(path, 'wb') as compressed_file:
             compressed_file.write(compressed_str)
