@@ -31,12 +31,12 @@ class Command(BaseCommand):
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
                 for encrypted_file in options['file']:
-                    if os.path.exists(file):
+                    if os.path.exists(encrypted_file):
                         filename = os.path.basename(encrypted_file)
 
                         box = SecretBox(key)
 
-                        with open(file, 'rb') as backup_file:
+                        with open(encrypted_file, 'rb') as backup_file:
                             content = box.decrypt(backup_file.read())
 
                             decompressed = bz2.decompress(content)
