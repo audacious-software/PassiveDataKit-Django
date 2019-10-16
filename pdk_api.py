@@ -361,13 +361,13 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
     if 'end_date' in parameters:
         prefix += '_' + parameters['end_date'].isoformat()
-        
+
     backup_staging = tempfile.gettempdir()
-    
+
     try:
-    	backup_staging = settings.PDK_BACKUP_STAGING_DESTINATION
+        backup_staging = settings.PDK_BACKUP_STAGING_DESTINATION
     except AttributeError:
-    	pass
+        pass
 
     for app in dumpdata_apps:
         print '[passive_data_kit] Backing up ' + app + '...'
