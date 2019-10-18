@@ -121,7 +121,7 @@ class Command(BaseCommand):
             if visualization.generator_identifier == 'pdk-data-frequency':
                 points = DataPoint.objects.filter(source_reference=source_reference)
             else:
-                definition = DataGeneratorDefinition.defintion_for_identifier(visualization.generator_identifier)
+                definition = DataGeneratorDefinition.definition_for_identifier(visualization.generator_identifier)
                 points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition)
 
             folder = settings.MEDIA_ROOT + '/pdk_visualizations/' + visualization.source + '/' + visualization.generator_identifier

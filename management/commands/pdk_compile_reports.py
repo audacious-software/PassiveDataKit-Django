@@ -106,7 +106,7 @@ class Command(BaseCommand):
                         for generator in generators: # pylint: disable=too-many-nested-blocks
                             if raw_json:
                                 for source in sources:
-                                    generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+                                    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
                                     source_reference = DataSourceReference.reference_for_source(source)
 
                                     points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)

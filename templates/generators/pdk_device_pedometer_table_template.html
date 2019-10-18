@@ -1,0 +1,34 @@
+{% load passive_data_kit %}
+<table id="pedometer_values_table" class="table-striped" data-toggle="table" data-sort-name="created" data-sort-order="desc" data-pagination="true" style="z-index: 10; display: none;">
+    <thead>
+        <tr>
+            <th data-sortable="true" data-field="created">Created</th>
+            <th data-sortable="true">Steps</th>
+            <th data-sortable="true">Floors Ascended</th>
+            <th data-sortable="true">Floors Descended</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in values %}
+        	{% with props=row.fetch_properties %}
+				<tr>
+					<td>
+						<span style="display: none;">
+							{{ row.created.isoformat }}
+						</span>
+						{{ row.created }}
+					</td>
+					<td>{{ props|get_item:'daily-summary-steps' }}</td>
+					<td>{{ props|get_item:'daily-summary-floors-ascended' }}</td>
+					<td>{{ props|get_item:'daily-summary-floors-descended' }}</td>
+				</tr>
+			{% endwith %}
+        {% endfor %}
+    </tbody>
+</table>
+    
+<script>
+	window.showValues = function() {
+		$("#pedometer_values_table").show();
+	};
+</script>

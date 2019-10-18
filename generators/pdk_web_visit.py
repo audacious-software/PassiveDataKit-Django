@@ -30,7 +30,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     with ZipFile(filename, 'w') as export_file:
         for source in sources:
             source_reference = DataSourceReference.reference_for_source(source)
-            generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+            generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
 
             identifier = slugify(generator + '__' + source)
 
@@ -108,7 +108,7 @@ def data_table(source, generator):
     context['generator_identifier'] = generator
 
     source_reference = DataSourceReference.reference_for_source(source.identifier)
-    generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
 
     context['values'] = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created')
 
