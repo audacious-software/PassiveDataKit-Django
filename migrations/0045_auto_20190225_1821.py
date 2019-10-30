@@ -7,6 +7,7 @@ import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
 
+from ..models import install_supports_jsonfield
 
 class Migration(migrations.Migration):
 
@@ -14,28 +15,55 @@ class Migration(migrations.Migration):
         ('passive_data_kit', '0044_dataserverapitoken'),
     ]
 
-    operations = [
-        migrations.CreateModel(
-            name='AppConfiguration',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=1024)),
-                ('id_pattern', models.CharField(max_length=1024)),
-                ('context_pattern', models.CharField(default='.*', max_length=1024)),
-                ('configuration_json', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('evaluate_order', models.IntegerField(default=1)),
-                ('is_valid', models.BooleanField(default=False)),
-                ('is_enabled', models.BooleanField(default=True)),
-            ],
-        ),
-        migrations.AlterField(
-            model_name='datafile',
-            name='data_bundle',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataBundle'),
-        ),
-        migrations.AlterField(
-            model_name='datafile',
-            name='data_point',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataPoint'),
-        ),
-    ]
+    if install_supports_jsonfield():
+        operations = [
+            migrations.CreateModel(
+                name='AppConfiguration',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('name', models.CharField(max_length=1024)),
+                    ('id_pattern', models.CharField(max_length=1024)),
+                    ('context_pattern', models.CharField(default='.*', max_length=1024)),
+                    ('configuration_json', django.contrib.postgres.fields.jsonb.JSONField()),
+                    ('evaluate_order', models.IntegerField(default=1)),
+                    ('is_valid', models.BooleanField(default=False)),
+                    ('is_enabled', models.BooleanField(default=True)),
+                ],
+            ),
+            migrations.AlterField(
+                model_name='datafile',
+                name='data_bundle',
+                field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataBundle'),
+            ),
+            migrations.AlterField(
+                model_name='datafile',
+                name='data_point',
+                field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataPoint'),
+            ),
+        ]
+    else:
+        operations = [
+            migrations.CreateModel(
+                name='AppConfiguration',
+                fields=[
+                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                    ('name', models.CharField(max_length=1024)),
+                    ('id_pattern', models.CharField(max_length=1024)),
+                    ('context_pattern', models.CharField(default='.*', max_length=1024)),
+                    ('configuration_json', models.TextField(max_length=34359738368)),
+                    ('evaluate_order', models.IntegerField(default=1)),
+                    ('is_valid', models.BooleanField(default=False)),
+                    ('is_enabled', models.BooleanField(default=True)),
+                ],
+            ),
+            migrations.AlterField(
+                model_name='datafile',
+                name='data_bundle',
+                field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataBundle'),
+            ),
+            migrations.AlterField(
+                model_name='datafile',
+                name='data_point',
+                field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='data_files', to='passive_data_kit.DataPoint'),
+            ),
+        ]

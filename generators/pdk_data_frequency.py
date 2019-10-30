@@ -3,20 +3,20 @@
 import calendar
 import datetime
 import json
+import os
 
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 DEFAULT_INTERVAL = 600
+DEFAULT_DAYS = 2
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Data Frequency'
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
     now = timezone.now()
-
-    now = now.replace(second=0, microsecond=0)
 
     interval = DEFAULT_INTERVAL
 
@@ -25,13 +25,25 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     except AttributeError:
         pass
 
+    visualize_days = DEFAULT_DAYS
+
+    try:
+        visualize_days = settings.PDK_DATA_FREQUENCY_VISUALIZATION_DAYS
+    except AttributeError:
+        pass
+
+    if points.count() > 0:
+        now = points.order_by('-created').first().created
+
+    now = now.replace(second=0, microsecond=0)
+
     remainder = now.minute % int(interval / 60)
 
     now = now.replace(minute=(now.minute - remainder))
 
-    start = now - datetime.timedelta(days=2)
+    now += datetime.timedelta(seconds=interval)
 
-    points = points.filter(created__lte=now, created__gte=start)
+    start = now - datetime.timedelta(days=visualize_days)
 
     end = start + datetime.timedelta(seconds=interval)
 
@@ -65,7 +77,10 @@ def visualization(source, generator): # pylint: disable=unused-argument
             data = json.load(infile)
 
             context['data'] = data
+
+            context['updated'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(filename))
     except IOError:
         context['data'] = {}
+        context['updated'] = None
 
     return render_to_string('pdk_data_frequency_template.html', context)
