@@ -40,8 +40,33 @@ class Command(BaseCommand):
                             action='store_true',
                             help='Delete backed-up content after successful transmission')
 
+
+    def folder_for_options(self, options): # pylint: disable=no-self-use
+        folder_path_format = '%(start_date)s__%(end_date)s'
+
+        try:
+            folder_path_format = settings.PDK_BACKUP_FOLDER_FORMAT
+        except AttributeError:
+            pass
+
+        folder_args = {}
+
+        if 'start_date' in options:
+            folder_args['start_date'] = str(options['start_date'])
+
+        if 'end_date' in options:
+            folder_args['end_date'] = str(options['end_date'])
+
+        if 'clear_archived' in options and options['clear_archived']:
+            folder_args['clear'] = 'data-cleared'
+        else:
+            folder_args['clear'] = 'data-retained'
+
+        return folder_path_format % folder_args
+
+
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-statements
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
         here_tz = pytz.timezone(settings.TIME_ZONE)
 
         parameters = {}
@@ -91,6 +116,15 @@ class Command(BaseCommand):
 
                     if destination_url.scheme == 'file':
                         dest_path = destination_url.path
+
+                        final_folder = self.folder_for_options(options)
+
+                        if final_folder is not None:
+                            dest_path = os.path.join(dest_path, final_folder)
+
+                        if os.path.exists(dest_path) is False:
+                            print 'Creating folder for archive storage: ' + dest_path
+                            os.makedirs(dest_path)
 
                         for path in to_transmit:
                             box = SecretBox(key)

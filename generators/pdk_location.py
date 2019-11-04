@@ -2,7 +2,6 @@
 
 import calendar
 import csv
-import datetime
 import os
 import tempfile
 import time
@@ -14,7 +13,6 @@ import arrow
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.utils.text import slugify
 
 from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
@@ -40,16 +38,21 @@ def visualization(source, generator):
 
     values = []
 
-    end = timezone.now()
-    start = end - datetime.timedelta(days=7)
-
     min_latitude = 90
     max_latitude = -90
 
     min_longitude = 180
     max_longitude = -180
 
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
+    start = None
+    end = None
+
+    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:500]:
+        if end is None:
+            end = point.created
+
+        start = point.created
+
         properties = point.fetch_properties()
 
         values.append(properties)
@@ -77,19 +80,16 @@ def visualization(source, generator):
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
 
-    return render_to_string('pdk_device_location_template.html', context)
+    return render_to_string('generators/pdk_device_location_template.html', context)
 
 def data_table(source, generator):
     context = {}
     context['source'] = source
     context['generator_identifier'] = generator
 
-    end = timezone.now()
-    start = end - datetime.timedelta(days=1)
+    context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator).order_by('-created')[:500]
 
-    context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created')
-
-    return render_to_string('pdk_device_location_table_template.html', context)
+    return render_to_string('generators/pdk_device_location_table_template.html', context)
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
@@ -98,7 +98,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
             source_reference = DataSourceReference.reference_for_source(source)
-            generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+            generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
 
             points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 

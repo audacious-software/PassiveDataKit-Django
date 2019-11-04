@@ -113,7 +113,7 @@ class DataGeneratorDefinition(models.Model):
         return self.generator_identifier
 
     @classmethod
-    def defintion_for_identifier(cls, generator_identifier):
+    def definition_for_identifier(cls, generator_identifier):
         try:
             return DataGeneratorDefinition.objects.get(generator_identifier=generator_identifier)
         except MultipleObjectsReturned:

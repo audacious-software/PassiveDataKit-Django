@@ -138,7 +138,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             'Properties'
         ])
 
-        generator_definition = DataGeneratorDefinition.defintion_for_identifier(generator)
+        generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
 
         for source in sources:
             source_reference = DataSourceReference.reference_for_source(source)

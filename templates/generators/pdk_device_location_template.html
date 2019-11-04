@@ -217,7 +217,11 @@
 		};
 
 		window.showVisualization = function() { 
-	
+			var width = $("#map").width();
+			
+			var height = (width * 9) / 16;
+			
+			$("#map").height(height);
 		};
 	</script>
 	<script src="https://maps.googleapis.com/maps/api/js?key={{ google_api_key }}&callback=initMap&libraries=visualization" async defer></script>
