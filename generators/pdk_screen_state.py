@@ -140,3 +140,9 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
             os.remove(secondary_filename)
 
     return filename
+
+def extract_secondary_identifier(properties):
+    if 'state' in properties:
+        return properties['state']
+
+    return None
