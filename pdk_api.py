@@ -228,7 +228,7 @@ def send_to_destination(destination, report_path):
 
                 path = path + '/'
 
-                if 'prepend_date' in parameters:
+                if ('prepend_date' in parameters) and parameters['prepend_date']:
                     path = path + timezone.now().date().isoformat() + '-'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
@@ -249,7 +249,7 @@ def send_to_destination(destination, report_path):
                 if 'path' in parameters:
                     path = parameters['path']
 
-                if 'prepend_date' in parameters:
+                if ('prepend_date' in parameters) and parameters['prepend_date']:
                     path = path + timezone.now().date().isoformat() + '-'
 
                 path = path + os.path.basename(os.path.normpath(report_path))

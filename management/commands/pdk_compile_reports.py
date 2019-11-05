@@ -97,7 +97,12 @@ class Command(BaseCommand):
                 if 'prefix' in parameters:
                     prefix = parameters['prefix']
 
-                filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + report.started.date().isoformat() + '.zip'
+                suffix = report.started.date().isoformat()
+
+                if 'suffix' in parameters:
+                    suffix = parameters['suffix']
+
+                filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
 
                 with open(filename, 'wb') as final_output_file:
                     with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long

@@ -1086,6 +1086,9 @@ class ReportJobBatchRequest(models.Model):
                 if 'prefix' in params:
                     job_params['prefix'] = params['prefix']
 
+                if 'suffix' in params:
+                    job_params['suffix'] = params['suffix']
+
                 if install_supports_jsonfield():
                     job.parameters = job_params
                 else:

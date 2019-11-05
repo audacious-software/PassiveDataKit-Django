@@ -1,5 +1,5 @@
 appdirs==1.4.3
-arrow==0.13.1
+arrow==0.15.4
 asn1crypto==0.24.0
 astroid==1.6.5
 backports.functools-lru-cache==1.5
