@@ -701,11 +701,7 @@ class DataSource(models.Model):
             identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
 
             for identifier in identifiers:
-                definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier)
-
-                if definition is None:
-                    definition = DataGeneratorDefinition(generator_identifier=identifier, name=identifier)
-                    definition.save()
+                definition = DataGeneratorDefinition.definition_for_identifier(identifier)
 
                 generator = {}
 
@@ -742,6 +738,7 @@ class DataSource(models.Model):
             self.performance_metadata_updated = timezone.now()
 
             self.save()
+
         elif self.server.source_metadata_url is not None:
             payload = {
                 'identifier': self.identifier,

@@ -113,8 +113,8 @@ class DataSourceGroupAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataSource)
 class DataSourceAdmin(admin.OSMGeoAdmin):
-    list_display = ('name', 'identifier', 'group', 'suppress_alerts',)
-    list_filter = ('group', 'suppress_alerts',)
+    list_display = ('name', 'identifier', 'group', 'suppress_alerts', 'performance_metadata_updated',)
+    list_filter = ('group', 'suppress_alerts', 'performance_metadata_updated',)
     search_fields = ['name', 'identifier']
 
 
