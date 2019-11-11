@@ -23,6 +23,9 @@ requirejs.config({
         "bootstrap-datepicker": {
             deps: ["bootstrap"],
         },
+        "bootstrap-timepicker": {
+            deps: ["bootstrap"],
+        },
         "rickshaw": {
             deps: ["d3-layout", "jquery"],
             exports: "Rickshaw"
