@@ -1311,7 +1311,7 @@ class Device(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.source.identifier + ' - ' + self.model.__unicode__())
+        return unicode(self.source.identifier + ': ' + self.model.model + ' (' + self.platform + ')')
 
     def populate_device(self):
         user_agent = self.source.latest_user_agent()
@@ -1348,10 +1348,14 @@ class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
     created = models.DateTimeField()
     last_updated = models.DateTimeField()
 
-    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
     user_agent = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    app = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    version = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
+    device_model = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
 
     description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+    tags = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
 
     stability_related = models.BooleanField(default=False)
     uptime_related = models.BooleanField(default=False)
@@ -1364,6 +1368,7 @@ class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
     storage_related = models.BooleanField(default=False)
     configuration_related = models.BooleanField(default=False)
     location_related = models.BooleanField(default=False)
+    correctness_related = models.BooleanField(default=False)
 
 @receiver(pre_save, sender=DeviceIssue)
 def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name

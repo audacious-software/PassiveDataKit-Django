@@ -1,6 +1,6 @@
 //Load common code that includes config, then load the app logic for this page.
 requirejs(['./common'], function (common) {
-    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table"], function (bootstrap, bs_typeahead, bs_table) {
+    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table", "moment"], function (bootstrap, bs_typeahead, bs_table, moment) {
 		$.ajaxSetup({ 
 			beforeSend: function(xhr, settings) {
 				if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
@@ -34,11 +34,21 @@ requirejs(['./common'], function (common) {
 			}, {
 				title: 'Created',
 				field: 'created',
-				sortable: true
+				sortable: true,
+				formatter: function(value, row) {
+					const date = moment(value);
+					
+					return date.format('lll');
+				}
 			}, {
 				title: 'Updated',
 				field: 'updated',
-				sortable: true
+				sortable: true,
+				formatter: function(value, row) {
+					const date = moment(value);
+					
+					return date.format('lll');
+				}
 			}, {
 				title: 'Issues',
 				field: 'issues',
@@ -88,6 +98,10 @@ requirejs(['./common'], function (common) {
 					if (row["responsiveness_related"]) {
 						issues.push("App Responsiveness")
 					}
+
+					if (row["correctness_related"]) {
+						issues.push("App Correctness")
+					}
 					
 					if (issues.length == 0) {
 						return "None Specified";
@@ -106,6 +120,7 @@ requirejs(['./common'], function (common) {
 			
 			data["source"] = $("#source").val();
 			data["description"] = $("#issue_description").val();
+			data["tags"] = $("#issue_tags").val();
 
 			data["location"] = $("#issue_location").is(":checked");
 			data["battery"] = $("#issue_battery").is(":checked");
@@ -118,6 +133,7 @@ requirejs(['./common'], function (common) {
 			data["app_stability"] = $("#issue_app_stability").is(":checked");
 			data["app_configuration"] = $("#issue_app_configuration").is(":checked");
 			data["app_responsiveness"] = $("#issue_app_responsiveness").is(":checked");
+			data["app_correctness"] = $("#issue_app_correctness").is(":checked");
 			
 			$.post($("#issues-table").attr("data-url"), data, function(data) {
 				alert(data["message"]);
@@ -125,6 +141,7 @@ requirejs(['./common'], function (common) {
 				if (data["success"]) {
 					$("#source").val("");
 					$("#issue_description").val("");
+					$("#issue_tags").val("");
 
 					$("#issue_location").prop("checked", false);
 					$("#issue_battery").prop("checked", false);
@@ -137,15 +154,12 @@ requirejs(['./common'], function (common) {
 					$("#issue_app_stability").prop("checked", false);
 					$("#issue_app_configuration").prop("checked", false);
 					$("#issue_app_responsiveness").prop("checked", false);
+					$("#issue_app_correctness").prop("checked", false);
 
 					$("#issues-table").bootstrapTable('refresh');
 				}
 			});
 		});
-
-		$.get("unmatched-sources.json", function(data) {
-	        $(".typeahead").typeahead({ source: data });
-        });
 
 		if (window.setupHome != undefined) {
 			window.setupHome();

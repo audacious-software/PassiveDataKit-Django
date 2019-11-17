@@ -619,6 +619,7 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
                 issue.storage_related = (request.POST['storage'] == 'true')
                 issue.configuration_related = (request.POST['app_configuration'] == 'true')
                 issue.location_related = (request.POST['location'] == 'true')
+                issue.correctness_related = (request.POST['app_correctness'] == 'true')
 
                 issue.save()
 
@@ -657,6 +658,7 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
             issue_obj['storage_related'] = issue.storage_related
             issue_obj['configuration_related'] = issue.configuration_related
             issue_obj['location_related'] = issue.location_related
+            issue_obj['correctness_related'] = issue.correctness_related
 
             payload.append(issue_obj)
 
