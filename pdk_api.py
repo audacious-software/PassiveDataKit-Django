@@ -414,10 +414,10 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     if 'end_date' in parameters:
         query = query & Q(recorded__lt=parameters['end_date'])
 
-    log_recorded = False
+    clear_archived = False
 
     if 'clear_archived' in parameters and parameters['clear_archived']:
-        log_recorded = True
+        clear_archived = True
 
     count = DataPoint.objects.filter(query).count()
 
@@ -433,7 +433,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         for point in DataPoint.objects.filter(query).order_by('recorded')[index:(index + bundle_size)]:
             bundle.append(point.fetch_properties())
 
-            if log_recorded:
+            if clear_archived:
                 to_clear.append('pdk:' + str(point.pk))
 
         index += bundle_size

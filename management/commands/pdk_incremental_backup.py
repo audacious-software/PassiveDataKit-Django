@@ -136,6 +136,8 @@ class Command(BaseCommand):
 
                                 encrypted_path = os.path.join(dest_path, filename)
 
+                                print 'Writing to filesystem: ' + encrypted_path
+
                                 with open(encrypted_path, 'wb') as encrypted_file:
                                     encrypted_file.write(encrypted_str)
 
@@ -157,9 +159,13 @@ class Command(BaseCommand):
 
                                 dropbox_path = os.path.join(destination_url.path, filename)
 
+                                print 'Uploading to Dropbox: ' + encrypted_path
+
                                 client.files_upload(encrypted_io.read(), dropbox_path)
 
                             os.remove(path)
+                    else:
+                        print 'Unknown desitination: ' + destination
 
                 pdk_api.clear_points(to_clear)
 
