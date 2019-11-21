@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from ...decorators import handle_lock
-from ...models import DataPoint
+from ...models import DataPoint, DataGeneratorDefinition
 
 class Command(BaseCommand):
     help = 'Send silent notifications to Android Firebase devices to nudge power management systems for transmission.'
@@ -19,9 +19,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         push_service = FCMNotification(api_key=settings.PDK_FIREBASE_API_KEY)
 
+        event_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
+
         tokens = {}
 
-        for point in DataPoint.objects.filter(generator_identifier='pdk-app-event', secondary_identifier='pdk-firebase-token').order_by('created'):
+        for point in DataPoint.objects.filter(generator_definition=event_definition, secondary_identifier='pdk-firebase-token').order_by('created'):
             properties = point.fetch_properties()
 
             tokens[point.source] = properties['event_details']['token']
