@@ -297,11 +297,14 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
-    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server'): # pylint: disable=no-self-use
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None): # pylint: disable=no-self-use, too-many-arguments
         now = timezone.now()
 
+        if created is None:
+            created = now
+
         payload['passive-data-metadata'] = {
-            'timestamp': calendar.timegm(now.utctimetuple()),
+            'timestamp': calendar.timegm(created.utctimetuple()),
             'generator-id': identifier,
             'generator': identifier + ': ' + user_agent,
             'source': source
@@ -315,8 +318,9 @@ class DataPointManager(models.Manager):
             point.properties = json.dumps(payload, indent=2)
 
         point.user_agent = user_agent
-        point.created = now
         point.recorded = now
+
+        point.created = created
 
         point.save()
 
@@ -551,7 +555,7 @@ class DataSource(models.Model):
     identifier = models.CharField(max_length=1024, db_index=True)
     name = models.CharField(max_length=1024, db_index=True, unique=True)
 
-    group = models.ForeignKey(DataSourceGroup, related_name='sources', null=True, on_delete=models.SET_NULL)
+    group = models.ForeignKey(DataSourceGroup, related_name='sources', blank=True, null=True, on_delete=models.SET_NULL)
 
     suppress_alerts = models.BooleanField(default=False)
 
