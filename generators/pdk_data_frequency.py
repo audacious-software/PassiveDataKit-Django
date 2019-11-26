@@ -32,8 +32,10 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     except AttributeError:
         pass
 
-    if points.count() > 0:
-        now = points.order_by('-created').first().created
+    latest = points.order_by('-created').first()
+
+    if latest is not None:
+        now = latest.created
 
     now = now.replace(second=0, microsecond=0)
 
