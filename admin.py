@@ -233,7 +233,7 @@ class DeviceAdmin(admin.OSMGeoAdmin):
 class DeviceIssueAdmin(admin.OSMGeoAdmin):
     list_display = ('device', 'state', 'created', 'last_updated',)
 
-    search_fields = ('device', 'description',)
+    search_fields = ('tags', 'description', 'user_agent')
     list_filter = ('state', 'created', 'last_updated', 'stability_related', 'uptime_related', 'responsiveness_related', 'battery_use_related', 'power_management_related', 'data_volume_related', 'data_quality_related', 'bandwidth_related', 'storage_related', 'configuration_related', 'location_related',)
 
 
