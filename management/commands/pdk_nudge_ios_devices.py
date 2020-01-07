@@ -37,7 +37,7 @@ class Command(BaseCommand):
             tokens[point.source] = properties['event_details']['token']
 
             if tokens[point.source] in expired:
-                print 'RENAMING TOKEN FOR ' + point.source
+                print 'PROD RENAMING TOKEN FOR ' + point.source
 
                 point.secondary_identifier = 'pdk-ios-device-token-expired'
                 point.save()
@@ -50,4 +50,38 @@ class Command(BaseCommand):
 
         notification = {'source': 'passive-data-kit', 'operation': 'nudge'}
 
-        apns.send(token_list, notification, content_available=True)
+        result = apns.send(token_list, notification, content_available=True)
+
+        expired = list(result.token_errors.keys())
+
+        # if expired:
+        #    print('PROD SENT: ' + json.dumps(result.tokens, indent=2))
+        #
+        #    for token in result.token_errors:
+        #        print('PROD ERROR[' + token + ']: ' + str(result.token_errors[token]))
+
+        try:
+            if expired:
+                apns = APNSSandboxClient(certificate=settings.PDK_SANDBOX_APNS_CERTIFICATE)
+
+                result = apns.send(expired, notification, content_available=True)
+
+                # print('SAND SENT: ' + json.dumps(result.tokens, indent=2))
+                #
+                # for token in result.token_errors:
+                #    print('SAND ERROR[' + token + ']: ' + str(result.token_errors[token]))
+
+                expired = list(result.token_errors.keys())
+        except AttributeError:
+            pass # Not set up for sandbox fallback
+
+        for point in DataPoint.objects.filter(generator_identifier='pdk-app-event', secondary_identifier='pdk-ios-device-token').order_by('created'):
+            properties = point.fetch_properties()
+
+            tokens[point.source] = properties['event_details']['token']
+
+            if tokens[point.source] in expired:
+                print 'SAND RENAMING TOKEN FOR ' + point.source
+
+                point.secondary_identifier = 'pdk-ios-device-token-error'
+                point.save()
