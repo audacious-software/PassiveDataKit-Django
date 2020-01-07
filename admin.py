@@ -145,6 +145,7 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
     list_filter = ('requested', 'started', 'completed',)
 
     actions = [reset_report_jobs]
+    search_fields = ('parameters',)
 
 
 @admin.register(ReportJobBatchRequest)
