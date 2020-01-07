@@ -183,7 +183,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row.append(point.recorded.isoformat())
                     row.append(json.dumps(point.fetch_properties()))
 
-                    writer.writerow(row)
+                    writer.writerow([s.encode('utf-8') for s in row])
 
                 index += 5000
 
