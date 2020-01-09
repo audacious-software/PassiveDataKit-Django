@@ -55,13 +55,26 @@ def data_table(source, generator):
 
     return render_to_string('generators/pdk_device_system_status_table_template.html', context)
 
-def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
+def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
+        seen_sources = []
+
         for source in sources:
-            identifier = slugify(generator + '__' + source)
+            export_source = source
+
+            seen_index = 1
+
+            while slugify(export_source) in seen_sources:
+                export_source = source + '__' + str(seen_index)
+
+                seen_index += 1
+
+            seen_sources.append(slugify(export_source))
+
+            identifier = slugify(generator + '__' + export_source)
 
             secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
@@ -134,7 +147,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     writer.writerow(row)
 
-            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(export_source) + '.txt')
 
             os.remove(secondary_filename)
 

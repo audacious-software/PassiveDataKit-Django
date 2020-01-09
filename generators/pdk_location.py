@@ -96,7 +96,20 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
+        seen_sources = []
+
         for source in sources:
+            export_source = source
+
+            seen_index = 1
+
+            while slugify(export_source) in seen_sources:
+                export_source = source + '__' + str(seen_index)
+
+                seen_index += 1
+
+            seen_sources.append(slugify(export_source))
+
             source_reference = DataSourceReference.reference_for_source(source)
             generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
 
@@ -201,7 +214,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     writer.writerow(row)
 
-            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(export_source) + '.txt')
 
             os.remove(secondary_filename)
 
