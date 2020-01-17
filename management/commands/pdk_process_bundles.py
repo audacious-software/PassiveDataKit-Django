@@ -132,6 +132,13 @@ class Command(BaseCommand):
                                 if source == '':
                                     source = 'missing-source'
 
+                                try:
+                                    source = settings.PDK_RENAME_SOURCE(source)
+
+                                    bundle_point['passive-data-metadata']['source'] = source
+                                except AttributeError:
+                                    pass # Optional method not defined
+
                                 server_url = None
 
                                 if source in sources:
