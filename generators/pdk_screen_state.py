@@ -79,8 +79,21 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
+        seen_sources = []
+
         for source in sources:
-            identifier = slugify(generator + '__' + source)
+            export_source = source
+
+            seen_index = 1
+
+            while slugify(export_source) in seen_sources:
+                export_source = source + '__' + str(seen_index)
+
+                seen_index += 1
+
+            seen_sources.append(slugify(export_source))
+
+            identifier = slugify(generator + '__' + export_source)
 
             secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
@@ -135,7 +148,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                     writer.writerow(row)
 
-            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
+            export_file.write(secondary_filename, slugify(generator) + '/' + slugify(export_source) + '.txt')
 
             os.remove(secondary_filename)
 

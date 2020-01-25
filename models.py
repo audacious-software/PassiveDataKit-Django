@@ -459,7 +459,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         if self.source in CACHED_SOURCE_REFERENCES:
             source_reference = CACHED_SOURCE_REFERENCES[self.source]
         else:
-            source_reference = DataSourceReference.objects.filter(source=self.source).first()
+            source_reference = DataSourceReference.objects.filter(source=self.source).order_by('pk').first()
 
             if source_reference is None:
                 source_reference = DataSourceReference(source=self.source)
@@ -719,18 +719,19 @@ class DataSource(models.Model):
                 last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
                 last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
 
-                generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
-                generator['first_created'] = calendar.timegm(first_point.created.timetuple())
-                generator['last_created'] = calendar.timegm(last_point.created.timetuple())
+                if last_recorded is not None:
+                    generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
+                    generator['first_created'] = calendar.timegm(first_point.created.timetuple())
+                    generator['last_created'] = calendar.timegm(last_point.created.timetuple())
 
-                duration = (last_point.created - first_point.created).total_seconds()
+                    duration = (last_point.created - first_point.created).total_seconds()
 
-                if generator['points_count'] > 1 and duration > 0:
-                    generator['frequency'] = float(generator['points_count']) / duration
-                else:
-                    generator['frequency'] = 0
+                    if generator['points_count'] > 1 and duration > 0:
+                        generator['frequency'] = float(generator['points_count']) / duration
+                    else:
+                        generator['frequency'] = 0
 
-                generators.append(generator)
+                    generators.append(generator)
 
             metadata['generator_statistics'] = generators
 
