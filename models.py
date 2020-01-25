@@ -942,7 +942,7 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
         params = {}
 
         params['sources'] = sources
-        params['generators'] = generators
+        params['generators'] = list(set(generators))
         params['export_raw'] = export_raw
         params['data_start'] = data_start
         params['data_end'] = data_end
