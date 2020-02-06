@@ -53,9 +53,13 @@ class Command(BaseCommand):
 
         if 'start_date' in options:
             folder_args['start_date'] = str(options['start_date'])
+        else:
+            folder_args['start_date'] = 'start'
 
         if 'end_date' in options:
             folder_args['end_date'] = str(options['end_date'])
+        else:
+            folder_args['end_date'] = 'end'
 
         if 'clear_archived' in options and options['clear_archived']:
             folder_args['clear'] = 'data-cleared'
@@ -157,9 +161,11 @@ class Command(BaseCommand):
 
                                 filename = os.path.basename(path) + '.encrypted'
 
-                                dropbox_path = os.path.join(destination_url.path, filename)
+                                final_folder = self.folder_for_options(options)
 
-                                print 'Uploading to Dropbox: ' + encrypted_path
+                                dropbox_path = os.path.join(destination_url.path, final_folder + '/' + filename)
+
+                                print 'Uploading to Dropbox: ' + dropbox_path
 
                                 client.files_upload(encrypted_io.read(), dropbox_path)
 

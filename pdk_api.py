@@ -3,6 +3,7 @@
 import bz2
 import calendar
 import csv
+import datetime
 import gc
 import importlib
 import json
@@ -357,10 +358,10 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
 
     if 'start_date' in parameters:
-        prefix += '_' + parameters['start_date'].isoformat()
+        prefix += '_' + parameters['start_date'].date().isoformat()
 
     if 'end_date' in parameters:
-        prefix += '_' + parameters['end_date'].isoformat()
+        prefix += '_' + (parameters['end_date'].date() - datetime.timedelta(days=1)).isoformat()
 
     backup_staging = tempfile.gettempdir()
 
