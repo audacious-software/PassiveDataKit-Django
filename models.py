@@ -501,6 +501,8 @@ def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint:
 class DataBundle(models.Model):
     recorded = models.DateTimeField(db_index=True)
 
+    errored = models.DateTimeField(db_index=True, null=True, blank=True)
+
     if install_supports_jsonfield():
         properties = JSONField()
     else:
