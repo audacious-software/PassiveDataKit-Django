@@ -528,6 +528,10 @@ class DataSourceGroup(models.Model):
     def __unicode__(self):
         return self.name
 
+    def refresh_performance_metadata(self):
+        for member in self.sources.all():
+            member.refresh_performance_metadata()
+
 class DataServer(models.Model):
     name = models.CharField(max_length=1024, unique=True)
     upload_url = models.URLField(max_length=1024, unique=True)
@@ -765,6 +769,11 @@ class DataSource(models.Model):
             self.performance_metadata_updated = timezone.now()
 
             self.save()
+
+    def refresh_performance_metadata(self):
+        self.performance_metadata_updated = None
+
+        self.save()
 
     def latest_point(self):
         metadata = self.fetch_performance_metadata()

@@ -560,20 +560,38 @@ def pdk_profile(request):
 
     return render(request, 'pdk_user_profile.html', context=context)
 
+@csrf_exempt
 def pdk_app_config(request): # pylint: disable=too-many-statements
+    identifier = None
+    context = None
+
     if request.method == 'GET':
-        if 'id' in request.GET and 'context' in request.GET:
+        if 'id' in request.GET:
             identifier = request.GET['id']
-            context = request.GET['context']
 
-            for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
-                if re.search(config.id_pattern, identifier) is not None:
-                    if re.search(config.context_pattern, context) is not None:
-                        return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
-        else:
-            raise Http404('"id" or "context" parameter not provided.')
+        if 'context' in request.GET:
+            identifier = request.GET['context']
 
-    raise Http404('Matching configuration not found.')
+    if request.method == 'POST':
+        if 'id' in request.POST:
+            identifier = request.POST['id']
+
+        if 'context' in request.POST:
+            identifier = request.POST['context']
+
+    if identifier is None:
+        identifier = 'default'
+
+    if context is None:
+        context = 'default'
+
+    for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
+        if re.search(config.id_pattern, identifier) is not None:
+            if re.search(config.context_pattern, context) is not None:
+                return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+
+    return HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
+#     raise Http404('Matching configuration not found.')
 
 @staff_member_required
 def pdk_issues(request):
