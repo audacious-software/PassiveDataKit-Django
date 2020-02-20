@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from passive_data_kit.decorators import handle_lock
+from passive_data_kit.decorators import handle_lock, log_scheduled_event
 from passive_data_kit.models import DataPoint, DataPointVisualization, DataSource, DataSourceReference, DataGeneratorDefinition
 
 class Command(BaseCommand):
@@ -37,6 +37,7 @@ class Command(BaseCommand):
                             help='Number of times to repeat in a single run')
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
         repeat = options['repeat']
 

@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from passive_data_kit.decorators import handle_lock
+from passive_data_kit.decorators import handle_lock, log_scheduled_event
 from passive_data_kit.models import DataBundle, DataPoint, DataServerMetadatum
 
 class Command(BaseCommand):
@@ -20,6 +20,7 @@ class Command(BaseCommand):
         pass
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-branches
         datum = DataServerMetadatum.objects.filter(key='Server Health').first()
 
