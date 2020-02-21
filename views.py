@@ -570,14 +570,14 @@ def pdk_app_config(request): # pylint: disable=too-many-statements
             identifier = request.GET['id']
 
         if 'context' in request.GET:
-            identifier = request.GET['context']
+            context = request.GET['context']
 
     if request.method == 'POST':
         if 'id' in request.POST:
             identifier = request.POST['id']
 
         if 'context' in request.POST:
-            identifier = request.POST['context']
+            context = request.POST['context']
 
     if identifier is None:
         identifier = 'default'
@@ -638,6 +638,9 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
                 issue.configuration_related = (request.POST['app_configuration'] == 'true')
                 issue.location_related = (request.POST['location'] == 'true')
                 issue.correctness_related = (request.POST['app_correctness'] == 'true')
+                issue.ui_related = (request.POST['app_ui'] == 'true')
+                issue.device_performance_related = (request.POST['device_performance'] == 'true')
+                issue.device_stability_related = (request.POST['device_stability'] == 'true')
 
                 issue.save()
 

@@ -441,10 +441,8 @@ class GeneratorName(template.Node):
                     return output
             except ImportError:
                 pass
-#                traceback.print_exc()
             except AttributeError:
                 pass
-#                traceback.print_exc()
 
         return generator
 
@@ -519,10 +517,10 @@ class PointsVisualizationNode(template.Node):
 
                     visualization_html = pdk_api.visualization(source, generator)
                 except ImportError:
-                    # traceback.print_exc()
+                    traceback.print_exc()
                     pass
                 except AttributeError:
-                    # traceback.print_exc()
+                    traceback.print_exc()
                     pass
 
         return visualization_html

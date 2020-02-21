@@ -102,6 +102,18 @@ requirejs(['./common'], function (common) {
 					if (row["correctness_related"]) {
 						issues.push("App Correctness")
 					}
+
+					if (row["ui_related"]) {
+						issues.push("App User Interface / Interactions")
+					}
+
+					if (row["device_peformance_related"]) {
+						issues.push("Device Performance")
+					}
+
+					if (row["device_stability_related"]) {
+						issues.push("Device Stability")
+					}
 					
 					if (issues.length == 0) {
 						return "None Specified";
@@ -134,6 +146,11 @@ requirejs(['./common'], function (common) {
 			data["app_configuration"] = $("#issue_app_configuration").is(":checked");
 			data["app_responsiveness"] = $("#issue_app_responsiveness").is(":checked");
 			data["app_correctness"] = $("#issue_app_correctness").is(":checked");
+
+			data["app_ui"] = $("#issue_app_ui").is(":checked");
+
+			data["device_performance"] = $("#issue_device_performance").is(":checked");
+			data["device_stability"] = $("#issue_device_stability").is(":checked");
 			
 			$.post($("#issues-table").attr("data-url"), data, function(data) {
 				alert(data["message"]);
@@ -143,18 +160,7 @@ requirejs(['./common'], function (common) {
 					$("#issue_description").val("");
 					$("#issue_tags").val("");
 
-					$("#issue_location").prop("checked", false);
-					$("#issue_battery").prop("checked", false);
-					$("#issue_power").prop("checked", false);
-					$("#issue_data_quality").prop("checked", false);
-					$("#issue_data_volume").prop("checked", false);
-					$("#issue_bandwidth").prop("checked", false);
-					$("#issue_storage").prop("checked", false);
-					$("#issue_app_uptime").prop("checked", false);
-					$("#issue_app_stability").prop("checked", false);
-					$("#issue_app_configuration").prop("checked", false);
-					$("#issue_app_responsiveness").prop("checked", false);
-					$("#issue_app_correctness").prop("checked", false);
+					$(".pdk-issue-type").prop("checked", false);
 
 					$("#issues-table").bootstrapTable('refresh');
 				}

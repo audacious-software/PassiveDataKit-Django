@@ -5,6 +5,8 @@ import datetime
 import json
 import os
 
+import traceback
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -13,76 +15,125 @@ DEFAULT_INTERVAL = 600
 DEFAULT_DAYS = 2
 
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Data Frequency'
+	return 'Data Frequency'
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
-    now = timezone.now()
+	now = timezone.now()
 
-    interval = DEFAULT_INTERVAL
+	interval = DEFAULT_INTERVAL
 
-    try:
-        interval = settings.PDK_DATA_FREQUENCY_VISUALIZATION_INTERVAL
-    except AttributeError:
-        pass
+	try:
+		interval = settings.PDK_DATA_FREQUENCY_VISUALIZATION_INTERVAL
+	except AttributeError:
+		pass
 
-    visualize_days = DEFAULT_DAYS
+	visualize_days = DEFAULT_DAYS
 
-    try:
-        visualize_days = settings.PDK_DATA_FREQUENCY_VISUALIZATION_DAYS
-    except AttributeError:
-        pass
+	try:
+		visualize_days = settings.PDK_DATA_FREQUENCY_VISUALIZATION_DAYS
+	except AttributeError:
+		pass
 
-    latest = points.order_by('-created').first()
+	latest = points.order_by('-created').first()
 
-    if latest is not None:
-        now = latest.created
+	if latest is not None:
+		now = latest.created
 
-    now = now.replace(second=0, microsecond=0)
+	now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % int(interval / 60)
+	remainder = now.minute % int(interval / 60)
 
-    now = now.replace(minute=(now.minute - remainder))
+	now = now.replace(minute=(now.minute - remainder))
 
-    now += datetime.timedelta(seconds=interval)
+	now += datetime.timedelta(seconds=interval)
 
-    start = now - datetime.timedelta(days=visualize_days)
+	start = now - datetime.timedelta(days=visualize_days)
 
-    end = start + datetime.timedelta(seconds=interval)
+	end = start + datetime.timedelta(seconds=interval)
 
-    timestamp_counts = {}
+	timestamp_counts = {}
 
-    keys = []
+	keys = []
 
-    while start < now:
-        timestamp = str(calendar.timegm(start.timetuple()))
+	while start < now:
+		timestamp = str(calendar.timegm(start.timetuple()))
 
-        keys.append(timestamp)
+		keys.append(timestamp)
 
-        timestamp_counts[timestamp] = points.filter(created__lte=end, created__gte=start).count()
+		timestamp_counts[timestamp] = points.filter(created__lte=end, created__gte=start).count()
 
-        start = end
-        end = start + datetime.timedelta(seconds=interval)
+		start = end
+		end = start + datetime.timedelta(seconds=interval)
 
-    timestamp_counts['keys'] = keys
+	timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
-        json.dump(timestamp_counts, outfile, indent=2)
+	with open(folder + '/timestamp-counts.json', 'w') as outfile:
+		json.dump(timestamp_counts, outfile, indent=2)
+
+	# Plot times recorded
+
+	latest = points.order_by('-recorded').first()
+
+	if latest is not None:
+		now = latest.recorded
+
+	now = now.replace(second=0, microsecond=0)
+
+	remainder = now.minute % int(interval / 60)
+
+	now = now.replace(minute=(now.minute - remainder))
+
+	now += datetime.timedelta(seconds=interval)
+
+	start = now - datetime.timedelta(days=visualize_days)
+
+	end = start + datetime.timedelta(seconds=interval)
+
+	timestamp_counts = {}
+
+	keys = []
+
+	while start < now:
+		timestamp = str(calendar.timegm(start.timetuple()))
+
+		keys.append(timestamp)
+
+		timestamp_counts[timestamp] = points.filter(recorded__lte=end, recorded__gte=start).count()
+
+		start = end
+		end = start + datetime.timedelta(seconds=interval)
+
+	timestamp_counts['keys'] = keys
+
+	with open(folder + '/timestamp-recorded-counts.json', 'w') as outfile:
+		json.dump(timestamp_counts, outfile, indent=2)
 
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-counts.json'
+	filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-counts.json'
 
-    context = {}
+	context = {}
 
-    try:
-        with open(filename) as infile:
-            data = json.load(infile)
+	try:
+		with open(filename) as infile:
+			data = json.load(infile)
 
-            context['data'] = data
+			context['data'] = data
 
-            context['updated'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(filename))
-    except IOError:
-        context['data'] = {}
-        context['updated'] = None
+			context['updated'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(filename))
 
-    return render_to_string('pdk_data_frequency_template.html', context)
+			try:
+				recorded_file = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-recorded-counts.json'
+
+				with open(recorded_file) as infile:
+					recorded_data = json.load(infile)
+
+					context['recorded'] = recorded_data
+			except IOError:
+				context['recorded'] = {}
+	except IOError:
+		context['data'] = {}
+		context['recorded'] = {}
+		context['updated'] = None
+
+	return render_to_string('pdk_data_frequency_template.html', context)

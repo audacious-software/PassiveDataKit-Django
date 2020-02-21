@@ -1385,6 +1385,9 @@ class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
     configuration_related = models.BooleanField(default=False)
     location_related = models.BooleanField(default=False)
     correctness_related = models.BooleanField(default=False)
+    iu_related = models.BooleanField(default=False)
+    device_performance_related = models.BooleanField(default=False)
+    device_stability_related = models.BooleanField(default=False)
 
 @receiver(pre_save, sender=DeviceIssue)
 def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
