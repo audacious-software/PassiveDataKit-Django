@@ -21,7 +21,7 @@ from django.db import transaction, DataError
 from django.db.transaction import TransactionManagementError
 from django.utils import timezone
 
-from ...decorators import handle_lock
+from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataServerMetadatum, DataPoint, DataBundle, DataSource, \
                       install_supports_jsonfield, TOTAL_DATA_POINT_COUNT_DATUM, \
                       SOURCES_DATUM, SOURCE_GENERATORS_DATUM
@@ -49,6 +49,7 @@ class Command(BaseCommand):
                             help='Skips statistic updates for improved speeds')
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         to_delete = []
 

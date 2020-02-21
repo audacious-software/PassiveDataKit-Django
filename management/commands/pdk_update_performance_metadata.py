@@ -2,7 +2,7 @@
 
 from django.core.management.base import BaseCommand
 
-from ...decorators import handle_lock
+from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataSource
 
 class Command(BaseCommand):
@@ -16,6 +16,7 @@ class Command(BaseCommand):
                             help='Specific source to update')
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options):
         source = None
 

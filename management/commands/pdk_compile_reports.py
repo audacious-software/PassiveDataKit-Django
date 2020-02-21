@@ -19,7 +19,7 @@ from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from ...decorators import handle_lock
+from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
 
 class Command(BaseCommand):
@@ -29,6 +29,7 @@ class Command(BaseCommand):
         pass
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         os.umask(000)
 

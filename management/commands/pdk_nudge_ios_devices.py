@@ -6,7 +6,7 @@ from django.conf import settings
 
 from django.core.management.base import BaseCommand
 
-from ...decorators import handle_lock
+from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint
 
 class Command(BaseCommand):
@@ -16,6 +16,7 @@ class Command(BaseCommand):
         pass
 
     @handle_lock
+    @log_scheduled_event
     def handle(self, *args, **options):
         apns = APNSClient(certificate=settings.PDK_APNS_CERTIFICATE)
 
