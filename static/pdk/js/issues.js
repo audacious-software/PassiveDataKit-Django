@@ -18,7 +18,10 @@ requirejs(['./common'], function (common) {
 			columns: [{
 				title: 'Data Source',
 				field: 'source',
-				sortable: true
+				sortable: true,
+				formatter: function(value, row) {
+					return '<a href="source/' + value + '" target="_blank">' + value + '</a>';
+				}
 			}, {
 				title: 'Model',
 				field: 'model',
@@ -125,6 +128,164 @@ requirejs(['./common'], function (common) {
 			}]
 		});
 		
+		$.get($("#issues-table").attr("data-issues-url"), function(data) {
+		    $("#issues-table").bootstrapTable("load", data)
+		});
+		
+		var cachedData = null;
+		
+		var applyFilter = function() {
+			console.log("FILTERING!");
+			
+			var toShow = new Set();
+		    
+		    if (cachedData == null) {
+			    cachedData = JSON.parse(JSON.stringify($("#issues-table").bootstrapTable("getData")));
+		    }
+
+		    var tableData = JSON.parse(JSON.stringify(cachedData));
+
+		    console.log(tableData);
+		    
+			$(".issue_state_filter").each(function(index) {
+				if ($(this).is(":checked")) {
+					var state = $(this).attr("data-value");
+					
+					for (var i = 0; i < tableData.length; i++) {
+						var item = tableData[i];
+						
+						if (item["state"] == state) {
+							toShow.add(i);
+						}
+					}
+				}
+			});
+
+			var typeMatches = new Set();
+
+			$(".issue_type_filter").each(function(index) {
+				if ($(this).is(":checked")) {
+					var issue_type = $(this).attr("data-key");
+					
+					for (var i = 0; i < tableData.length; i++) {
+						var item = tableData[i];
+
+						if (issue_type == "any_issue") {
+							typeMatches.add(i);
+						} else if (item[issue_type] != undefined && item[issue_type] == true) {
+							typeMatches.add(i);
+						}
+					}
+				}
+			});
+
+			var mfgrMatches = new Set();
+
+			$(".issue_mfgr_filter").each(function(index) {
+				if ($(this).is(":checked")) {
+					var manufacturer = $(this).attr("data-value");
+					
+					for (var i = 0; i < tableData.length; i++) {
+						var item = tableData[i];
+						
+						if (manufacturer == "any") {
+							mfgrMatches.add(i);
+						} else  if (item['model'].endsWith("(" + manufacturer + ")")) {
+							mfgrMatches.add(i);
+						}
+					}
+				}
+			});
+
+			var searchMatches = new Set();
+			
+			var searchQuery = $("#issue_search").val();
+			
+			if (searchQuery == undefined) {
+				searchQuery = "";
+			}
+			
+			for (var i = 0; i < tableData.length; i++) {
+				if (searchQuery == "") {
+					searchMatches.add(i);
+				} else {
+					var item = tableData[i];
+				
+					if (item["description"] != null && item["description"].toLowerCase().indexOf(searchQuery.toLowerCase()) != -1) {
+						searchMatches.add(i);
+					}
+
+					if (item["platform"] != null && item["platform"].toLowerCase().indexOf(searchQuery.toLowerCase()) != -1) {
+						searchMatches.add(i);
+					}
+
+					if (item["user_agent"] != null && item["user_agent"].toLowerCase().indexOf(searchQuery.toLowerCase()) != -1) {
+						searchMatches.add(i);
+					}
+
+					if (item["model"] != null && item["model"].toLowerCase().indexOf(searchQuery.toLowerCase()) != -1) {
+						searchMatches.add(i);
+					}
+				}
+			}
+			
+			var toDelete = new Set();
+			
+			for (var visible of toShow) {
+				if (typeMatches.has(visible)) {
+					// Do nothing...
+				} else {
+					toDelete.add(visible);
+				}
+			}
+
+			for (var visible of toShow) {
+				if (mfgrMatches.has(visible)) {
+					// Do nothing...
+				} else {
+					toDelete.add(visible);
+				}
+			}
+
+			for (var visible of toShow) {
+				if (searchMatches.has(visible)) {
+					// Do nothing...
+				} else {
+					toDelete.add(visible);
+				}
+			}
+
+			for (var remove of toDelete) {
+				toShow.delete(remove);
+			}
+
+			for (var i = tableData.length - 1; i >= 0; i--) {
+				if (toShow.has(i)) {
+					// Keep
+				} else {
+					tableData.splice(i, 1);
+				}
+			}
+
+		    $("#issues-table").bootstrapTable("load", tableData);
+		}
+		
+		$(".issue_state_filter").click(function() {
+			applyFilter();
+		});
+
+		$(".issue_type_filter").click(function() {
+			applyFilter();
+		});
+
+		$(".issue_mfgr_filter").click(function() {
+			applyFilter();
+		});
+
+		$("#issue_search").on('input', function() {
+			applyFilter();
+		});
+		
 		$("#add_issue_button").click(function(eventObj) {
 			eventObj.preventDefault();
 			
@@ -134,25 +295,23 @@ requirejs(['./common'], function (common) {
 			data["description"] = $("#issue_description").val();
 			data["tags"] = $("#issue_tags").val();
 
-			data["location"] = $("#issue_location").is(":checked");
+			data["app_stability"] = $("#issue_app_stability").is(":checked");
+			data["app_uptime"] = $("#issue_app_uptime").is(":checked");
+			data["app_responsiveness"] = $("#issue_app_responsiveness").is(":checked");
 			data["battery"] = $("#issue_battery").is(":checked");
 			data["power"] = $("#issue_power").is(":checked");
-			data["data_quality"] = $("#issue_data_quality").is(":checked");
 			data["data_volume"] = $("#issue_data_volume").is(":checked");
+			data["data_quality"] = $("#issue_data_quality").is(":checked");
 			data["bandwidth"] = $("#issue_bandwidth").is(":checked");
 			data["storage"] = $("#issue_storage").is(":checked");
-			data["app_uptime"] = $("#issue_app_uptime").is(":checked");
-			data["app_stability"] = $("#issue_app_stability").is(":checked");
 			data["app_configuration"] = $("#issue_app_configuration").is(":checked");
-			data["app_responsiveness"] = $("#issue_app_responsiveness").is(":checked");
+			data["location"] = $("#issue_location").is(":checked");
 			data["app_correctness"] = $("#issue_app_correctness").is(":checked");
-
 			data["app_ui"] = $("#issue_app_ui").is(":checked");
-
 			data["device_performance"] = $("#issue_device_performance").is(":checked");
 			data["device_stability"] = $("#issue_device_stability").is(":checked");
 			
-			$.post($("#issues-table").attr("data-url"), data, function(data) {
+			$.post($("#issues-table").attr("data-issues-url"), data, function(data) {
 				alert(data["message"]);
 
 				if (data["success"]) {
@@ -162,7 +321,13 @@ requirejs(['./common'], function (common) {
 
 					$(".pdk-issue-type").prop("checked", false);
 
-					$("#issues-table").bootstrapTable('refresh');
+					$.get($("#issues-table").attr("data-issues-url"), function(data) {
+						$("#issues-table").bootstrapTable("load", data)
+						
+						cachedData = null;
+					
+						applyFilter();
+					});
 				}
 			});
 		});

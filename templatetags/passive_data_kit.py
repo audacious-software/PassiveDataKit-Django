@@ -517,10 +517,8 @@ class PointsVisualizationNode(template.Node):
 
                     visualization_html = pdk_api.visualization(source, generator)
                 except ImportError:
-                    traceback.print_exc()
                     pass
                 except AttributeError:
-                    traceback.print_exc()
                     pass
 
         return visualization_html

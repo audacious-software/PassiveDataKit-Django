@@ -8,7 +8,7 @@ import re
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
-                        FileResponse, UnreadablePostError, Http404
+                        FileResponse, UnreadablePostError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -17,7 +17,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource, ReportJob, \
                     generator_label, install_supports_jsonfield, DataSourceAlert, \
-                    DataServerMetadatum, AppConfiguration, DeviceIssue, Device
+                    DataServerMetadatum, AppConfiguration, DeviceIssue, Device, DeviceModel
 
 
 @csrf_exempt
@@ -597,6 +597,8 @@ def pdk_app_config(request): # pylint: disable=too-many-statements
 def pdk_issues(request):
     context = {}
 
+    context['manufacturers'] = DeviceModel.objects.order_by('manufacturer').values_list('manufacturer', flat=True).distinct()
+
     return render(request, 'pdk_issues.html', context=context)
 
 @staff_member_required
@@ -623,6 +625,7 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
 
                 issue = DeviceIssue(device=device)
                 issue.description = request.POST['description']
+                issue.tags = request.POST['tags']
                 issue.created = timezone.now()
                 issue.last_updated = timezone.now()
 

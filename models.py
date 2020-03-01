@@ -1327,7 +1327,7 @@ class Device(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.source.identifier + ': ' + self.model.model + ' (' + self.platform + ')')
+        return unicode(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
 
     def populate_device(self):
         user_agent = self.source.latest_user_agent()
@@ -1385,7 +1385,7 @@ class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
     configuration_related = models.BooleanField(default=False)
     location_related = models.BooleanField(default=False)
     correctness_related = models.BooleanField(default=False)
-    iu_related = models.BooleanField(default=False)
+    ui_related = models.BooleanField(default=False)
     device_performance_related = models.BooleanField(default=False)
     device_stability_related = models.BooleanField(default=False)
 

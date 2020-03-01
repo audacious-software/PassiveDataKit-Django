@@ -5,7 +5,160 @@
 {% block 'page_title' %}Device Issues | Passive Data Kit{% endblock %}
 
 {% block sidebar %}
-	(Filters coming soon...)
+<h1>&nbsp;</h1>
+<ul class="nav nav-sidebar">
+	<li>
+		<div class="form-group" style="margin-left: 20px; margin-right: 20px;">
+			<input type="text" class="form-control" id="issue_search" aria-describedby="issue_search_help" placeholder="Search issues&#8230;">
+		</div>
+	</li>
+</ul>
+
+<ul class="nav nav-sidebar">
+	<li><label>State</label></li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_state_filter" type="checkbox" name="state_opened" id="state_opened" data-value="opened" />
+			<label class="form-check-label issue_state_filter" for="state_opened" style="font-weight: normal;">Open</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_state_filter" type="checkbox" name="state_in_progress" id="state_in_progress"  data-value="in-progress"  />
+			<label class="form-check-label issue_state_filter" for="state_in_progress" style="font-weight: normal;">In Progress</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_state_filter" type="checkbox" name="state_resolved" id="state_resolved" data-value="resolved" />
+			<label class="form-check-label issue_state_filter" for="state_resolved" style="font-weight: normal;">Resolved</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_state_filter" type="checkbox" name="state_wont_fix" id="state_wont_fix" data-value="wont-fix"  />
+			<label class="form-check-label issue_state_filter" for="state_wont_fix" style="font-weight: normal;">Won't Fix</label>
+		</div>
+	</li>
+</ul>
+<ul class="nav nav-sidebar">
+	<li><label>Affected</label></li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_location" id="filter_location" data-key="location_related"  />
+			<label class="form-check-label issue_type_filter" for="filter_location" style="font-weight: normal;">Location</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_battery_usage" id="filter_battery_usage" data-key="battery_use_related" />
+			<label class="form-check-label issue_type_filter" for="filter_battery_usage" style="font-weight: normal;">Battery Usage</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_power_management" id="filter_power_management" data-key="power_management_related" />
+			<label class="form-check-label issue_type_filter" for="filter_power_management" style="font-weight: normal;">Power Management</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_device_storage" id="filter_device_storage" data-key="storage_related" />
+			<label class="form-check-label issue_type_filter" for="filter_device_storage" style="font-weight: normal;">Device Storage</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_device_performance" id="filter_device_performance" data-key="device_performance_related" />
+			<label class="form-check-label issue_type_filter" for="filter_device_performance" style="font-weight: normal;">Device Performance</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_device_stability" id="filter_device_stability" data-key="device_stability_related" />
+			<label class="form-check-label issue_type_filter" for="filter_device_stability" style="font-weight: normal;">Device Stability</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_data_quality" id="filter_data_quality" data-key="data_quality_related" />
+			<label class="form-check-label issue_type_filter" for="filter_data_quality" style="font-weight: normal;">Data Quality</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_data_volume" id="filter_data_volume" data-key="data_volume_related" />
+			<label class="form-check-label issue_type_filter" for="filter_data_volume" style="font-weight: normal;">Data Volume</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_bandwidth" id="filter_bandwidth" data-key="bandwidth_related" />
+			<label class="form-check-label issue_type_filter" for="filter_bandwidth" style="font-weight: normal;">Bandwidth</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_uptime" id="filter_app_uptime" data-key="uptime_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_uptime" style="font-weight: normal;">App Uptime</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_stability" id="filter_app_stability" data-key="stability_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_stability" style="font-weight: normal;">App Stability</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_configuration" id="filter_app_configuration" data-key="configuration_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_configuration" style="font-weight: normal;">App Configuration</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_responsiveness" id="filter_app_responsiveness" data-key="responsiveness_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_responsiveness" style="font-weight: normal;">App Responsiveness</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_correctness" id="filter_app_correctness" data-key="correctness_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_correctness" style="font-weight: normal;">App Correctness</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="filter_app_ui" id="filter_app_ui" data-key="interface_related" />
+			<label class="form-check-label issue_type_filter" for="filter_app_ui" style="font-weight: normal;">App User Interface</label>
+		</div>
+	</li>
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_type_filter" type="checkbox" name="issue_any" id="issue_any" data-key="any_issue" />
+			<label class="form-check-label issue_type_filter" for="issue_any" style="font-weight: normal;"><em>Any Issue</em></label>
+		</div>
+	</li>
+</ul>
+<ul class="nav nav-sidebar">
+	<li><label>Device Manufacturer</label></li>
+	{% for manufacturer in manufacturers %}
+		<li>
+			<div class="form-check" style="margin-left: 20px;">
+				<input class="form-check-input issue_mfgr_filter" type="checkbox" name="mfgr_{{ manufacturer|slugify }}" id="mfgr_{{ manufacturer|slugify }}" data-value="{{ manufacturer }}" />
+				<label class="form-check-label issue_mfgr_filter" for="mfgr_{{ manufacturer|slugify }}" style="font-weight: normal;">{{ manufacturer }}</label>
+			</div>
+		</li>
+	{% endfor %}
+	<li>
+		<div class="form-check" style="margin-left: 20px;">
+			<input class="form-check-input issue_mfgr_filter" type="checkbox" name="mfgr_any" id="mfgr_any" data-value="any" />
+			<label class="form-check-label issue_mfgr_filter" for="mfgr_any" style="font-weight: normal;"><em>Any Manufacturer</em></label>
+		</div>
+	</li>
+</ul>
+
+
 {% endblock %}
 
 {% block content %}
@@ -17,7 +170,7 @@
     
     <div class="row">
         <div class="col-md-12">
-        	<table id="issues-table" data-url="{% url 'pdk_issues_json'%}"></table>
+        	<table id="issues-table" data-issues-url="{% url 'pdk_issues_json'%}"></table>
         </div>
     </div>
 
