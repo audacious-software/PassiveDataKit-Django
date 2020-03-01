@@ -65,4 +65,5 @@ typing==3.7.4.1
 urllib3==1.25.8
 whitenoise==4.1.2
 wrapt==1.12.0
+XlsxWriter==1.2.8
 zipstream==1.1.4
