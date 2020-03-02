@@ -128,6 +128,7 @@ class Command(BaseCommand):
 
                         if os.path.exists(dest_path) is False:
                             print 'Creating folder for archive storage: ' + dest_path
+                            sys.stdout.flush()
                             os.makedirs(dest_path)
 
                         for path in to_transmit:
@@ -141,6 +142,7 @@ class Command(BaseCommand):
                                 encrypted_path = os.path.join(dest_path, filename)
 
                                 print 'Writing to filesystem: ' + encrypted_path
+                                sys.stdout.flush()
 
                                 with open(encrypted_path, 'wb') as encrypted_file:
                                     encrypted_file.write(encrypted_str)
@@ -166,6 +168,7 @@ class Command(BaseCommand):
                                 dropbox_path = os.path.join(destination_url.path, final_folder + '/' + filename)
 
                                 print 'Uploading to Dropbox: ' + dropbox_path
+                                sys.stdout.flush()
 
                                 client.files_upload(encrypted_io.read(), dropbox_path)
 

@@ -8,6 +8,7 @@ import gc
 import importlib
 import json
 import os
+import sys
 import tempfile
 import traceback
 
@@ -372,6 +373,8 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
     for app in dumpdata_apps:
         print '[passive_data_kit] Backing up ' + app + '...'
+        sys.stdout.flush()
+
         buf = StringIO.StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
@@ -420,6 +423,9 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     if 'clear_archived' in parameters and parameters['clear_archived']:
         clear_archived = True
 
+    print '[passive_data_kit] Fetching count of data points...'
+    sys.stdout.flush()
+
     count = DataPoint.objects.filter(query).count()
 
     index = 0
@@ -428,6 +434,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
 
         print '[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...'
+        sys.stdout.flush()
 
         bundle = []
 
