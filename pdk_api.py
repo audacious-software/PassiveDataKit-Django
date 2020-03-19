@@ -191,11 +191,14 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     return filename
 
-def compile_visualization(identifier, points, folder):
+def compile_visualization(identifier, points, folder, source=None):
     try:
         generator_module = importlib.import_module('.generators.' + identifier.replace('-', '_'), package='passive_data_kit')
 
-        generator_module.compile_visualization(identifier, points, folder)
+        try:
+            generator_module.compile_visualization(identifier, points, folder, source)
+        except TypeError:
+            generator_module.compile_visualization(identifier, points, folder)
     except ImportError:
         pass
     except AttributeError:
@@ -229,6 +232,9 @@ def send_to_destination(destination, report_path):
                     path = parameters['path']
 
                 path = path + '/'
+
+                if ('prepend_host' in parameters) and parameters['prepend_host']:
+                    path = path + settings.ALLOWED_HOSTS[0] + '-'
 
                 if ('prepend_date' in parameters) and parameters['prepend_date']:
                     path = path + timezone.now().date().isoformat() + '-'

@@ -35,6 +35,7 @@ TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
 SOURCES_DATUM = 'Data Point Sources'
 SOURCE_GENERATORS_DATUM = 'Data Point Source Generator Identifiers'
 LATEST_POINT_DATUM = 'Latest Data Point'
+MISSING_POINT_DATUM = 'Missing Data Point'
 GENERATORS_DATUM = 'Data Point Generators'
 
 ALERT_LEVEL_CHOICES = (
@@ -226,13 +227,25 @@ class DataPointManager(models.Manager):
                     identifiers.append(definition.generator_identifier)
             else:
                 key = LATEST_POINT_DATUM + ': ' + source + '/' + definition.generator_identifier
-
                 latest_point_datum = DataServerMetadatum.objects.filter(key=key).first()
+
+                missing_key = MISSING_POINT_DATUM + ': ' + source + '/' + definition.generator_identifier
+                missing_point_datum = DataServerMetadatum.objects.filter(key=missing_key).first()
 
                 if latest_point_datum is not None:
                     identifiers.append(definition.generator_identifier)
-                elif DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).count() > 0:
-                    identifiers.append(definition.generator_identifier)
+
+                    if missing_point_datum is not None:
+                        DataServerMetadatum.objects.filter(key=key).delete()
+                else:
+                    if missing_point_datum is not None:
+                        pass
+                    else:
+                        if DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition).count() > 0:
+                            identifiers.append(definition.generator_identifier)
+                        else:
+                            missing_point_datum = DataServerMetadatum(key=missing_key, last_updated=timezone.now(), value='Not found')
+                            missing_point_datum.save()
 
         return identifiers
 
@@ -261,8 +274,14 @@ class DataPointManager(models.Manager):
                 return None
 
             if identifier == 'pdk-data-frequency':
-                if DataPoint.objects.filter(source_reference=source_reference).count() > 0:
-                    point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
+                data_source = DataSource.objects.filter(identifier=source).first()
+
+                if data_source is not None:
+                    point = data_source.latest_point()
+
+                if point is None:
+                    if DataPoint.objects.filter(source_reference=source_reference).count() > 0:
+                        point = DataPoint.objects.filter(source_reference=source_reference).order_by('-pk').first()
             else:
                 generator_definition = DataGeneratorDefinition.objects.filter(generator_identifier=identifier).first()
 

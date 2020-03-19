@@ -86,6 +86,7 @@ class Command(BaseCommand):
                     delta['visualization'].last_updated = timezone.now()
                     delta['visualization'].save()
 
+
                 last_point = DataPoint.objects.latest_point(source, identifier)
 
                 if last_point is not None:
@@ -136,11 +137,23 @@ class Command(BaseCommand):
                 try:
                     pdk_api = importlib.import_module(app + '.pdk_api')
 
-                    pdk_api.compile_visualization(visualization.generator_identifier, points, folder)
+                    completed = False
 
-                    time_spent[computed_id]['app'] = app
+                    try:
+                        pdk_api.compile_visualization(visualization.generator_identifier, points, folder, visualization.source)
 
-                    break
+                        time_spent[computed_id]['app'] = app
+
+                        completed = True
+                    except TypeError:
+                        pdk_api.compile_visualization(visualization.generator_identifier, points, folder)
+
+                        time_spent[computed_id]['app'] = app
+
+                        completed = True
+
+                    if completed:
+                        break
                 except ImportError:
                     pass
                 except AttributeError:

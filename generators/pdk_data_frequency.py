@@ -9,13 +9,15 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from ..models import DataSource
+
 DEFAULT_INTERVAL = 600
 DEFAULT_DAYS = 2
 
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Data Frequency'
 
-def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
+def compile_visualization(identifier, points, folder, source): # pylint: disable=unused-argument, too-many-locals, too-many-statements
     now = timezone.now()
 
     interval = DEFAULT_INTERVAL
@@ -32,10 +34,13 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     except AttributeError:
         pass
 
-    latest = points.order_by('-created').first()
+    data_source = DataSource.objects.filter(identifier=source).first()
 
-    if latest is not None:
-        now = latest.created
+    if data_source is not None:
+        latest = data_source.latest_point()
+
+        if latest is not None:
+            now = latest.created
 
     now = now.replace(second=0, microsecond=0)
 
@@ -70,7 +75,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     # Plot times recorded
 
-    latest = points.order_by('-recorded').first()
+    latest = points.filter(created__gte=start).order_by('-pk').first()
 
     if latest is not None:
         now = latest.recorded
