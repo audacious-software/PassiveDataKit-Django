@@ -501,9 +501,9 @@ def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint:
 
 
 class DataBundle(models.Model):
-    recorded = models.DateTimeField(db_index=True)
+    recorded = models.DateTimeField()
 
-    errored = models.DateTimeField(db_index=True, null=True, blank=True)
+    errored = models.DateTimeField(null=True, blank=True)
 
     if install_supports_jsonfield():
         properties = JSONField()
@@ -511,8 +511,8 @@ class DataBundle(models.Model):
         properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
     processed = models.BooleanField(default=False, db_index=True)
-    encrypted = models.BooleanField(default=False, db_index=True)
-    compression = models.CharField(max_length=128, choices=COMPRESSION_CHOICES, default='none', db_index=True)
+    encrypted = models.BooleanField(default=False)
+    compression = models.CharField(max_length=128, choices=COMPRESSION_CHOICES, default='none')
 
 
 class DataFile(models.Model):

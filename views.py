@@ -561,7 +561,7 @@ def pdk_profile(request):
     return render(request, 'pdk_user_profile.html', context=context)
 
 @csrf_exempt
-def pdk_app_config(request): # pylint: disable=too-many-statements
+def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-branches
     identifier = None
     context = None
 
@@ -584,6 +584,10 @@ def pdk_app_config(request): # pylint: disable=too-many-statements
 
     if context is None:
         context = 'default'
+
+    for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
+        if re.search(config.context_pattern, context) is not None:
+            return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
     for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if re.search(config.id_pattern, identifier) is not None:

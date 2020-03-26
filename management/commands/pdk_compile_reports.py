@@ -20,7 +20,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from ...decorators import handle_lock, log_scheduled_event
-from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
+from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
 
 class Command(BaseCommand):
     help = 'Compiles data reports requested by end users.'
@@ -112,74 +112,77 @@ class Command(BaseCommand):
                         for generator in generators: # pylint: disable=too-many-nested-blocks
                             if raw_json:
                                 for source in sources:
-                                    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
-                                    source_reference = DataSourceReference.reference_for_source(source)
+                                    data_source = DataSource.objects.filter(identifier=source).first()
 
-                                    points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+                                    if data_source is not None and data_source.server is None:
+                                        generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+                                        source_reference = DataSourceReference.reference_for_source(source)
 
-                                    if data_start is not None:
-                                        if date_type == 'recorded':
-                                            points = points.filter(recorded__gte=data_start)
-                                        else:
-                                            points = points.filter(created__gte=data_start)
+                                        points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
 
-                                    if data_end is not None:
-                                        if date_type == 'recorded':
-                                            points = points.filter(recorded__lte=data_end)
-                                        else:
-                                            points = points.filter(created__lte=data_end)
+                                        if data_start is not None:
+                                            if date_type == 'recorded':
+                                                points = points.filter(recorded__gte=data_start)
+                                            else:
+                                                points = points.filter(created__gte=data_start)
 
-                                    points = points.order_by('created')
+                                        if data_end is not None:
+                                            if date_type == 'recorded':
+                                                points = points.filter(recorded__lte=data_end)
+                                            else:
+                                                points = points.filter(created__lte=data_end)
 
-                                    first = points.first() # pylint: disable=line-too-long
-                                    last = points.last() # pylint: disable=line-too-long
+                                        points = points.order_by('created')
 
-                                    if first is not None:
-                                        first_create = first.created
-                                        last_create = last.created
+                                        first = points.first() # pylint: disable=line-too-long
+                                        last = points.last() # pylint: disable=line-too-long
 
-                                        start = datetime.datetime(first_create.year, \
-                                                                  first_create.month, \
-                                                                  first_create.day, \
-                                                                  0, \
-                                                                  0, \
-                                                                  0, \
-                                                                  0, \
-                                                                  first_create.tzinfo)
+                                        if first is not None:
+                                            first_create = first.created
+                                            last_create = last.created
 
-                                        end = datetime.datetime(last_create.year, \
-                                                                last_create.month, \
-                                                                last_create.day, \
-                                                                0, \
-                                                                0, \
-                                                                0, \
-                                                                0, \
-                                                                first_create.tzinfo) + \
-                                                                datetime.timedelta(days=1)
+                                            start = datetime.datetime(first_create.year, \
+                                                                      first_create.month, \
+                                                                      first_create.day, \
+                                                                      0, \
+                                                                      0, \
+                                                                      0, \
+                                                                      0, \
+                                                                      first_create.tzinfo)
 
-                                        if data_start is not None and data_start > start:
-                                            start = data_start
+                                            end = datetime.datetime(last_create.year, \
+                                                                    last_create.month, \
+                                                                    last_create.day, \
+                                                                    0, \
+                                                                    0, \
+                                                                    0, \
+                                                                    0, \
+                                                                    first_create.tzinfo) + \
+                                                                    datetime.timedelta(days=1)
 
-                                        if data_end is not None and data_end < data_end:
-                                            end = data_end
+                                            if data_start is not None and data_start > start:
+                                                start = data_start
 
-                                        while start <= end:
-                                            day_end = start + datetime.timedelta(days=1)
+                                            if data_end is not None and data_end < data_end:
+                                                end = data_end
 
-                                            day_filename = source + '__' + generator + '__' + \
-                                                           start.date().isoformat() + '.json'
+                                            while start <= end:
+                                                day_end = start + datetime.timedelta(days=1)
 
-                                            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
+                                                day_filename = source + '__' + generator + '__' + \
+                                                               start.date().isoformat() + '.json'
 
-                                            out_points = []
+                                                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gte=start, created__lt=day_end).order_by('created') # pylint: disable=line-too-long
 
-                                            for point in points:
-                                                out_points.append(point.fetch_properties())
+                                                out_points = []
 
-                                            if out_points:
-                                                export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+                                                for point in points:
+                                                    out_points.append(point.fetch_properties())
 
-                                            start = day_end
+                                                if out_points:
+                                                    export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+
+                                                start = day_end
                             else:
                                 output_file = None
 

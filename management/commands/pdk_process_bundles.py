@@ -66,13 +66,29 @@ class Command(BaseCommand):
         new_point_count = 0
         processed_bundle_count = 0
         process_limit = 1000
+        remote_bundle_size = 500
+        remote_timeout = 5
 
         try:
             process_limit = settings.PDK_BUNDLE_PROCESS_LIMIT
         except AttributeError:
             pass
 
+        try:
+            remote_bundle_size = settings.PDK_REMOTE_BUNDLE_SIZE
+        except AttributeError:
+            pass
+
+        try:
+            remote_timeout = settings.PDK_REMOTE_BUNDLE_TIMEOUT
+        except AttributeError:
+            pass
+
         sources = {}
+
+        xmit_points = {}
+
+        # start_time = timezone.now()
 
         for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]:
             if new_point_count < process_limit:
@@ -127,8 +143,6 @@ class Command(BaseCommand):
                                 gzip_file_obj.close()
 
                                 bundle.properties = json.loads(payload)
-
-                        xmit_points = {}
 
                         for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
                             if bundle_point is not None:
@@ -245,14 +259,22 @@ class Command(BaseCommand):
                             for server_url in xmit_points:
                                 points = xmit_points[server_url]
 
-                                payload = {
-                                    'payload': json.dumps(points, indent=2)
-                                }
+                                if len(points) > remote_bundle_size:
+                                    payload = {
+                                        'payload': json.dumps(points, indent=2)
+                                    }
 
-                                bundle_post = requests.post(server_url, data=payload)
+                                    try:
+                                        bundle_post = requests.post(server_url, data=payload, timeout=remote_timeout)
 
-                                if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
-                                    failed = True
+                                        if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
+                                            failed = True
+
+                                        xmit_points[server_url] = []
+                                    except requests.exceptions.Timeout:
+                                        print 'Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').'
+
+                                        failed = True
 
                             if failed is False:
                                 bundle.processed = True
@@ -275,6 +297,25 @@ class Command(BaseCommand):
 
                     bundle.errored = timezone.now()
                     bundle.save()
+
+        for server_url in xmit_points:
+            points = xmit_points[server_url]
+
+            if points:
+                payload = {
+                    'payload': json.dumps(points, indent=2)
+                }
+
+                try:
+
+                    bundle_post = requests.post(server_url, data=payload, timeout=remote_timeout)
+
+                    if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
+                        failed = True
+
+                    xmit_points[server_url] = []
+                except requests.exceptions.Timeout:
+                    print 'Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').'
 
         for bundle in to_delete:
             bundle.delete()
@@ -368,3 +409,7 @@ class Command(BaseCommand):
                 DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
             logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
+
+        # elapsed = timezone.now() - start_time
+
+        # print('Elapsed: ' + str(elapsed) + ' -- ' + str(processed_bundle_count) + ' bundles')
