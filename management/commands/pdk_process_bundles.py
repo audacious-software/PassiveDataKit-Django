@@ -90,6 +90,9 @@ class Command(BaseCommand):
 
         # start_time = timezone.now()
 
+        private_key = None
+        public_key = None
+
         for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]:
             if new_point_count < process_limit:
                 processed_bundle_count += 1
@@ -106,8 +109,11 @@ class Command(BaseCommand):
                                 payload = base64.b64decode(bundle.properties['encrypted'])
                                 nonce = base64.b64decode(bundle.properties['nonce'])
 
-                                private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
-                                public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
+                                if private_key is None:
+                                    private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
+
+                                if public_key is None:
+                                    public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
 
                                 box = Box(private_key, public_key)
 
@@ -144,6 +150,8 @@ class Command(BaseCommand):
 
                                 bundle.properties = json.loads(payload)
 
+                        now = timezone.now()
+
                         for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
@@ -154,6 +162,7 @@ class Command(BaseCommand):
                                     point_json = point_json.replace(u'\u0000', '')
 
                                 bundle_point = json.loads(point_json)
+
                             try:
                                 if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
                                     source = bundle_point['passive-data-metadata']['source']
@@ -191,7 +200,7 @@ class Command(BaseCommand):
                                         sources[source] = server_url
 
                                     if server_url == '':
-                                        point = DataPoint(recorded=timezone.now())
+                                        point = DataPoint(recorded=now)
                                         bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
 
                                         point.source = bundle_point['passive-data-metadata']['source']
@@ -216,8 +225,8 @@ class Command(BaseCommand):
                                         else:
                                             point.properties = json.dumps(bundle_point, indent=2)
 
-                                        point.fetch_secondary_identifier(skip_save=True)
-                                        point.fetch_user_agent(skip_save=True)
+                                        point.fetch_secondary_identifier(skip_save=True, properties=point.properties)
+                                        point.fetch_user_agent(skip_save=True, properties=point.properties)
                                         point.fetch_generator_definition(skip_save=True)
                                         point.fetch_source_reference(skip_save=True)
 
