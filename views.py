@@ -91,6 +91,8 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
         'added': True
     }
 
+    supports_json = install_supports_jsonfield()
+
     if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), \
                                 content_type='application/json', \
@@ -115,17 +117,17 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         bundle = DataBundle(recorded=timezone.now())
 
-        if install_supports_jsonfield():
+        if supports_json:
             bundle.properties = points
         else:
-            bundle.properties = json.dumps(points, indent=2)
+            bundle.properties = json.dumps(points)
 
         bundle.save()
 
         return response
 
     elif request.method == 'POST':
-        response = HttpResponse(json.dumps(response, indent=2), \
+        response = HttpResponse(json.dumps(response), \
                                 content_type='application/json', \
                                 status=201)
 
@@ -149,37 +151,37 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
                     'nonce': request.POST['nonce']
                 }
 
-                if install_supports_jsonfield():
+                if supports_json:
                     bundle.properties = payload
                 else:
-                    bundle.properties = json.dumps(payload, indent=2)
+                    bundle.properties = json.dumps(payload)
             else:
                 if bundle.compression == 'none':
                     points = json.loads(request.POST['payload'])
 
-                    if install_supports_jsonfield():
+                    if supports_json:
                         bundle.properties = points
                     else:
-                        bundle.properties = json.dumps(points, indent=2)
+                        bundle.properties = json.dumps(points)
                 else:
                     properties = {
                         'payload': request.POST['payload']
                     }
 
-                    if install_supports_jsonfield():
+                    if supports_json:
                         bundle.properties = properties
                     else:
-                        bundle.properties = json.dumps(properties, indent=2)
+                        bundle.properties = json.dumps(properties)
 
             bundle.save()
         except ValueError:
             response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response, indent=2), \
+            response = HttpResponse(json.dumps(response), \
                                     content_type='application/json', \
                                     status=400)
         except UnreadablePostError:
             response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response, indent=2), \
+            response = HttpResponse(json.dumps(response), \
                                     content_type='application/json', \
                                     status=400)
 
@@ -207,7 +209,6 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
         response['Access-Control-Allow-Headers'] = 'Content-Type'
 
         return response
-
 
     return HttpResponseNotAllowed(['CREATE', 'POST', 'HEAD'])
 
@@ -586,12 +587,12 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
         context = 'default'
 
     for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
-        if re.search(config.context_pattern, context) is not None:
+        if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
             return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
     for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
-        if re.search(config.id_pattern, identifier) is not None:
-            if re.search(config.context_pattern, context) is not None:
+        if config.id_pattern == '.*' or re.search(config.id_pattern, identifier) is not None:
+            if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
                 return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
     return HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)

@@ -383,17 +383,20 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     else:
         properties = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    def fetch_secondary_identifier(self, skip_save=False):
+    def fetch_secondary_identifier(self, skip_save=False, properties=None):
         if self.secondary_identifier is not None:
             return self.secondary_identifier
         else:
-            for app in settings.INSTALLED_APPS:
-                generator_name = generator_slugify(self.generator_identifier)
+            if properties is None:
+                properties = self.fetch_properties()
 
+            generator_name = generator_slugify(self.generator_identifier)
+
+            for app in settings.INSTALLED_APPS:
                 try:
                     generator = importlib.import_module(app + '.generators.' + generator_name)
 
-                    identifier = generator.extract_secondary_identifier(self.fetch_properties())
+                    identifier = generator.extract_secondary_identifier(properties)
 
                     if identifier is not None:
                         self.secondary_identifier = identifier
@@ -422,9 +425,10 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return self.cached_properties
 
-    def fetch_user_agent(self, skip_save=False):
+    def fetch_user_agent(self, skip_save=False, properties=None):
         if self.user_agent is None:
-            properties = self.fetch_properties()
+            if properties is None:
+                properties = self.fetch_properties()
 
             if 'passive-data-metadata' in properties:
                 if 'generator' in properties['passive-data-metadata']:
@@ -1240,9 +1244,15 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = json.dumps(parameters, indent=2)
 
 class AppConfiguration(models.Model):
+    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+        index_together = [
+            ['is_valid', 'is_enabled'],
+            ['is_valid', 'is_enabled', 'evaluate_order'],
+        ]
+
     name = models.CharField(max_length=1024)
-    id_pattern = models.CharField(max_length=1024)
-    context_pattern = models.CharField(max_length=1024, default='.*')
+    id_pattern = models.CharField(max_length=1024, db_index=True)
+    context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)
 
     if install_supports_jsonfield():
         configuration_json = JSONField()
