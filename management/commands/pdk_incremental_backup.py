@@ -174,7 +174,7 @@ class Command(BaseCommand):
 
                             os.remove(path)
                     else:
-                        print 'Unknown desitination: ' + destination
+                        print 'Unknown destination: ' + destination
 
                 pdk_api.clear_points(to_clear)
 
