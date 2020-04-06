@@ -225,8 +225,8 @@ class Command(BaseCommand):
                                         else:
                                             point.properties = json.dumps(bundle_point, indent=2)
 
-                                        point.fetch_secondary_identifier(skip_save=True, properties=point.properties)
-                                        point.fetch_user_agent(skip_save=True, properties=point.properties)
+                                        point.fetch_secondary_identifier(skip_save=True, properties=bundle_point)
+                                        point.fetch_user_agent(skip_save=True, properties=bundle_point)
                                         point.fetch_generator_definition(skip_save=True)
                                         point.fetch_source_reference(skip_save=True)
 
