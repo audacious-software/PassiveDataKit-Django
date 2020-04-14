@@ -86,14 +86,14 @@ class Command(BaseCommand):
 
         sources = {}
 
-        xmit_points = {}
-
         # start_time = timezone.now()
 
         private_key = None
         public_key = None
 
-        for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]:
+        xmit_points = {}
+
+        for bundle in DataBundle.objects.filter(processed=False, errored=None).order_by('-recorded', '-compression')[:options['bundle_count']]:
             if new_point_count < process_limit:
                 processed_bundle_count += 1
 
@@ -279,6 +279,8 @@ class Command(BaseCommand):
                                         if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
                                             failed = True
 
+                                        # print(server_url + ': ' + str(len(points)))
+
                                         xmit_points[server_url] = []
                                     except requests.exceptions.Timeout:
                                         print 'Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').'
@@ -316,11 +318,12 @@ class Command(BaseCommand):
                 }
 
                 try:
-
                     bundle_post = requests.post(server_url, data=payload, timeout=remote_timeout)
 
                     if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
                         failed = True
+
+                    # print(server_url + ': ' + str(len(points)))
 
                     xmit_points[server_url] = []
                 except requests.exceptions.Timeout:
