@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from ...decorators import handle_lock, log_scheduled_event
-from ...models import DataPoint, DataGeneratorDefinition
+from ...models import DataPoint, DataGeneratorDefinition, DataSourceReference, DataSource
 
 class Command(BaseCommand):
     help = 'Send silent notifications to Android Firebase devices to nudge power management systems for transmission.'
@@ -17,27 +17,40 @@ class Command(BaseCommand):
 
     @handle_lock
     @log_scheduled_event
-    def handle(self, *args, **options):
+    def handle(self, *args, **options): # pylint: disable=too-many-locals
         push_service = FCMNotification(api_key=settings.PDK_FIREBASE_API_KEY)
 
         event_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
 
-        tokens = {}
+        count = DataSource.objects.all().count()
 
-        for point in DataPoint.objects.filter(generator_definition=event_definition, secondary_identifier='pdk-firebase-token').order_by('created'):
-            properties = point.fetch_properties()
+        index = 0
 
-            tokens[point.source] = properties['event_details']['token']
+        while index < count:
+            tokens = {}
 
-        token_list = []
+            for source in DataSource.objects.all().order_by('identifier')[index:(index+128)]:
 
-        for source, token in tokens.iteritems(): # pylint: disable=unused-variable
-            if (token in token_list) is False:
-                token_list.append(token)
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
 
-        message = {'operation' : 'nudge', 'source': 'passive-data-kit'}
+                point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token').order_by('-created').first()
 
-        result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
+                if point is not None:
+                    properties = point.fetch_properties()
+
+                    tokens[source.identifier] = properties['event_details']['token']
+
+            token_list = []
+
+            for source, token in tokens.iteritems(): # pylint: disable=unused-variable
+                if (token in token_list) is False:
+                    token_list.append(token)
+
+            message = {'operation' : 'nudge', 'source': 'passive-data-kit'}
+
+            result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
+
+            index += 128
 
         if settings.DEBUG:
             print 'Firebase nudge result: ' + str(result)
