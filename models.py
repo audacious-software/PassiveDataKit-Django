@@ -369,7 +369,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     generator_definition = models.ForeignKey(DataGeneratorDefinition, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
     source_reference = models.ForeignKey(DataSourceReference, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
 
-    user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    user_agent = models.CharField(max_length=1024, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True, blank=True)
