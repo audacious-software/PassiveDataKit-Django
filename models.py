@@ -350,21 +350,14 @@ class DataPointManager(models.Manager):
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
-        index_together = [
-            ['generator_definition', 'source_reference'],
-            ['generator_definition', 'created'],
-            ['source_reference', 'created'],
-            ['generator_definition', 'source_reference', 'created'],
-            ['generator_definition', 'source_reference', 'created', 'recorded'],
-            ['generator_definition', 'source_reference', 'recorded'],
-        ]
+        index_together = []
 
     objects = DataPointManager()
 
     source = models.CharField(max_length=1024)
     generator = models.CharField(max_length=1024)
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
-    secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    secondary_identifier = models.CharField(max_length=1024, null=True, blank=True)
 
     generator_definition = models.ForeignKey(DataGeneratorDefinition, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
     source_reference = models.ForeignKey(DataSourceReference, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
