@@ -219,7 +219,7 @@ class DataPointManager(models.Manager):
     def generator_identifiers_for_source(self, source, since=None): # pylint: disable=invalid-name, no-self-use
         identifiers = []
 
-        source_reference = DataSourceReference.objects.filter(source=source).first()
+        source_reference = DataSourceReference.reference_for_source(source)
 
         for definition in DataGeneratorDefinition.objects.all():
             if since is not None:
@@ -350,27 +350,19 @@ class DataPointManager(models.Manager):
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
-        index_together = [
-            ['generator_definition', 'source_reference'],
-            ['generator_definition', 'created'],
-            ['source_reference', 'created'],
-            ['source_reference', 'recorded'],
-            ['generator_definition', 'source_reference', 'created'],
-            ['generator_definition', 'source_reference', 'created', 'recorded'],
-            ['generator_definition', 'source_reference', 'recorded'],
-        ]
+        index_together = []
 
     objects = DataPointManager()
 
     source = models.CharField(max_length=1024)
     generator = models.CharField(max_length=1024)
     generator_identifier = models.CharField(max_length=1024, db_index=True, default='unknown-generator')
-    secondary_identifier = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    secondary_identifier = models.CharField(max_length=1024, null=True, blank=True)
 
     generator_definition = models.ForeignKey(DataGeneratorDefinition, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
     source_reference = models.ForeignKey(DataSourceReference, on_delete=models.SET_NULL, related_name='data_points', null=True, blank=True)
 
-    user_agent = models.CharField(max_length=1024, db_index=True, null=True, blank=True)
+    user_agent = models.CharField(max_length=1024, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
     generated_at = models.PointField(null=True, blank=True)
@@ -757,11 +749,12 @@ class DataSource(models.Model):
 
                 generator['points_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start, generator_definition=definition).count()
 
-                first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
-                last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
                 last_recorded = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-recorded').first()
 
                 if last_recorded is not None:
+                    first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
+                    last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
+
                     generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())
                     generator['first_created'] = calendar.timegm(first_point.created.timetuple())
                     generator['last_created'] = calendar.timegm(last_point.created.timetuple())
@@ -801,6 +794,17 @@ class DataSource(models.Model):
                     self.performance_metadata = metadata
                 else:
                     self.performance_metadata = json.dumps(metadata, indent=2)
+
+                for app in settings.INSTALLED_APPS:
+                    try:
+                        pdk_api = importlib.import_module(app + '.pdk_api')
+
+                        pdk_api.process_remote_metadata(self.identifier, metadata)
+                    except ImportError:
+                        pass
+                    except AttributeError:
+                        pass
+
             else:
                 print 'Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url
 
