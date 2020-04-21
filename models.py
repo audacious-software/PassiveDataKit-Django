@@ -354,6 +354,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
             ['generator_definition', 'source_reference'],
             ['generator_definition', 'created'],
             ['source_reference', 'created'],
+            ['source_reference', 'recorded'],
             ['generator_definition', 'source_reference', 'created'],
             ['generator_definition', 'source_reference', 'created', 'recorded'],
             ['generator_definition', 'source_reference', 'recorded'],
@@ -696,6 +697,35 @@ class DataSource(models.Model):
                 metadata['user_agent'] = latest_point.fetch_user_agent()
                 metadata['latest_point_created'] = calendar.timegm(latest_point.created.timetuple())
 
+            latest_point_recorded = self.latest_point_recorded()
+
+            query = Q(source_reference=source_reference)
+
+            if latest_point_recorded is not None:
+                query = query & Q(recorded__gt=latest_point_recorded.recorded)
+            else:
+                latest_point_recorded = DataPoint.objects.filter(source_reference=source_reference).order_by('-recorded').first()
+
+            point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-recorded').first()
+
+            while point is not None:
+                user_agent = point.fetch_user_agent()
+
+                if ('Passive Data Kit Server' in user_agent) is False:
+                    metadata['latest_point_recorded'] = point.pk
+
+                    latest_point_recorded = point
+
+                    point = None
+                else:
+                    point = DataPoint.objects.filter(source_reference=source_reference, server_generated=False, recorded__lt=point.recorded).order_by('-recorded').first()
+
+                    if point is not None:
+                        metadata['latest_point_recorded'] = point.pk
+
+            if latest_point_recorded is not None:
+                metadata['latest_point_recorded'] = calendar.timegm(latest_point_recorded.created.timetuple())
+
             # Update point_count
 
             metadata['point_count'] = DataPoint.objects.filter(source_reference=source_reference, created__gte=window_start).count()
@@ -790,6 +820,15 @@ class DataSource(models.Model):
             return DataPoint.objects.filter(pk=metadata['latest_point']).first()
 
         return None
+
+    def latest_point_recorded(self):
+        metadata = self.fetch_performance_metadata()
+
+        if 'latest_point_recorded' in metadata:
+            return DataPoint.objects.filter(pk=metadata['latest_point_recorded']).first()
+
+        return None
+
 
     def earliest_point(self):
         metadata = self.fetch_performance_metadata()

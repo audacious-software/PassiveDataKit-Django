@@ -62,11 +62,14 @@ def visualization(source, generator):
 
     values = []
 
+    source_reference = DataSourceReference.reference_for_source(source.identifier)
+    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+
     for counter in range(0, 14): # pylint: disable=unused-variable
         start = datetime.datetime(date.year, date.month, date.day, 0, 0, 0, 0, local_tz)
         end = start + datetime.timedelta(days=1)
 
-        point = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created').first()
+        point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gt=start, created__lte=end).order_by('created').first()
 
         if point is not None:
             properties = point.fetch_properties()
@@ -105,9 +108,12 @@ def data_table(source, generator):
     end = timezone.now()
     start = end - datetime.timedelta(days=14)
 
+    source_reference = DataSourceReference.reference_for_source(source.identifier)
+    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+
     values = []
 
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('-created'):
+    for point in DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gt=start, created__lte=end).order_by('-created'):
         properties = point.fetch_properties()
 
         properties['is_day'] = (properties['observed'] > properties['sunrise']) and (properties['observed'] < properties['sunset'])
