@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate
 
-from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource
+from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource, DataSourceReference, DataGeneratorDefinition
 
 
 def valid_pdk_token_required(function):
@@ -70,7 +70,7 @@ def pdk_request_token(request):
 
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -97,6 +97,12 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+                    elif field == 'source':
+                        value = DataSourceReference.reference_for_source(value)
+                        field = 'source_reference'
+                    elif field == 'generator_identifier':
+                        value = DataGeneratorDefinition.definition_for_identifier(value)
+                        field = 'generator_definition'
 
                 processed_filter[field] = value
 
@@ -109,6 +115,12 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+                    elif field == 'source':
+                        value = DataSourceReference.reference_for_source(value)
+                        field = 'source_reference'
+                    elif field == 'generator_identifier':
+                        value = DataGeneratorDefinition.definition_for_identifier(value)
+                        field = 'generator_definition'
 
                 processed_exclude[field] = value
 
