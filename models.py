@@ -647,6 +647,8 @@ class DataSource(models.Model):
         if self.server is None:
             source_reference = self.fetch_source_reference()
 
+            print str(self.identifier) + ': ' + timezone.now().isoformat()
+
             metadata = self.fetch_performance_metadata()
 
             now = timezone.now()
@@ -698,7 +700,26 @@ class DataSource(models.Model):
             else:
                 latest_point_recorded = DataPoint.objects.filter(source_reference=source_reference).order_by('-recorded').first()
 
-            point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-recorded').first()
+            point = None
+
+            user_count = DataPoint.objects.filter(query).count()
+
+            user_index = 0
+
+            while user_index < user_count:
+                for user_point in DataPoint.objects.filter(query).order_by('-recorded')[user_index:(user_index + 500)]:
+                    if user_point.server_generated is False:
+                        user_agent = user_point.fetch_user_agent()
+
+                        if ('Passive Data Kit Server' in user_agent) is False:
+                            point = user_point
+
+                            break
+
+                if point is not None:
+                    break
+
+                user_index += 500
 
             while point is not None:
                 user_agent = point.fetch_user_agent()
@@ -739,6 +760,8 @@ class DataSource(models.Model):
             identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
 
             for identifier in identifiers:
+                print '  ' + str(identifier) + ': ' + timezone.now().isoformat()
+
                 definition = DataGeneratorDefinition.definition_for_identifier(identifier)
 
                 generator = {}
@@ -753,6 +776,7 @@ class DataSource(models.Model):
 
                 if last_recorded is not None:
                     first_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('created').first()
+
                     last_point = DataPoint.objects.filter(source_reference=source_reference, generator_definition=definition, created__gte=window_start).order_by('-created').first()
 
                     generator['last_recorded'] = calendar.timegm(last_recorded.recorded.timetuple())

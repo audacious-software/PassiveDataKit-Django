@@ -111,12 +111,23 @@ class DataSourceGroupAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'suppress_alerts',)
     list_filter = ('suppress_alerts',)
 
+def suppress_alerts(modeladmin, request, queryset): # pylint: disable=unused-argument
+    queryset.update(suppress_alerts=True)
+
+suppress_alerts.description = 'Suppress Alerts'
+
+def enable_alerts(modeladmin, request, queryset): # pylint: disable=unused-argument
+    queryset.update(suppress_alerts=False)
+
+enable_alerts.description = 'Enable Alerts'
+
 @admin.register(DataSource)
 class DataSourceAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'identifier', 'group', 'suppress_alerts', 'performance_metadata_updated',)
     list_filter = ('group', 'suppress_alerts', 'performance_metadata_updated',)
     search_fields = ['name', 'identifier']
 
+    actions = [enable_alerts, suppress_alerts]
 
 def reset_report_jobs(modeladmin, request, queryset): # pylint: disable=unused-argument
     for job in queryset:

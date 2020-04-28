@@ -29,13 +29,13 @@ class Command(BaseCommand):
             source = None
 
             if options['source'] != 'any':
-                source = DataSource.objects.filter(identifier=options['source'], server=server).first()
+                source = DataSource.objects.filter(identifier=options['source']).first()
 
             if source is None:
-                source = DataSource.objects.filter(performance_metadata_updated=None, server=server).first()
+                source = DataSource.objects.filter(server=server, performance_metadata_updated=None, suppress_alerts=False).first()
 
             if source is None:
-                source = DataSource.objects.filter(server=server).order_by('performance_metadata_updated').first()
+                source = DataSource.objects.filter(server=server, suppress_alerts=False).order_by('performance_metadata_updated').first()
 
             if source is not None:
                 source.update_performance_metadata()
