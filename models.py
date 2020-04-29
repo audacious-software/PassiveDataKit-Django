@@ -869,7 +869,9 @@ class DataSource(models.Model):
                 return DataPoint.objects.filter(pk=metadata['latest_point']).first()
         elif 'latest_point' in metadata and 'latest_point_created' in metadata:
             virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
+            virtual_point.pk = metadata['latest_point']
             virtual_point.created = arrow.get(metadata['latest_point_created']).datetime
+            virtual_point.recorded = virtual_point.created
 
             return virtual_point
 
@@ -883,7 +885,9 @@ class DataSource(models.Model):
                 return DataPoint.objects.filter(pk=metadata['latest_point_recorded']).first()
         elif 'latest_point_recorded' in metadata and 'latest_point_recorded_time' in metadata:
             virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
-            virtual_point.created = arrow.get(metadata['latest_point_recorded_time']).datetime
+            virtual_point.pk = metadata['latest_point_recorded']
+            virtual_point.recorded = arrow.get(metadata['latest_point_recorded_time']).datetime
+            virtual_point.created = virtual_point.recorded
 
             return virtual_point
 
