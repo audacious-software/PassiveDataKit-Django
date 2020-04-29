@@ -12,6 +12,7 @@ import urlparse
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
 
+import arrow
 import requests
 
 import django
@@ -474,6 +475,12 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return CACHED_SOURCE_REFERENCES[self.source]
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.generator_identifier != 'pdk-virtual-point':
+            super(DataPoint, self).save(force_insert, force_update, using, update_fields)
+        else:
+            raise Exception('Attempting to save pdk-virtual-point.')
+
 @receiver(post_save, sender=DataPoint)
 def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
     try:
@@ -857,16 +864,28 @@ class DataSource(models.Model):
     def latest_point(self):
         metadata = self.fetch_performance_metadata()
 
-        if 'latest_point' in metadata:
-            return DataPoint.objects.filter(pk=metadata['latest_point']).first()
+        if self.server is None:
+            if 'latest_point' in metadata:
+                return DataPoint.objects.filter(pk=metadata['latest_point']).first()
+        elif 'latest_point' in metadata and 'latest_point_created' in metadata:
+            virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
+            virtual_point.created = arrow.get(metadata['latest_point_created']).datetime
+
+            return virtual_point
 
         return None
 
     def latest_point_recorded(self):
         metadata = self.fetch_performance_metadata()
 
-        if 'latest_point_recorded' in metadata:
-            return DataPoint.objects.filter(pk=metadata['latest_point_recorded']).first()
+        if self.server is None:
+            if 'latest_point_recorded' in metadata:
+                return DataPoint.objects.filter(pk=metadata['latest_point_recorded']).first()
+        elif 'latest_point_recorded' in metadata and 'latest_point_recorded_time' in metadata:
+            virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
+            virtual_point.created = arrow.get(metadata['latest_point_recorded_time']).datetime
+
+            return virtual_point
 
         return None
 
