@@ -647,8 +647,6 @@ class DataSource(models.Model):
         if self.server is None:
             source_reference = self.fetch_source_reference()
 
-            print str(self.identifier) + ': ' + timezone.now().isoformat()
-
             metadata = self.fetch_performance_metadata()
 
             now = timezone.now()
@@ -670,7 +668,26 @@ class DataSource(models.Model):
             else:
                 latest_point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
 
-            point = DataPoint.objects.filter(query).exclude(server_generated=True).order_by('-created').first()
+            latest_count = DataPoint.objects.filter(query).count()
+
+            latest_index = 0
+
+            point = None
+
+            while latest_index < latest_count:
+                for late_point in DataPoint.objects.filter(query).order_by('-created')[latest_index:(latest_index + 500)]:
+                    if late_point.server_generated is False:
+                        user_agent = late_point.fetch_user_agent()
+
+                        if ('Passive Data Kit Server' in user_agent) is False:
+                            point = late_point
+
+                            break
+
+                if point is not None:
+                    break
+
+                latest_index += 500
 
             while point is not None:
                 user_agent = point.fetch_user_agent()
@@ -697,8 +714,6 @@ class DataSource(models.Model):
 
             if latest_point_recorded is not None:
                 query = query & Q(recorded__gt=latest_point_recorded.recorded)
-            else:
-                latest_point_recorded = DataPoint.objects.filter(source_reference=source_reference).order_by('-recorded').first()
 
             point = None
 
@@ -737,7 +752,7 @@ class DataSource(models.Model):
                         metadata['latest_point_recorded'] = point.pk
 
             if latest_point_recorded is not None:
-                metadata['latest_point_recorded'] = calendar.timegm(latest_point_recorded.created.timetuple())
+                metadata['latest_point_recorded_time'] = calendar.timegm(latest_point_recorded.created.timetuple())
 
             # Update point_count
 
@@ -760,8 +775,6 @@ class DataSource(models.Model):
             identifiers = DataPoint.objects.generator_identifiers_for_source(self.identifier, since=window_start)
 
             for identifier in identifiers:
-                print '  ' + str(identifier) + ': ' + timezone.now().isoformat()
-
                 definition = DataGeneratorDefinition.definition_for_identifier(identifier)
 
                 generator = {}
