@@ -752,7 +752,7 @@ class DataSource(models.Model):
                         metadata['latest_point_recorded'] = point.pk
 
             if latest_point_recorded is not None:
-                metadata['latest_point_recorded_time'] = calendar.timegm(latest_point_recorded.created.timetuple())
+                metadata['latest_point_recorded_time'] = calendar.timegm(latest_point_recorded.recorded.timetuple())
 
             # Update point_count
 
