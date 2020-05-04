@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-withings-device'
 CRITICAL_DAYS = 2

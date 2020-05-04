@@ -30,8 +30,8 @@ class Command(BaseCommand):
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
             else:
-            	source_reference = DataSourceReference.reference_for_source(source.identifier)
-            	generator_definition = DataGeneratorDefinition.definition_for_identifier(GENERATOR)
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
+                generator_definition = DataGeneratorDefinition.definition_for_identifier(GENERATOR)
 
                 last_battery = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created').first()
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()

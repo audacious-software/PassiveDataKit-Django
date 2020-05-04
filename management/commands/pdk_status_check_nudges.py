@@ -19,7 +19,7 @@ class Command(BaseCommand):
     help = 'Determines if mobile devices are receiving silent push notifications.'
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         try:
             if (GENERATOR in settings.PDK_ENABLED_CHECKS) is False:
                 DataSourceAlert.objects.filter(generator_identifier=GENERATOR, active=True).update(active=False)
@@ -34,8 +34,8 @@ class Command(BaseCommand):
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
             now = timezone.now()
 
-			source_reference = DataSourceReference.reference_for_source(source.identifier)
-			generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
+            source_reference = DataSourceReference.reference_for_source(source.identifier)
+            generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
 
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
