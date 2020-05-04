@@ -34,7 +34,10 @@ class Command(BaseCommand):
             else:
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
-                last_upload = DataPoint.objects.filter(source=source.identifier, generator_identifier=GENERATOR).order_by('-created').first()
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
+                generator_definition = DataGeneratorDefinition.definition_for_identifier(GENERATOR)
+
+                last_upload = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created').first()
 
                 alert_name = None
                 alert_details = {}

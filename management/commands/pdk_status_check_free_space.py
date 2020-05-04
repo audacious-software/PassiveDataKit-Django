@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-device-free-space'
 CRITICAL_LEVEL = 256 * 1024 * 1024
@@ -30,7 +30,10 @@ class Command(BaseCommand):
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
             else:
-                last_status = DataPoint.objects.filter(source=source.identifier, generator_identifier='pdk-system-status').order_by('-created').first()
+            	source_reference = DataSourceReference.reference_for_source(source.identifier)
+            	generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-system-status')
+
+                last_status = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created').first()
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
                 alert_name = None

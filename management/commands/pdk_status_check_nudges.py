@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-remote-nudge'
 CRITICAL_LEVEL = 12 * 60 * 60
@@ -34,12 +34,15 @@ class Command(BaseCommand):
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
             now = timezone.now()
 
+			source_reference = DataSourceReference.reference_for_source(source.identifier)
+			generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
+
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
             else:
                 secondary_query = Q(secondary_identifier='app_recv_remote_notification') | Q(secondary_identifier='pdk-received-firebase-message')
 
-                last_event = DataPoint.objects.filter(source=source.identifier, generator_identifier='pdk-app-event').filter(secondary_query).order_by('-created').first()
+                last_event = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).filter(secondary_query).order_by('-created').first()
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
                 alert_name = None
