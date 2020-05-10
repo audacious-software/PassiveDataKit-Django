@@ -113,7 +113,7 @@ class DataSourceGroupAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataSource)
 class DataSourceAdmin(admin.OSMGeoAdmin):
-    list_display = ('name', 'identifier', 'group', 'suppress_alerts', 'performance_metadata_updated',)
+    list_display = ('name', 'identifier', 'group', 'suppress_alerts', 'server', 'performance_metadata_updated',)
     list_filter = ('group', 'suppress_alerts', 'performance_metadata_updated',)
     search_fields = ['name', 'identifier']
 
@@ -227,7 +227,7 @@ class DeviceModelAdmin(admin.OSMGeoAdmin):
 class DeviceAdmin(admin.OSMGeoAdmin):
     list_display = ('source', 'model', 'platform',)
 
-    search_fields = ('source', 'model', 'platform', 'notes',)
+    search_fields = ('source__identifier', 'model__model', 'model__manufacturer', 'platform', 'notes',)
     list_filter = ('platform', 'model',)
 
 @admin.register(DeviceIssue)

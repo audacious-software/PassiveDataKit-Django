@@ -13,16 +13,10 @@ class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--delete',
-                            action='store_true',
-                            dest='delete',
-                            default=False,
-                            help='Delete data points after processing')
-
         parser.add_argument('--count',
                             type=int,
                             dest='point_count',
-                            default=1000,
+                            default=100,
                             help='Number of points to include in a a bundle')
 
         parser.add_argument('--source',
@@ -30,6 +24,12 @@ class Command(BaseCommand):
                             dest='source',
                             default='any',
                             help='Specific source to update')
+
+        parser.add_argument('--bundle-count',
+                            type=int,
+                            dest='bundle_count',
+                            default=100,
+                            help='Number of bundles to generate for each source before moving on to next source')
 
         parser.add_argument('--server-pk',
                             type=int,
@@ -57,10 +57,15 @@ class Command(BaseCommand):
 
             point_count = DataPoint.objects.filter(source_reference=source_reference).count()
 
+            if point_count > 0:
+                print '---- ----'
+
             if options['source'] != 'any':
                 print source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server)
 
-            while point_count > 0:
+            bundle_count = 0
+
+            while point_count > 0 and bundle_count < options['bundle_count']:
                 with transaction.atomic():
                     clear_pks = []
 
@@ -81,6 +86,8 @@ class Command(BaseCommand):
                         data_bundle.properties = json.dumps(bundle)
 
                     data_bundle.save()
+
+                    bundle_count += 1
 
                     for clear_pk in clear_pks:
                         DataPoint.objects.get(pk=clear_pk).delete()
