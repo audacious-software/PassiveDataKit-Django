@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from passive_data_kit.decorators import handle_lock
 
-from passive_data_kit.models import DataPoint, DataSource, DataSourceAlert
+from passive_data_kit.models import DataPoint, DataSource, DataSourceAlert, DataSourceReference
 
 DATA_CHECK = 'pdk-data-upload'
 
@@ -34,9 +34,11 @@ class Command(BaseCommand):
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=DATA_CHECK, active=True).update(active=False)
             else:
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
+
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=DATA_CHECK, active=True).order_by('-created').first()
 
-                last_upload = DataPoint.objects.filter(source=source.identifier).order_by('-created').first()
+                last_upload = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
 
                 alert_name = None
                 alert_details = {}

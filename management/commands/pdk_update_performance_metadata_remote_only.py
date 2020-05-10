@@ -6,7 +6,7 @@ from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataSource, DataServer
 
 class Command(BaseCommand):
-    help = 'Updates each user performance metadata measurements on a round-robin basis'
+    help = 'Updates each user performance metadata measurements on a round-robin basis (remote servers only)'
 
     def add_arguments(self, parser):
         parser.add_argument('--source',
@@ -23,19 +23,18 @@ class Command(BaseCommand):
         for server in DataServer.objects.all():
             servers.append(server)
 
-        servers.append(None)
-
         for server in servers:
             source = None
 
             if options['source'] != 'any':
-                source = DataSource.objects.filter(identifier=options['source']).first()
+                source = DataSource.objects.filter(identifier=options['source'], server=server).first()
 
             if source is None:
-                source = DataSource.objects.filter(server=server, performance_metadata_updated=None, suppress_alerts=False).first()
+                source = DataSource.objects.filter(performance_metadata_updated=None, server=server).first()
 
             if source is None:
-                source = DataSource.objects.filter(server=server, suppress_alerts=False).order_by('performance_metadata_updated').first()
+                source = DataSource.objects.filter(server=server).order_by('performance_metadata_updated').first()
 
             if source is not None:
+                # print('SOURCE: ' + str(source))
                 source.update_performance_metadata()

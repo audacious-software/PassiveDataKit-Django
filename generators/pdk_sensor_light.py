@@ -28,7 +28,10 @@ def fetch_values(source, generator, start, end):
     index = start
     current_value = None
 
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
+    source_reference = DataSourceReference.reference_for_source(source.identifier)
+    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+
+    for point in DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gt=start, created__lte=end).order_by('created'):
         if (point.created - index).total_seconds() > WINDOW_SIZE:
             if current_value is not None and current_value['min_value'] != -1: # pylint: disable=unsubscriptable-object
                 values.append(current_value)

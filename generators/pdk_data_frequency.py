@@ -9,7 +9,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from ..models import DataSource
+from ..models import DataSource, DataSourceReference, DataPoint
 
 DEFAULT_INTERVAL = 600
 DEFAULT_DAYS = 2
@@ -58,6 +58,10 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     keys = []
 
+    source_reference = DataSourceReference.reference_for_source(source)
+
+    points = DataPoint.objects.filter(source_reference=source_reference)
+
     while start < now:
         timestamp = str(calendar.timegm(start.timetuple()))
 
@@ -75,10 +79,13 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     # Plot times recorded
 
-    latest = points.filter(created__gte=start).order_by('-pk').first()
+    now = timezone.now()
 
-    if latest is not None:
-        now = latest.recorded
+    if data_source is not None:
+        latest = data_source.latest_point_recorded()
+
+        if latest is not None:
+            now = latest.recorded
 
     now = now.replace(second=0, microsecond=0)
 
@@ -110,7 +117,6 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     with open(folder + '/timestamp-recorded-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
-
 
 def visualization(source, generator): # pylint: disable=unused-argument
     filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-counts.json'

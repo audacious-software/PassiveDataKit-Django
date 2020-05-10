@@ -697,14 +697,26 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
 def pdk_fetch_metadata_json(request):
     metadata = {}
 
-    if 'identifier' in request.POST and 'request-key' in request.POST:
+    if 'identifier' in request.POST and 'request-key' in request.POST: # pylint: disable=too-many-nested-blocks
         try:
             if request.POST['request-key'] == settings.PDK_REQUEST_KEY:
                 source = DataSource.objects.filter(identifier=request.POST['identifier']).first()
 
                 if source is not None:
                     metadata = source.fetch_performance_metadata()
+
+                    for app in settings.INSTALLED_APPS:
+                        try:
+                            pdk_api = importlib.import_module(app + '.pdk_api')
+
+                            pdk_api.annotate_remote_metadata(source.identifier, metadata)
+                        except ImportError:
+                            pass
+                        except AttributeError:
+                            pass
+
         except AttributeError:
             pass
+
 
     return JsonResponse(metadata, safe=False, json_dumps_params={'indent': 2})
