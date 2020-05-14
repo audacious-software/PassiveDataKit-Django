@@ -231,6 +231,9 @@ class Command(BaseCommand):
                         'url': settings.SITE_URL
                     })
 
+                    if 'email_subject' in parameters:
+                        subject = parameters['email_subject']
+
                     message = render_to_string('pdk_report_message.txt', {
                         'report': report,
                         'url': settings.SITE_URL

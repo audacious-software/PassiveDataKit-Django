@@ -1211,6 +1211,9 @@ class ReportJobBatchRequest(models.Model):
                 if 'suffix' in params:
                     job_params['suffix'] = params['suffix']
 
+                if 'email_subject' in params:
+                    job_params['email_subject'] = params['email_subject']
+
                 if install_supports_jsonfield():
                     job.parameters = job_params
                 else:
@@ -1288,6 +1291,15 @@ class ReportJobBatchRequest(models.Model):
                     job_params['data_start'] = params['data_start']
                     job_params['data_end'] = params['data_end']
 
+                    if 'prefix' in params:
+                        job_params['prefix'] = params['prefix']
+
+                    if 'suffix' in params:
+                        job_params['suffix'] = params['suffix']
+
+                    if 'email_subject' in params:
+                        job_params['email_subject'] = params['email_subject']
+
                     if install_supports_jsonfield():
                         job.parameters = job_params
                     else:
@@ -1308,6 +1320,15 @@ class ReportJobBatchRequest(models.Model):
                 job_params['raw_data'] = params['export_raw']
                 job_params['data_start'] = params['data_start']
                 job_params['data_end'] = params['data_end']
+
+                if 'prefix' in params:
+                    job_params['prefix'] = params['prefix']
+
+                if 'suffix' in params:
+                    job_params['suffix'] = params['suffix']
+
+                if 'email_subject' in params:
+                    job_params['email_subject'] = params['email_subject']
 
                 if install_supports_jsonfield():
                     job.parameters = job_params
