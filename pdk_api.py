@@ -342,7 +342,7 @@ def load_backup(filename, content):
     else:
         print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
 
-def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements
+def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     to_transmit = []
     to_clear = []
 
@@ -416,7 +416,14 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     except AttributeError:
         print 'Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.'
 
-    query = Q(generator_identifier__startswith='pdk-')
+    query = None
+
+    for definition in DataGeneratorDefinition.objects.all():
+        if definition.generator_identifier.startswith('pdk-'):
+            if query is None:
+                query = Q(generator_definition=definition)
+            else:
+                query = query | Q(generator_definition=definition)
 
     if 'start_date' in parameters:
         query = query & Q(recorded__gte=parameters['start_date'])
@@ -463,9 +470,16 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
     return to_transmit, to_clear
 
-
 def clear_points(to_clear):
-    for point_id in to_clear:
+    point_count = len(to_clear)
+
+    for i in range(0, point_count):
+        if (i % 1000) == 0:
+            print '[passive_data_kit] Clearing points ' + str(i) + ' of ' + str(point_count) + '...'
+            sys.stdout.flush()
+
+        point_id = to_clear[i]
+
         point_pk = int(point_id.replace('pdk:', ''))
 
         DataPoint.objects.filter(pk=point_pk).delete()
