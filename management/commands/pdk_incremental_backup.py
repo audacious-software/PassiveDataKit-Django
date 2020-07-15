@@ -157,9 +157,9 @@ class Command(BaseCommand):
                             box = SecretBox(key)
 
                             with open(path, 'rb') as backup_file:
-                                encrypted_io = StringIO.StringIO()
-                                encrypted_io.write(backup_file.read())
-                                encrypted_io.seek(0)
+                                backup_io = StringIO.StringIO()
+                                backup_io.write(backup_file.read())
+                                backup_io.seek(0)
 
                                 filename = os.path.basename(path) + '.encrypted'
 
@@ -170,7 +170,7 @@ class Command(BaseCommand):
                                 print 'Uploading to Dropbox: ' + dropbox_path
                                 sys.stdout.flush()
 
-                                client.files_upload(encrypted_io.read(), dropbox_path)
+                                client.files_upload(box.encrypt(backup_io.read()), dropbox_path)
 
                             os.remove(path)
                     else:
