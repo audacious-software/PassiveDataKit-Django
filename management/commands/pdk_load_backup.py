@@ -5,6 +5,7 @@ import bz2
 import importlib
 import os
 
+from nacl.exceptions import CryptoError
 from nacl.secret import SecretBox
 
 from django.conf import settings
@@ -26,6 +27,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         key = base64.b64decode(settings.PDK_BACKUP_KEY)
 
+        warned = False
+
         for app in settings.INSTALLED_APPS:
             try:
                 pdk_api = importlib.import_module(app + '.pdk_api')
@@ -37,7 +40,14 @@ class Command(BaseCommand):
                         box = SecretBox(key)
 
                         with open(encrypted_file, 'rb') as backup_file:
-                            content = box.decrypt(backup_file.read())
+                            content = backup_file.read()
+
+                            try:
+                                content = box.decrypt(content)
+                            except CryptoError:
+                                if warned is False:
+                                    print 'Unable to decrypt "' + filename + '", attempting decompression of original (maybe unencrypted) content...'
+                                    warned = True
 
                             decompressed = bz2.decompress(content)
 

@@ -66,7 +66,7 @@ class Command(BaseCommand):
         new_point_count = 0
         processed_bundle_count = 0
         process_limit = 1000
-        remote_bundle_size = 500
+        remote_bundle_size = 100
         remote_timeout = 5
 
         try:
@@ -93,7 +93,7 @@ class Command(BaseCommand):
 
         xmit_points = {}
 
-        for bundle in DataBundle.objects.filter(processed=False, errored=None).order_by('-recorded', '-compression')[:options['bundle_count']]:
+        for bundle in DataBundle.objects.filter(processed=False, errored=None).order_by('compression', '-recorded')[:options['bundle_count']]:
             if new_point_count < process_limit:
                 processed_bundle_count += 1
 
@@ -420,7 +420,7 @@ class Command(BaseCommand):
                 DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
                 DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
-            logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False).count())
+            logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False, errored=None).count())
 
         # elapsed = timezone.now() - start_time
 

@@ -331,14 +331,30 @@ def load_backup(filename, content):
 
         os.remove(path)
     elif 'pdk-bundle' in filename:
-        bundle = DataBundle(recorded=timezone.now())
+        backup_content = json.loads(content)
 
-        if install_supports_jsonfield():
-            bundle.properties = json.loads(content)
-        else:
-            bundle.properties = content
+        bundle_index = 0
 
-        bundle.save()
+        while backup_content:
+            bundle_content = []
+
+            if (bundle_index % 50) == 0:
+                print '[passive_data_kit.pdk_api.load_backup] ' + str(len(backup_content)) + ' items remaining to write...'
+
+            while backup_content and len(bundle_content) < 100:
+                bundle_content.append(backup_content.pop(0))
+
+            if bundle_content:
+                bundle = DataBundle(recorded=timezone.now())
+
+                if install_supports_jsonfield():
+                    bundle.properties = bundle_content
+                else:
+                    bundle.properties = json.dumps(bundle_content, indent=2)
+
+                bundle.save()
+
+                bundle_index += 1
     else:
         print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
 
