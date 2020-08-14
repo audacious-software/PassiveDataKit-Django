@@ -1,10 +1,13 @@
 # pylint: disable=no-member,line-too-long
 
+import datetime
+
 from pyfcm import FCMNotification
 
 from django.conf import settings
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, DataGeneratorDefinition, DataSourceReference, DataSource
@@ -26,19 +29,30 @@ class Command(BaseCommand):
 
         index = 0
 
+        active_days_window = 14
+
+        try:
+            active_days_window = settings.PDK_NOTIFICATION_ACTIVE_DAYS_WINDOW
+        except AttributeError:
+            pass
+
+        window_start = timezone.now() - datetime.timedelta(days=active_days_window)
+
         while index < count:
             tokens = {}
 
             for source in DataSource.objects.all().order_by('identifier')[index:(index+128)]:
-
                 source_reference = DataSourceReference.reference_for_source(source.identifier)
 
-                point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token').order_by('-created').first()
+                latest_point = source.latest_point()
 
-                if point is not None:
-                    properties = point.fetch_properties()
+                if latest_point is not None and latest_point.created > window_start:
+                    point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token', created__gte=window_start).order_by('-created').first()
 
-                    tokens[source.identifier] = properties['event_details']['token']
+                    if point is not None:
+                        properties = point.fetch_properties()
+
+                        tokens[source.identifier] = properties['event_details']['token']
 
             token_list = []
 
