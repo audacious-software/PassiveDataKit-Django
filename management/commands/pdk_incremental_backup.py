@@ -75,12 +75,16 @@ class Command(BaseCommand):
 
         parameters = {}
 
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+
         if options['start_date'] is not None:
             components = options['start_date'].split('-')
 
-            start_date = datetime.datetime(int(components[0]), int(components[1]), int(components[2]), 0, 0, 0, 0, here_tz)
+            parameters['start_date'] = datetime.datetime(int(components[0]), int(components[1]), int(components[2]), 0, 0, 0, 0, here_tz)
+        else:
+            parameters['start_date'] = datetime.datetime(yesterday.year, yesterday.month, yesterday.day, 0, 0, 0, 0, here_tz)
 
-            parameters['start_date'] = start_date
+            options['start_date'] = yesterday.isoformat()
 
         if options['end_date'] is not None:
             components = options['end_date'].split('-')
@@ -88,6 +92,12 @@ class Command(BaseCommand):
             end_date = datetime.datetime(int(components[0]), int(components[1]), int(components[2]), 0, 0, 0, 0, here_tz) + datetime.timedelta(days=1)
 
             parameters['end_date'] = end_date
+        else:
+            today = yesterday + datetime.timedelta(days=1)
+
+            parameters['end_date'] = datetime.datetime(today.year, today.month, today.day, 0, 0, 0, 0, here_tz)
+
+            options['end_date'] = today.isoformat()
 
         parameters['clear_archived'] = options['clear_archived']
 
