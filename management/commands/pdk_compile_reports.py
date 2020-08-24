@@ -105,6 +105,8 @@ class Command(BaseCommand):
 
                 filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
 
+                zips_to_merge = []
+
                 with open(filename, 'wb') as final_output_file:
                     with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                         to_delete = []
@@ -196,17 +198,21 @@ class Command(BaseCommand):
 
                                                 if output_file is not None:
                                                     if output_file.lower().endswith('.zip'):
-                                                        with zipfile.ZipFile(output_file, 'r') as source_file:
-                                                            for name in source_file.namelist():
-                                                                data_file = source_file.open(name)
+                                                        zips_to_merge.append(output_file)
 
-                                                                export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                        # with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                        #    for name in source_file.namelist():
+                                                        #        data_file = source_file.open(name)
+
+                                                        #        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
                                                     else:
                                                         name = os.path.basename(os.path.normpath(output_file))
 
                                                         export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
 
-                                                    to_delete.append(output_file)
+                                                        to_delete.append(output_file)
+
+                                                    # to_delete.append(output_file)
                                             except TypeError as exception:
                                                 print 'Verify that ' + app + '.' + generator + ' implements all compile_report arguments!'
                                                 raise exception
@@ -220,6 +226,15 @@ class Command(BaseCommand):
 
                         for output_file in to_delete:
                             os.remove(output_file)
+
+                if zips_to_merge:
+                    with zipfile.ZipFile(filename, 'a') as zip_output:
+                        for zip_filename in zips_to_merge:
+                            zip_file = zipfile.ZipFile(zip_filename, 'r')
+
+                            for child_file in zip_file.namelist():
+                                with zip_file.open(child_file) as child_stream:
+                                    zip_output.writestr(child_file, child_stream.read())
 
                 report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
                 report.completed = timezone.now()
