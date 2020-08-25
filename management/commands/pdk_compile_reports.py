@@ -6,6 +6,7 @@ import importlib
 import json
 import os
 import tempfile
+import traceback
 import zipfile
 
 import zipstream
@@ -21,6 +22,8 @@ from django.utils import timezone
 
 from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
+
+REMOVE_SLEEP_MAX = 60 # Added to avoid "WindowsError: [Error 32] The process cannot access the file because it is being used by another process"
 
 class Command(BaseCommand):
     help = 'Compiles data reports requested by end users.'
@@ -225,7 +228,18 @@ class Command(BaseCommand):
                             final_output_file.write(data)
 
                         for output_file in to_delete:
-                            os.remove(output_file)
+                            remove_sleep = 1.0
+
+                            while remove_sleep < REMOVE_SLEEP_MAX:
+                                try:
+                                    os.remove(output_file)
+
+                                    remove_sleep = REMOVE_SLEEP_MAX
+                                except OSError:
+                                    remove_sleep = remove_sleep * 2
+
+                                    if remove_sleep >= REMOVE_SLEEP_MAX:
+                                        traceback.print_exc()
 
                 if zips_to_merge:
                     with zipfile.ZipFile(filename, 'a') as zip_output:
@@ -272,7 +286,18 @@ class Command(BaseCommand):
                 for extra_destination in report.requester.pdk_report_destinations.all():
                     extra_destination.transmit(filename)
 
-                os.remove(filename)
+                remove_sleep = 1.0
+
+                while remove_sleep < REMOVE_SLEEP_MAX:
+                    try:
+                        os.remove(filename)
+
+                        remove_sleep = REMOVE_SLEEP_MAX
+                    except OSError:
+                        remove_sleep = remove_sleep * 2
+
+                        if remove_sleep >= REMOVE_SLEEP_MAX:
+                            traceback.print_exc()
 
         request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
                       .order_by('requested', 'pk')\
