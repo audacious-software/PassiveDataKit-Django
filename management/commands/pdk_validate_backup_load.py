@@ -67,7 +67,7 @@ class Command(BaseCommand):
                         data_points = json.loads(decompressed)
 
                         while remaining_count > 0:
-                            random_point = random.choice(data_points)
+                            random_point = random.choice(data_points) # nosec
 
                             created = datetime.datetime.fromtimestamp(random_point['passive-data-metadata']['timestamp'], tz=default_tz)
 
