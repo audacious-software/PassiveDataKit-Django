@@ -160,10 +160,10 @@ class Command(BaseCommand):
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
 
-                                while '\u0000' in point_json:
+                                while r'\u0000' in point_json:
                                     print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
 
-                                    point_json = point_json.replace('\u0000', '')
+                                    point_json = point_json.replace(r'\u0000', '')
 
                                 bundle_point = json.loads(point_json)
 

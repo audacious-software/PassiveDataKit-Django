@@ -9,7 +9,6 @@ import datetime
 import importlib
 import os
 import sys
-import urllib.parse
 
 import io
 
@@ -22,6 +21,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from passive_data_kit.decorators import handle_lock
+
+try:
+    from urllib.parse import urlparse, urlunsplit
+except ImportError:
+    from urlparse import urlparse, urlunsplit
 
 class Command(BaseCommand):
     help = 'Generates incremental backups of data content and transmits to storage.'

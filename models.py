@@ -41,7 +41,7 @@ from django.contrib.gis.db import models
 try:
     from urllib.parse import urlparse, urlunsplit
 except ImportError:
-    from urllib.parse import urlparse, urlunsplit
+    from urlparse import urlparse, urlunsplit
 
 standard_library.install_aliases()
 
