@@ -16,8 +16,6 @@ before_install:
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
   
 install:
-  - pip2 install -r requirements-py2.txt
-  - pip2 install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
   - pip3 install -r requirements.txt
   - pip3 install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
 
