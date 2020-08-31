@@ -1,5 +1,6 @@
-from __future__ import print_function
 # pylint: disable=line-too-long, no-member
+
+from __future__ import print_function
 
 import pytz
 

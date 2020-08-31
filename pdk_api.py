@@ -1,8 +1,9 @@
-from __future__ import print_function
 # pylint: disable=line-too-long, no-member
 
-from builtins import str
-from builtins import range
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
 import bz2
 import calendar
 import csv

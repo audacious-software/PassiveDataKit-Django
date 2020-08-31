@@ -1,11 +1,13 @@
-from __future__ import division
 # pylint: disable=line-too-long, no-member
 
-from builtins import str
-from past.utils import old_div
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
 import datetime
 import importlib
 import json
+
+from past.utils import old_div
 
 import arrow
 

@@ -1,9 +1,10 @@
-from __future__ import division
 # pylint: disable=line-too-long, no-member
 
-from builtins import str
-from builtins import range
-from past.utils import old_div
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
@@ -13,6 +14,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 

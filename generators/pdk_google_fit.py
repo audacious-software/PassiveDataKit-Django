@@ -1,6 +1,7 @@
 # pylint: disable=line-too-long, no-member
 
-from builtins import str
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import json
 import time

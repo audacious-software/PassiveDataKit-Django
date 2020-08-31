@@ -2,7 +2,8 @@
 # pylint: disable=no-member,line-too-long
 
 from __future__ import print_function
-from builtins import str
+
+from builtins import str # pylint: disable=redefined-builtin
 import copy
 import json
 import os

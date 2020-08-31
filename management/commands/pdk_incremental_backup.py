@@ -1,5 +1,6 @@
-from __future__ import print_function
 # pylint: disable=no-member,line-too-long
+
+from __future__ import print_function # pylint: disable=redefined-builtin
 
 from builtins import str
 import base64

@@ -3,26 +3,21 @@
 from __future__ import print_function
 from __future__ import division
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from past.utils import old_div
-from builtins import object
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+from builtins import object # pylint: disable=redefined-builtin
+
 import calendar
 import datetime
 import json
 import random
 import string
 
-try:
-	from urllib.parse import urlparse, urlunsplit
-except ImportError:
-	from urllib.parse import urlparse, urlunsplit
-
 import importlib
 
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from future import standard_library
+from past.utils import old_div
 
 import arrow
 import requests
@@ -42,6 +37,13 @@ from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
+
+try:
+    from urllib.parse import urlparse, urlunsplit
+except ImportError:
+    from urllib.parse import urlparse, urlunsplit
+
+standard_library.install_aliases()
 
 DB_SUPPORTS_JSON = None
 TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'

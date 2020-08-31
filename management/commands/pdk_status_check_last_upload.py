@@ -1,8 +1,10 @@
-from __future__ import division
-from __future__ import print_function
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+from __future__ import print_function
+
 from past.utils import old_div
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone

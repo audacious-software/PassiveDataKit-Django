@@ -1,7 +1,9 @@
-from __future__ import print_function
 # pylint: disable=no-member, line-too-long
 
-from builtins import str
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import sys
 
 from django.core.management.base import BaseCommand
