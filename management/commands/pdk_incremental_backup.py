@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 to_transmit, to_clear = pdk_api.incremental_backup(parameters)
 
                 for destination in destinations:
-                    destination_url = urllib.parse.urlparse(destination)
+                    destination_url = urlparse(destination)
 
                     if destination_url.scheme == 'file':
                         dest_path = destination_url.path
