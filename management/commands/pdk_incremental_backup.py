@@ -23,9 +23,9 @@ from django.core.management.base import BaseCommand
 from passive_data_kit.decorators import handle_lock
 
 try:
-    from urllib.parse import urlparse, urlunsplit
+    from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse, urlunsplit
+    from urlparse import urlparse
 
 class Command(BaseCommand):
     help = 'Generates incremental backups of data content and transmits to storage.'
