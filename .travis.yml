@@ -16,8 +16,7 @@ before_install:
   - export PYTHONPATH=$HOME/builds/audaciouscode/pdk
   
 install:
-  - pip3 install -r requirements.txt
-  - pip3 install git+git://github.com/tinio/pysqlite.git@extension-enabled#egg=pysqlite
+  - pip install -r requirements.txt
 
 before_script:
   - psql -U postgres -c "create extension postgis"
