@@ -1,3 +1,4 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
 from pushjack import APNSClient, APNSSandboxClient
@@ -45,7 +46,7 @@ class Command(BaseCommand):
 
         token_list = []
 
-        for source, token in tokens.items(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             if (token in token_list) is False and (token in expired) is False:
                 token_list.append(token)
 

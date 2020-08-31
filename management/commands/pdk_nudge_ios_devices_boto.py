@@ -1,3 +1,4 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
 import json
@@ -42,7 +43,7 @@ class Command(BaseCommand):
             region=region,
         )
 
-        for source, token in tokens.items(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             try:
                 endpoint_response = sns.create_platform_endpoint(
                     platform_application_arn=settings.PDK_BOTO_SNS_ARN,
@@ -90,7 +91,7 @@ class Command(BaseCommand):
 
         message = {'APNS_SANDBOX': json.dumps(notification), 'default': 'nil'}
 
-        for source, token in tokens.items(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             try:
                 endpoint_response = sns.create_platform_endpoint(
                     platform_application_arn=settings.PDK_BOTO_SNS_ARN_SANDBOX,

@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
+from builtins import str
 from django.core.management.base import BaseCommand
 
 from ...decorators import handle_lock

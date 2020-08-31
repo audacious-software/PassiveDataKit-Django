@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
+from builtins import str
 import json
 
 from django.core.management.base import BaseCommand

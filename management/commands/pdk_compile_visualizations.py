@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
+from builtins import str
 import datetime
 import importlib
 import json
@@ -200,7 +202,7 @@ class Command(BaseCommand):
         if (end_time - start_time).total_seconds() > excessive_time:
             print('Excessive visualization compilation time: ' + str((end_time - start_time).total_seconds()) + ' seconds:')
 
-            for key, times in time_spent.items():
+            for key, times in list(time_spent.items()):
                 query = times['query_end'] - times['start']
                 spent = times['end'] - times['start']
 

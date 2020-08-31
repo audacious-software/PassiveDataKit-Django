@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
+from builtins import str
 import base64
 import datetime
 import gzip
@@ -371,7 +373,7 @@ class Command(BaseCommand):
             else:
                 DataPoint.objects.sources()
 
-            for source, identifiers in source_identifiers.items():
+            for source, identifiers in list(source_identifiers.items()):
                 datum_key = SOURCE_GENERATORS_DATUM + ': ' + source
                 source_id_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
 
@@ -416,7 +418,7 @@ class Command(BaseCommand):
                 generators_datum.value = json.dumps(generator_ids, indent=2)
                 generators_datum.save()
 
-            for identifier, point in latest_points.items():
+            for identifier, point in list(latest_points.items()):
                 DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
                 DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member, line-too-long
 
+from __future__ import print_function
+from builtins import str
 import calendar
 import datetime
 import json
@@ -160,7 +162,7 @@ def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disab
         if results['body']['series'] == []:
             return
 
-        for timestamp, values in results['body']['series'].items():
+        for timestamp, values in list(results['body']['series'].items()):
             found = False
 
             created_date = arrow.get(timestamp).datetime

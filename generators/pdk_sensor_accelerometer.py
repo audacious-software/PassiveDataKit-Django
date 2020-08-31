@@ -1,5 +1,9 @@
+from __future__ import division
 # pylint: disable=line-too-long, no-member
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import calendar
 import csv
 import datetime
@@ -66,7 +70,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
             if 'sensor_data' in properties:
                 try:
                     for timestamp in properties['sensor_data']['observed']:
-                        timestamp = timestamp / (1000 * 1000 * 1000)
+                        timestamp = old_div(timestamp, (1000 * 1000 * 1000))
 
                         for key in keys:
                             key_end = float(key) + 600
@@ -178,7 +182,7 @@ def data_table(source, generator): # pylint: disable=unused-argument
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
@@ -203,7 +207,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             points_count = float(points.count())
 
-            splits = int(math.ceil(points_count / SPLIT_SIZE))
+            splits = int(math.ceil(old_div(points_count, SPLIT_SIZE)))
 
             for split_index in range(0, splits):
                 identifier = slugify(generator + '__' + source)

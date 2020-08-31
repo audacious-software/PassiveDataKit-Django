@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
+from builtins import str
 import base64
 import bz2
 import datetime
@@ -83,7 +85,7 @@ class Command(BaseCommand):
                 else:
                     print('Skipping ' + filename + '. Invalid file type.')
             else:
-                raise RuntimeError(file + ' does not exist.')
+                raise RuntimeError(filename + ' does not exist.')
 
             if seen < tested:
                 print('Missing points (' + str(seen) + ' / ' + str(tested) + '): ' + filename)

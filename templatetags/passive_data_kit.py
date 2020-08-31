@@ -1,5 +1,8 @@
+from __future__ import division
 # pylint: disable=line-too-long, no-member
 
+from builtins import str
+from past.utils import old_div
 import datetime
 import importlib
 import json
@@ -213,10 +216,10 @@ class DateAgoNode(template.Node):
         if diff.days > 0:
             ago_str = str(diff.days) + 'd'
         else:
-            minutes = diff.seconds / 60
+            minutes = old_div(diff.seconds, 60)
 
             if minutes >= 60:
-                ago_str = str(minutes / 60) + 'h'
+                ago_str = str(old_div(minutes, 60)) + 'h'
             else:
                 ago_str = str(minutes) + 'm'
 
@@ -249,9 +252,9 @@ class HumanDurationNode(template.Node):
         ago_str = str(seconds_obj) + 's'
 
         if seconds_obj > (24.0 * 60 * 60):
-            ago_str = '{0:.2f}'.format(seconds_obj / (24.0 * 60 * 60)) + 'd'
+            ago_str = '{0:.2f}'.format(old_div(seconds_obj, (24.0 * 60 * 60))) + 'd'
         elif seconds_obj > (60.0 * 60):
-            ago_str = '{0:.2f}'.format(seconds_obj / (60.0 * 60)) + 'h'
+            ago_str = '{0:.2f}'.format(old_div(seconds_obj, (60.0 * 60))) + 'h'
         elif seconds_obj > 60.0:
             ago_str = '{0:.2f}'.format(seconds_obj / 60.0) + 'm'
 
@@ -280,14 +283,14 @@ class HumanMSDurationNode(template.Node):
         if milliseconds_obj is None:
             return ''
 
-        seconds_obj = milliseconds_obj / 1000
+        seconds_obj = old_div(milliseconds_obj, 1000)
 
         ago_str = str(seconds_obj) + 's'
 
         if seconds_obj > (24.0 * 60 * 60):
-            ago_str = '{0:.2f}'.format(seconds_obj / (24.0 * 60 * 60)) + 'd'
+            ago_str = '{0:.2f}'.format(old_div(seconds_obj, (24.0 * 60 * 60))) + 'd'
         elif seconds_obj > (60.0 * 60):
-            ago_str = '{0:.2f}'.format(seconds_obj / (60.0 * 60)) + 'h'
+            ago_str = '{0:.2f}'.format(old_div(seconds_obj, (60.0 * 60))) + 'h'
         elif seconds_obj > 60.0:
             ago_str = '{0:.2f}'.format(seconds_obj / 60.0) + 'm'
 
@@ -529,7 +532,7 @@ def get_item(dictionary, key):
 
 @register.filter('to_gb')
 def to_gb(value):
-    value = (value / (1024.0 * 1024.0 * 1024.0))
+    value = (old_div(value, (1024.0 * 1024.0 * 1024.0)))
 
     if value > 1:
         return '%.3f GB' %  value

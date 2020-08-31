@@ -1,5 +1,8 @@
+from __future__ import division
 # pylint: disable=line-too-long, no-member
 
+from builtins import str
+from past.utils import old_div
 import calendar
 import datetime
 import json
@@ -44,7 +47,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % int(interval / 60)
+    remainder = now.minute % int(old_div(interval, 60))
 
     now = now.replace(minute=(now.minute - remainder))
 
@@ -89,7 +92,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % int(interval / 60)
+    remainder = now.minute % int(old_div(interval, 60))
 
     now = now.replace(minute=(now.minute - remainder))
 

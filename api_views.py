@@ -1,5 +1,7 @@
+from __future__ import print_function
 # pylint: disable=no-member, line-too-long
 
+from builtins import str
 import datetime
 import json
 
@@ -93,7 +95,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.items():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -111,7 +113,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.items():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -184,7 +186,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.items():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -199,7 +201,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.items():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime

@@ -1,15 +1,27 @@
 # pylint: disable=no-member, line-too-long, too-many-lines
 
+from __future__ import print_function
+from __future__ import division
 
-
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import calendar
 import datetime
 import json
 import random
 import string
-import urllib.parse
+
+try:
+	from urllib.parse import urlparse, urlunsplit
+except ImportError:
+	from urllib.parse import urlparse, urlunsplit
 
 import importlib
+
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
 
 import arrow
@@ -350,7 +362,7 @@ class DataPointManager(models.Manager):
 
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = []
 
     objects = DataPointManager()
@@ -489,7 +501,7 @@ def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=u
         pass
 
 class DataServerMetadatum(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name_plural = "data server metadata"
 
     key = models.CharField(max_length=1024, db_index=True)
@@ -589,9 +601,9 @@ class DataSource(models.Model):
         if self.server is None:
             return url
 
-        components = urllib.parse.urlparse(self.server.upload_url)
+        components = urlparse(self.server.upload_url)
 
-        return urllib.parse.urlunsplit((components.scheme, components.netloc, url, '', ''))
+        return urlunsplit((components.scheme, components.netloc, url, '', ''))
 
     def fetch_definition(self):
         definition = {
@@ -775,7 +787,7 @@ class DataSource(models.Model):
                 seconds = (latest_point.created - earliest_point.created).total_seconds()
 
                 if seconds > 0:
-                    metadata['point_frequency'] = metadata['point_count'] / seconds
+                    metadata['point_frequency'] = old_div(metadata['point_count'], seconds)
 
             generators = []
 
@@ -1368,7 +1380,7 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = json.dumps(parameters, indent=2)
 
 class AppConfiguration(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['is_valid', 'is_enabled'],
             ['is_valid', 'is_enabled', 'evaluate_order'],
@@ -1395,7 +1407,7 @@ class AppConfiguration(models.Model):
         return json.loads(self.configuration_json)
 
 class DataServerApiToken(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 

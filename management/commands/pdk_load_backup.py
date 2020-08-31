@@ -1,3 +1,4 @@
+from __future__ import print_function
 # pylint: disable=no-member,line-too-long
 
 import base64
@@ -34,9 +35,9 @@ class Command(BaseCommand):
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
                 for encrypted_file in options['file']:
-                    if os.path.exists(encrypted_file):
-                        filename = os.path.basename(encrypted_file)
+                    filename = os.path.basename(encrypted_file)
 
+                    if os.path.exists(encrypted_file):
                         box = SecretBox(key)
 
                         with open(encrypted_file, 'rb') as backup_file:
@@ -53,7 +54,7 @@ class Command(BaseCommand):
 
                             pdk_api.load_backup(filename, decompressed)
                     else:
-                        raise RuntimeError(file + ' does not exist.')
+                        raise RuntimeError(filename + ' does not exist.')
 
             except ImportError:
                 pass

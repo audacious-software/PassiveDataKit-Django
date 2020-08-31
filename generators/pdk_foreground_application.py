@@ -1,5 +1,8 @@
+from __future__ import division
 # pylint: disable=line-too-long, no-member
 
+from builtins import str
+from past.utils import old_div
 import calendar
 import csv
 import datetime
@@ -65,7 +68,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     now = now.replace(second=0, microsecond=0)
 
-    remainder = now.minute % int(interval / 60)
+    remainder = now.minute % int(old_div(interval, 60))
 
     now = now.replace(minute=(now.minute - remainder))
 
@@ -134,7 +137,7 @@ def data_table(source, generator): # pylint: disable=too-many-locals
                     'screen_active': last_active,
                     'application': last_application,
                     'start': last_start,
-                    'duration': datetime.timedelta(seconds=(cumulative_duration / 1000))
+                    'duration': datetime.timedelta(seconds=(old_div(cumulative_duration, 1000)))
                 }
 
                 values.append(value)
@@ -152,7 +155,7 @@ def data_table(source, generator): # pylint: disable=too-many-locals
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:
