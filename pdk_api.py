@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import traceback
 
 import StringIO
@@ -216,8 +217,20 @@ def extract_location_method(identifier):
 
     return None
 
-def send_to_destination(destination, report_path):
+def send_to_destination(destination, report_path): # pylint: disable=too-many-branches, too-many-statements
     file_sent = False
+
+    sleep_durations = [
+        0,
+        60,
+        120,
+        300,
+    ]
+
+    try:
+        sleep_durations = settings.PDK_UPLOAD_SLEEP_DURATIONS
+    except AttributeError:
+        pass # Use defaults above.
 
     if destination.destination == 'dropbox':
         try:
@@ -241,10 +254,20 @@ def send_to_destination(destination, report_path):
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
-                with open(report_path, 'rb') as report_file:
-                    client.files_upload(report_file.read(), path)
+                for duration in sleep_durations:
+                    time.sleep(duration)
 
-                file_sent = True
+                    try:
+                        with open(report_path, 'rb') as report_file:
+                            client.files_upload(report_file.read(), path)
+
+                            file_sent = True
+                    except: # pylint: disable=bare-except
+                        if duration == sleep_durations[-1]:
+                            print 'Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)'
+
+                            traceback.print_exc()
+
         except BaseException:
             traceback.print_exc()
     elif destination.destination == 'sftp':
@@ -262,17 +285,27 @@ def send_to_destination(destination, report_path):
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
-                key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
+                for duration in sleep_durations:
+                    time.sleep(duration)
 
-                ssh_client = paramiko.SSHClient()
-                ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+                    try:
+                        key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
 
-                ftp_client = ssh_client.open_sftp()
-                ftp_client.put(report_path, path)
-                ftp_client.close()
+                        ssh_client = paramiko.SSHClient()
+                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                        ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
-                file_sent = True
+                        ftp_client = ssh_client.open_sftp()
+                        ftp_client.put(report_path, path)
+                        ftp_client.close()
+
+                        file_sent = True
+                    except: # pylint: disable=bare-except
+                        if duration == sleep_durations[-1]:
+                            print 'Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)'
+
+                            traceback.print_exc()
+
         except BaseException:
             traceback.print_exc()
 
