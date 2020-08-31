@@ -36,6 +36,5 @@ script:
   - python manage.py migrate
   - python manage.py test
   - cp passive_data_kit/.pylintrc .
-  - python2 -m pylint passive_data_kit
-  - python3 -m pylint passive_data_kit
+  - pylint passive_data_kit
   - bandit -r .
