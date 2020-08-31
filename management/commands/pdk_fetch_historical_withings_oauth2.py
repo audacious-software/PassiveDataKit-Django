@@ -115,14 +115,14 @@ class Command(BaseCommand):
 
                         try:
                             if options['source'] != 'all':
-                                print 'FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day)
+                                print('FETCHING INTRADAY FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
                             fetch_intraday(data_point.source, access_token, index_date, next_day)
 
                             time.sleep(1)
 
                             if options['source'] != 'all':
-                                print 'FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day)
+                                print('FETCHING SLEEP MEASURES FOR ' + source + ': ' + str(index_date) + ': ' + str(next_day))
 
                             fetch_sleep_measures(data_point.source, access_token, index_date, next_day)
 
@@ -135,11 +135,11 @@ class Command(BaseCommand):
 
                         index_date = next_day
                 except KeyError:
-                    print 'Error fetching data: ' + json.dumps(properties, indent=2)
+                    print('Error fetching data: ' + json.dumps(properties, indent=2))
 
         for redo_date in redo_dates:
             if options['source'] != 'all':
-                print 'REDO DATE: ' + str(redo_date)
+                print('REDO DATE: ' + str(redo_date))
 
 
 def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
@@ -160,7 +160,7 @@ def fetch_intraday(user_id, access_token, start_date, end_date): # pylint: disab
         if results['body']['series'] == []:
             return
 
-        for timestamp, values in results['body']['series'].iteritems():
+        for timestamp, values in results['body']['series'].items():
             found = False
 
             created_date = arrow.get(timestamp).datetime

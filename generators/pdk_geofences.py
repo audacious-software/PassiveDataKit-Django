@@ -30,7 +30,7 @@ def extract_secondary_identifier(properties):
     return None
 
 def extract_value(pattern, properties):
-    for key, value in properties.iteritems():
+    for key, value in properties.items():
 
         match = re.search(pattern, key)
 

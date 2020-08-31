@@ -46,7 +46,7 @@ class Command(BaseCommand):
                                 content = box.decrypt(content)
                             except CryptoError:
                                 if warned is False:
-                                    print 'Unable to decrypt "' + filename + '", attempting decompression of original (maybe unencrypted) content...'
+                                    print('Unable to decrypt "' + filename + '", attempting decompression of original (maybe unencrypted) content...')
                                     warned = True
 
                             decompressed = bz2.decompress(content)

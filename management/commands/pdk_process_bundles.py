@@ -7,7 +7,7 @@ import json
 import logging
 import traceback
 
-import StringIO
+import io
 
 import requests
 import six
@@ -125,7 +125,7 @@ class Command(BaseCommand):
                                     compressed = base64.b64decode(decrypted)
 
                                     if bundle.compression == 'gzip':
-                                        fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                                        fio = io.StringIO(compressed)  # io.BytesIO for Python 3
                                         gzip_file_obj = gzip.GzipFile(fileobj=fio)
                                         payload = gzip_file_obj.read()
                                         gzip_file_obj.close()
@@ -134,16 +134,16 @@ class Command(BaseCommand):
 
                                 bundle.properties = json.loads(decrypted)
                             elif 'encrypted' in bundle.properties:
-                                print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                                print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
                                 break
                             elif 'nonce' in bundle.properties:
-                                print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                                print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
                                 break
                         elif bundle.compression != 'none':
                             compressed = base64.b64decode(bundle.properties['payload'])
 
                             if bundle.compression == 'gzip':
-                                fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                                fio = io.StringIO(compressed)  # io.BytesIO for Python 3
                                 gzip_file_obj = gzip.GzipFile(fileobj=fio)
                                 payload = gzip_file_obj.read()
                                 gzip_file_obj.close()
@@ -156,10 +156,10 @@ class Command(BaseCommand):
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
 
-                                while u'\u0000' in point_json:
-                                    print 'Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...'
+                                while '\u0000' in point_json:
+                                    print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
 
-                                    point_json = point_json.replace(u'\u0000', '')
+                                    point_json = point_json.replace('\u0000', '')
 
                                 bundle_point = json.loads(point_json)
 
@@ -257,8 +257,8 @@ class Command(BaseCommand):
                                     new_point_count += 1
                             except DataError:
                                 traceback.print_exc()
-                                print 'Error ingesting bundle: ' + str(bundle.pk) + ':'
-                                print str(bundle.properties)
+                                print('Error ingesting bundle: ' + str(bundle.pk) + ':')
+                                print(str(bundle.properties))
 
                         if len(xmit_points) == 0: # pylint: disable=len-as-condition
                             bundle.processed = True
@@ -283,14 +283,14 @@ class Command(BaseCommand):
 
                                         xmit_points[server_url] = []
                                     except requests.exceptions.Timeout:
-                                        print 'Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').'
+                                        print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
 
                                         failed = True
 
                             if failed is False:
                                 bundle.processed = True
                             else:
-                                print 'Error encountered uploading contents of ' + str(bundle.pk) + '.'
+                                print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
 
                         # if bundle.encrypted is False and supports_json is False:
                         #    bundle.properties = json.dumps(bundle.properties, indent=2)
@@ -302,7 +302,7 @@ class Command(BaseCommand):
                         if options['delete']:
                             to_delete.append(bundle)
                 except TransactionManagementError:
-                    print 'Abandoning and marking errored ' + str(bundle.pk) + '.'
+                    print('Abandoning and marking errored ' + str(bundle.pk) + '.')
 
                     bundle = DataBundle.objects.get(pk=bundle.pk)
 
@@ -327,7 +327,7 @@ class Command(BaseCommand):
 
                     xmit_points[server_url] = []
                 except requests.exceptions.Timeout:
-                    print 'Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').'
+                    print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
 
         for bundle in to_delete:
             bundle.delete()
@@ -371,7 +371,7 @@ class Command(BaseCommand):
             else:
                 DataPoint.objects.sources()
 
-            for source, identifiers in source_identifiers.iteritems():
+            for source, identifiers in source_identifiers.items():
                 datum_key = SOURCE_GENERATORS_DATUM + ': ' + source
                 source_id_datum = DataServerMetadatum.objects.filter(key=datum_key).first()
 
@@ -416,7 +416,7 @@ class Command(BaseCommand):
                 generators_datum.value = json.dumps(generator_ids, indent=2)
                 generators_datum.save()
 
-            for identifier, point in latest_points.iteritems():
+            for identifier, point in latest_points.items():
                 DataPoint.objects.set_latest_point(point.source, point.generator_identifier, point)
                 DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 

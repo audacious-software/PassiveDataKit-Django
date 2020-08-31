@@ -122,7 +122,7 @@ def fetch_intraday(source, start, access_token): # pylint: disable=too-many-loca
                 if results['body']['series'] == []:
                     return None
 
-                for timestamp, values in results['body']['series'].iteritems():
+                for timestamp, values in results['body']['series'].items():
                     row = []
 
                     row.append(source)

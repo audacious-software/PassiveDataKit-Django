@@ -58,10 +58,10 @@ class Command(BaseCommand):
             point_count = DataPoint.objects.filter(source_reference=source_reference).count()
 
             if point_count > 0:
-                print '---- ----'
+                print('---- ----')
 
             if options['source'] != 'any':
-                print source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server)
+                print(source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server))
 
             bundle_count = 0
 
@@ -94,4 +94,4 @@ class Command(BaseCommand):
 
                 point_count = DataPoint.objects.filter(source_reference=source_reference).count()
 
-                print source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server)
+                print(source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server))

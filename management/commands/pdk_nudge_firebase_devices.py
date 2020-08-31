@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
             token_list = []
 
-            for source, token in tokens.iteritems(): # pylint: disable=unused-variable
+            for source, token in tokens.items(): # pylint: disable=unused-variable
                 if (token in token_list) is False:
                     token_list.append(token)
 
@@ -67,5 +67,5 @@ class Command(BaseCommand):
             index += 128
 
         if settings.DEBUG:
-            print 'Firebase nudge result: ' + str(result)
-            print '(Update settings.DEBUG to suppress...)'
+            print('Firebase nudge result: ' + str(result))
+            print('(Update settings.DEBUG to suppress...)')

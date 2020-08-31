@@ -4,7 +4,7 @@ import base64
 import gzip
 import json
 
-import StringIO
+import io
 
 import six
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
                     compressed = base64.b64decode(decrypted)
 
                     if bundle.compression == 'gzip':
-                        fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                        fio = io.StringIO(compressed)  # io.BytesIO for Python 3
                         gzip_file_obj = gzip.GzipFile(fileobj=fio)
                         payload = gzip_file_obj.read()
                         gzip_file_obj.close()
@@ -61,18 +61,18 @@ class Command(BaseCommand):
 
                 bundle.properties = json.loads(decrypted)
             elif 'encrypted' in bundle.properties:
-                print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
             elif 'nonce' in bundle.properties:
-                print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
         elif bundle.compression != 'none':
             compressed = base64.b64decode(bundle.properties['payload'])
 
             if bundle.compression == 'gzip':
-                fio = StringIO.StringIO(compressed)  # io.BytesIO for Python 3
+                fio = io.StringIO(compressed)  # io.BytesIO for Python 3
                 gzip_file_obj = gzip.GzipFile(fileobj=fio)
                 payload = gzip_file_obj.read()
                 gzip_file_obj.close()
 
                 bundle.properties = json.loads(payload)
 
-        print json.dumps(bundle.properties, indent=2)
+        print(json.dumps(bundle.properties, indent=2))

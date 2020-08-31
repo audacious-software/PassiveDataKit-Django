@@ -11,7 +11,7 @@ class Command(BaseCommand):
     @handle_lock
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         for group in DataSourceGroup.objects.all().order_by('name'):
-            print group.name
+            print(group.name)
 
             for source in group.sources.all().order_by('identifier'):
                 source_reference = DataSourceReference.reference_for_source(source.identifier)
@@ -19,6 +19,6 @@ class Command(BaseCommand):
                 latest_point = DataPoint.objects.filter(source_reference=source_reference).exclude(user_agent__icontains='Web Dashboard').order_by('-created').first()
 
                 if latest_point is not None:
-                    print source.identifier + ': ' + latest_point.user_agent
+                    print(source.identifier + ': ' + latest_point.user_agent)
                 else:
-                    print source.identifier + ': No data points logged'
+                    print(source.identifier + ': No data points logged')

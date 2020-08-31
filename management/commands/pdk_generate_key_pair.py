@@ -16,5 +16,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         key = PrivateKey.generate()
 
-        print 'PRIVATE: ' + base64.b64encode(key.encode())
-        print 'PUBLIC:  ' + base64.b64encode(key.public_key.encode())
+        print('PRIVATE: ' + base64.b64encode(key.encode()))
+        print('PUBLIC:  ' + base64.b64encode(key.public_key.encode()))

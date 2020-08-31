@@ -1,13 +1,13 @@
 # pylint: disable=no-member, line-too-long, too-many-lines
 
-from __future__ import unicode_literals
+
 
 import calendar
 import datetime
 import json
 import random
 import string
-import urlparse
+import urllib.parse
 
 import importlib
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
@@ -145,7 +145,7 @@ class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
     def __unicode__(self):
-        return unicode(self.source)
+        return str(self.source)
 
     @classmethod
     def reference_for_source(cls, source):
@@ -548,7 +548,7 @@ class DataServer(models.Model):
     request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.name)
+        return str(self.name)
 
 class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
     def sources(self): # pylint: disable=no-self-use
@@ -589,9 +589,9 @@ class DataSource(models.Model):
         if self.server is None:
             return url
 
-        components = urlparse.urlparse(self.server.upload_url)
+        components = urllib.parse.urlparse(self.server.upload_url)
 
-        return urlparse.urlunsplit((components.scheme, components.netloc, url, '', ''))
+        return urllib.parse.urlunsplit((components.scheme, components.netloc, url, '', ''))
 
     def fetch_definition(self):
         definition = {
@@ -850,7 +850,7 @@ class DataSource(models.Model):
                         pass
 
             else:
-                print 'Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url
+                print('Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url)
 
             self.performance_metadata_updated = timezone.now()
 
@@ -1246,7 +1246,7 @@ class ReportJobBatchRequest(models.Model):
 
                                 had_extras = True
                         except TypeError as exception:
-                            print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
+                            print('Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!')
                             raise exception
                     except ImportError:
                         pass
@@ -1452,7 +1452,7 @@ class DeviceModel(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.model + ' (' + self.manufacturer + ')')
+        return str(self.model + ' (' + self.manufacturer + ')')
 
 class Device(models.Model):
     source = models.ForeignKey(DataSource, related_name='devices')
@@ -1463,7 +1463,7 @@ class Device(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
+        return str(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
 
     def populate_device(self):
         user_agent = self.source.latest_user_agent()

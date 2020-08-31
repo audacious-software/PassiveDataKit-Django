@@ -66,7 +66,7 @@ class Command(BaseCommand):
             if options['clear_archived'] is not None and options['clear_archived'] is not False:
                 arguments.append('--clear-archived')
 
-            print str(arguments)
+            print(str(arguments))
 
             management.call_command('pdk_incremental_backup', *arguments)
 

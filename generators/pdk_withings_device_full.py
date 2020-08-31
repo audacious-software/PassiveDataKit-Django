@@ -86,7 +86,7 @@ def fetch_intraday(source, properties, start): # pylint: disable=too-many-locals
                 if results['body']['series'] == []:
                     return None
 
-                for timestamp, values in results['body']['series'].iteritems():
+                for timestamp, values in results['body']['series'].items():
                     row = []
 
                     row.append(source)

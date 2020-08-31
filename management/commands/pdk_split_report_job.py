@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
         index = 0
 
-        print 'Original sources: ' + str(len(parameters['sources']))
+        print('Original sources: ' + str(len(parameters['sources'])))
 
         for source in parameters['sources']:
             if (index % 2) == 1:
@@ -56,8 +56,8 @@ class Command(BaseCommand):
 
         new_parameters['sources'] = new_sources
 
-        print 'Updated sources: ' + str(len(parameters['sources']))
-        print 'New sources: ' + str(len(new_parameters['sources']))
+        print('Updated sources: ' + str(len(parameters['sources'])))
+        print('New sources: ' + str(len(new_parameters['sources'])))
 
         if install_supports_jsonfield():
             report.parameters = parameters

@@ -31,7 +31,7 @@ class Command(BaseCommand):
             bundles = DataBundle.objects.filter(processed=True, pk__lte=start)
 
             while bundles.count() > 0:
-                print str(deleted) + ' / ' + str(total) + ' [' + str(start) + ']'
+                print(str(deleted) + ' / ' + str(total) + ' [' + str(start) + ']')
 
                 # deleted += bundles.delete()[0]
 

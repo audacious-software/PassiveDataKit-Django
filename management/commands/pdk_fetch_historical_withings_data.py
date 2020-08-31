@@ -98,7 +98,7 @@ def fetch_intraday(user_id, properties, start_date, end_date): # pylint: disable
         if results['body']['series'] == []:
             return
 
-        for timestamp, values in results['body']['series'].iteritems():
+        for timestamp, values in results['body']['series'].items():
             found = False
 
             created_date = arrow.get(timestamp).datetime
