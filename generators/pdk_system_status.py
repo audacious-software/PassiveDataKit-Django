@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
@@ -9,6 +13,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 import pytz
@@ -57,7 +63,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         seen_sources = []

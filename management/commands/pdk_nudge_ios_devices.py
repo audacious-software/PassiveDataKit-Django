@@ -1,5 +1,7 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
 from pushjack import APNSClient, APNSSandboxClient
 
 from django.conf import settings
@@ -38,14 +40,14 @@ class Command(BaseCommand):
             tokens[point.source] = properties['event_details']['token']
 
             if tokens[point.source] in expired:
-                print 'PROD RENAMING TOKEN FOR ' + point.source
+                print('PROD RENAMING TOKEN FOR ' + point.source)
 
                 point.secondary_identifier = 'pdk-ios-device-token-expired'
                 point.save()
 
         token_list = []
 
-        for source, token in tokens.iteritems(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             if (token in token_list) is False and (token in expired) is False:
                 token_list.append(token)
 
@@ -82,7 +84,7 @@ class Command(BaseCommand):
             tokens[point.source] = properties['event_details']['token']
 
             if tokens[point.source] in expired:
-                print 'SAND RENAMING TOKEN FOR ' + point.source
+                print('SAND RENAMING TOKEN FOR ' + point.source)
 
                 point.secondary_identifier = 'pdk-ios-device-token-error'
                 point.save()

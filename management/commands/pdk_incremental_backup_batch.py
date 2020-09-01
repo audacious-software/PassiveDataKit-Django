@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 
 import pytz
@@ -66,7 +70,7 @@ class Command(BaseCommand):
             if options['clear_archived'] is not None and options['clear_archived'] is not False:
                 arguments.append('--clear-archived')
 
-            print str(arguments)
+            print(str(arguments))
 
             management.call_command('pdk_incremental_backup', *arguments)
 

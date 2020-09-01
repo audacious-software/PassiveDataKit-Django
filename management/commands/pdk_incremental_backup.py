@@ -1,13 +1,16 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import base64
 import datetime
 import importlib
 import os
 import sys
-import urlparse
 
-import StringIO
+import io
 
 import dropbox
 import pytz
@@ -18,6 +21,11 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from passive_data_kit.decorators import handle_lock
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 class Command(BaseCommand):
     help = 'Generates incremental backups of data content and transmits to storage.'
@@ -106,7 +114,7 @@ class Command(BaseCommand):
         try:
             key = base64.b64decode(settings.PDK_BACKUP_KEY)
         except AttributeError:
-            print 'Please define PDK_BACKUP_KEY in the settings.'
+            print('Please define PDK_BACKUP_KEY in the settings.')
 
             sys.exit(1)
 
@@ -115,7 +123,7 @@ class Command(BaseCommand):
         try:
             destinations = settings.PDK_BACKUP_DESTINATIONS
         except AttributeError:
-            print 'Please define PDK_BACKUP_DESTINATIONS in the settings.'
+            print('Please define PDK_BACKUP_DESTINATIONS in the settings.')
 
             sys.exit(1)
 
@@ -126,7 +134,7 @@ class Command(BaseCommand):
                 to_transmit, to_clear = pdk_api.incremental_backup(parameters)
 
                 for destination in destinations:
-                    destination_url = urlparse.urlparse(destination)
+                    destination_url = urlparse(destination)
 
                     if destination_url.scheme == 'file':
                         dest_path = destination_url.path
@@ -137,7 +145,7 @@ class Command(BaseCommand):
                             dest_path = os.path.join(dest_path, final_folder)
 
                         if os.path.exists(dest_path) is False:
-                            print 'Creating folder for archive storage: ' + dest_path
+                            print('Creating folder for archive storage: ' + dest_path)
                             sys.stdout.flush()
                             os.makedirs(dest_path)
 
@@ -151,7 +159,7 @@ class Command(BaseCommand):
 
                                 encrypted_path = os.path.join(dest_path, filename)
 
-                                print 'Writing to filesystem: ' + encrypted_path
+                                print('Writing to filesystem: ' + encrypted_path)
                                 sys.stdout.flush()
 
                                 with open(encrypted_path, 'wb') as encrypted_file:
@@ -167,7 +175,7 @@ class Command(BaseCommand):
                             box = SecretBox(key)
 
                             with open(path, 'rb') as backup_file:
-                                backup_io = StringIO.StringIO()
+                                backup_io = io.StringIO()
                                 backup_io.write(backup_file.read())
                                 backup_io.seek(0)
 
@@ -177,14 +185,14 @@ class Command(BaseCommand):
 
                                 dropbox_path = os.path.join(destination_url.path, final_folder + '/' + filename)
 
-                                print 'Uploading to Dropbox: ' + dropbox_path
+                                print('Uploading to Dropbox: ' + dropbox_path)
                                 sys.stdout.flush()
 
                                 client.files_upload(box.encrypt(backup_io.read()), dropbox_path)
 
                             os.remove(path)
                     else:
-                        print 'Unknown destination: ' + destination
+                        print('Unknown destination: ' + destination)
 
                 pdk_api.clear_points(to_clear)
 

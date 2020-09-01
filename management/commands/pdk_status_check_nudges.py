@@ -1,5 +1,7 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import print_function
+
 import pytz
 
 from django.conf import settings
@@ -26,8 +28,8 @@ class Command(BaseCommand):
 
                 return
         except AttributeError:
-            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
-            print 'Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)'
+            print('Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.')
+            print('Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)')
 
         here_tz = pytz.timezone(settings.TIME_ZONE)
 

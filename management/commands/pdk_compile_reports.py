@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import importlib
 import json
@@ -185,7 +189,7 @@ class Command(BaseCommand):
                                                     out_points.append(point.fetch_properties())
 
                                                 if out_points:
-                                                    export_stream.writestr(day_filename, unicode(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
+                                                    export_stream.writestr(day_filename, str(json.dumps(out_points, indent=2)).encode("utf-8")) # pylint: disable=line-too-long
 
                                                 start = day_end
                             else:
@@ -217,7 +221,7 @@ class Command(BaseCommand):
 
                                                     # to_delete.append(output_file)
                                             except TypeError as exception:
-                                                print 'Verify that ' + app + '.' + generator + ' implements all compile_report arguments!'
+                                                print('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
                                                 raise exception
                                         except ImportError:
                                             output_file = None

@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import json
 
 from django.core.management.base import BaseCommand
@@ -58,10 +62,10 @@ class Command(BaseCommand):
             point_count = DataPoint.objects.filter(source_reference=source_reference).count()
 
             if point_count > 0:
-                print '---- ----'
+                print('---- ----')
 
             if options['source'] != 'any':
-                print source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server)
+                print(source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server))
 
             bundle_count = 0
 
@@ -94,4 +98,4 @@ class Command(BaseCommand):
 
                 point_count = DataPoint.objects.filter(source_reference=source_reference).count()
 
-                print source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server)
+                print(source.identifier + ': ' + str(point_count) + ' -> ' + str(source.server))

@@ -1,16 +1,23 @@
 # pylint: disable=no-member, line-too-long, too-many-lines
 
-from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+from builtins import object # pylint: disable=redefined-builtin
 
 import calendar
 import datetime
 import json
 import random
 import string
-import urlparse
 
 import importlib
+
 from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from future import standard_library
+from past.utils import old_div
 
 import arrow
 import requests
@@ -30,6 +37,13 @@ from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
+
+try:
+    from urllib.parse import urlparse, urlunsplit
+except ImportError:
+    from urlparse import urlparse, urlunsplit
+
+standard_library.install_aliases()
 
 DB_SUPPORTS_JSON = None
 TOTAL_DATA_POINT_COUNT_DATUM = 'Total Data Point Count'
@@ -145,7 +159,7 @@ class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
     def __unicode__(self):
-        return unicode(self.source)
+        return str(self.source)
 
     @classmethod
     def reference_for_source(cls, source):
@@ -350,7 +364,7 @@ class DataPointManager(models.Manager):
 
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = []
 
     objects = DataPointManager()
@@ -489,7 +503,7 @@ def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=u
         pass
 
 class DataServerMetadatum(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name_plural = "data server metadata"
 
     key = models.CharField(max_length=1024, db_index=True)
@@ -548,7 +562,7 @@ class DataServer(models.Model):
     request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.name)
+        return str(self.name)
 
 class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
     def sources(self): # pylint: disable=no-self-use
@@ -589,9 +603,9 @@ class DataSource(models.Model):
         if self.server is None:
             return url
 
-        components = urlparse.urlparse(self.server.upload_url)
+        components = urlparse(self.server.upload_url)
 
-        return urlparse.urlunsplit((components.scheme, components.netloc, url, '', ''))
+        return urlunsplit((components.scheme, components.netloc, url, '', ''))
 
     def fetch_definition(self):
         definition = {
@@ -775,7 +789,7 @@ class DataSource(models.Model):
                 seconds = (latest_point.created - earliest_point.created).total_seconds()
 
                 if seconds > 0:
-                    metadata['point_frequency'] = metadata['point_count'] / seconds
+                    metadata['point_frequency'] = old_div(metadata['point_count'], seconds)
 
             generators = []
 
@@ -850,7 +864,7 @@ class DataSource(models.Model):
                         pass
 
             else:
-                print 'Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url
+                print('Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url)
 
             self.performance_metadata_updated = timezone.now()
 
@@ -1246,7 +1260,7 @@ class ReportJobBatchRequest(models.Model):
 
                                 had_extras = True
                         except TypeError as exception:
-                            print 'Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!'
+                            print('Verify that ' + app + '.' + generator + ' implements all generators_for_extra_generator arguments!')
                             raise exception
                     except ImportError:
                         pass
@@ -1368,7 +1382,7 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = json.dumps(parameters, indent=2)
 
 class AppConfiguration(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         index_together = [
             ['is_valid', 'is_enabled'],
             ['is_valid', 'is_enabled', 'evaluate_order'],
@@ -1395,7 +1409,7 @@ class AppConfiguration(models.Model):
         return json.loads(self.configuration_json)
 
 class DataServerApiToken(models.Model):
-    class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 
@@ -1452,7 +1466,7 @@ class DeviceModel(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(self.model + ' (' + self.manufacturer + ')')
+        return str(self.model + ' (' + self.manufacturer + ')')
 
 class Device(models.Model):
     source = models.ForeignKey(DataSource, related_name='devices')
@@ -1463,7 +1477,7 @@ class Device(models.Model):
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __unicode__(self):
-        return unicode(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
+        return str(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
 
     def populate_device(self):
         user_agent = self.source.latest_user_agent()

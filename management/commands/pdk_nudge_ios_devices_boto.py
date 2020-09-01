@@ -1,5 +1,7 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
 import json
 import re
 
@@ -42,15 +44,15 @@ class Command(BaseCommand):
             region=region,
         )
 
-        for source, token in tokens.iteritems(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             try:
                 endpoint_response = sns.create_platform_endpoint(
                     platform_application_arn=settings.PDK_BOTO_SNS_ARN,
                     token=token,
                 )
                 endpoint_arn = endpoint_response['CreatePlatformEndpointResponse']['CreatePlatformEndpointResult']['EndpointArn']
-            except boto.exception.BotoServerError, err:
-                print 'ERR 1: ' + err.message
+            except boto.exception.BotoServerError as err:
+                print('ERR 1: ' + err.message)
                 # Yes, this is actually the official way:
                 # http://stackoverflow.com/questions/22227262/aws-boto-sns-get-endpoint-arn-by-device-token
                 result_re = re.compile(r'Endpoint(.*)already', re.IGNORECASE)
@@ -63,9 +65,9 @@ class Command(BaseCommand):
 
             try:
                 sns.publish(target_arn=endpoint_arn, message_structure='json', message=json.dumps(message))
-            except boto.exception.BotoServerError, err:
-                print 'FAILED SENDING TO ' + token
-                print 'ERR: ' + err.message
+            except boto.exception.BotoServerError as err:
+                print('FAILED SENDING TO ' + token)
+                print('ERR: ' + err.message)
 
                 result_re = re.compile(r'Endpoint(.*)disabled', re.IGNORECASE)
                 result = result_re.search(err.message)
@@ -75,7 +77,7 @@ class Command(BaseCommand):
                         properties = point.fetch_properties()
 
                         if token == properties['event_details']['token']:
-                            print 'RENAMING: ' + token
+                            print('RENAMING: ' + token)
                             point.secondary_identifier = 'pdk-ios-device-token-sandbox'
                             point.save()
                 else:
@@ -90,15 +92,15 @@ class Command(BaseCommand):
 
         message = {'APNS_SANDBOX': json.dumps(notification), 'default': 'nil'}
 
-        for source, token in tokens.iteritems(): # pylint: disable=unused-variable
+        for source, token in list(tokens.items()): # pylint: disable=unused-variable
             try:
                 endpoint_response = sns.create_platform_endpoint(
                     platform_application_arn=settings.PDK_BOTO_SNS_ARN_SANDBOX,
                     token=token,
                 )
                 endpoint_arn = endpoint_response['CreatePlatformEndpointResponse']['CreatePlatformEndpointResult']['EndpointArn']
-            except boto.exception.BotoServerError, err:
-                print 'ERR 2: ' + err.message
+            except boto.exception.BotoServerError as err:
+                print('ERR 2: ' + err.message)
                 # Yes, this is actually the official way:
                 # http://stackoverflow.com/questions/22227262/aws-boto-sns-get-endpoint-arn-by-device-token
                 result_re = re.compile(r'Endpoint(.*)already', re.IGNORECASE)
@@ -112,9 +114,9 @@ class Command(BaseCommand):
             try:
                 sns.publish(target_arn=endpoint_arn, message_structure='json', message=json.dumps(message))
                 # print('PUBLISHED DEV: ' + token)
-            except boto.exception.BotoServerError, err:
-                print 'FAILED SENDING 2 TO ' + token
-                print 'ERR: ' + err.message
+            except boto.exception.BotoServerError as err:
+                print('FAILED SENDING 2 TO ' + token)
+                print('ERR: ' + err.message)
 
                 result_re = re.compile(r'Endpoint(.*)disabled', re.IGNORECASE)
                 result = result_re.search(err.message)
@@ -124,7 +126,7 @@ class Command(BaseCommand):
                         properties = point.fetch_properties()
 
                         if token == properties['event_details']['token']:
-                            print 'RENAMING 2: ' + token
+                            print('RENAMING 2: ' + token)
                             point.secondary_identifier = 'pdk-ios-device-token-disabled'
                             point.save()
                 else:

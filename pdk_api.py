@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
 import bz2
 import calendar
 import csv
@@ -13,7 +17,7 @@ import tempfile
 import time
 import traceback
 
-import StringIO
+import io
 
 import dropbox
 import paramiko
@@ -112,7 +116,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         try:
             output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print 'TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!'
+            print('TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!')
 
             output_file = generator_module.compile_report(generator, sources)
 
@@ -264,7 +268,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                             file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print 'Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)'
+                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
 
                             traceback.print_exc()
 
@@ -289,7 +293,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
+                        key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
                         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -302,7 +306,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                         file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print 'Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)'
+                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
 
                             traceback.print_exc()
 
@@ -310,7 +314,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
             traceback.print_exc()
 
     if file_sent is False:
-        print 'Unable to transmit report to destination "' + destination.destination + '".'
+        print('Unable to transmit report to destination "' + destination.destination + '".')
 
 def annotate_source_definition(source, definition):
     active_alerts = []
@@ -372,7 +376,7 @@ def load_backup(filename, content):
             bundle_content = []
 
             if (bundle_index % 50) == 0:
-                print '[passive_data_kit.pdk_api.load_backup] ' + str(len(backup_content)) + ' items remaining to write...'
+                print('[passive_data_kit.pdk_api.load_backup] ' + str(len(backup_content)) + ' items remaining to write...')
 
             while backup_content and len(bundle_content) < 100:
                 bundle_content.append(backup_content.pop(0))
@@ -389,7 +393,7 @@ def load_backup(filename, content):
 
                 bundle_index += 1
     else:
-        print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
+        print('[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename)
 
 def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     to_transmit = []
@@ -427,10 +431,10 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         pass
 
     for app in dumpdata_apps:
-        print '[passive_data_kit] Backing up ' + app + '...'
+        print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = StringIO.StringIO()
+        buf = io.StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
@@ -463,7 +467,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     try:
         bundle_size = settings.PDK_BACKUP_BUNDLE_SIZE
     except AttributeError:
-        print 'Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.'
+        print('Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.')
 
     query = None
 
@@ -485,7 +489,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     if 'clear_archived' in parameters and parameters['clear_archived']:
         clear_archived = True
 
-    print '[passive_data_kit] Fetching count of data points...'
+    print('[passive_data_kit] Fetching count of data points...')
     sys.stdout.flush()
 
     count = DataPoint.objects.filter(query).count()
@@ -495,7 +499,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     while index < count:
         filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
 
-        print '[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...'
+        print('[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...')
         sys.stdout.flush()
 
         bundle = []
@@ -524,7 +528,7 @@ def clear_points(to_clear):
 
     for i in range(0, point_count):
         if (i % 1000) == 0:
-            print '[passive_data_kit] Clearing points ' + str(i) + ' of ' + str(point_count) + '...'
+            print('[passive_data_kit] Clearing points ' + str(i) + ' of ' + str(point_count) + '...')
             sys.stdout.flush()
 
         point_id = to_clear[i]

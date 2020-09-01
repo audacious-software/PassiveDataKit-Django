@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import importlib
 import json
@@ -79,7 +83,7 @@ class Command(BaseCommand):
                     visualizations = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated')
 
                     if visualizations.count() > 1:
-                        print 'Removing extra ' + source + '@' + identifier + ' visualizations...'
+                        print('Removing extra ' + source + '@' + identifier + ' visualizations...')
 
                         first = visualizations.order_by('pk').first()
 
@@ -198,17 +202,17 @@ class Command(BaseCommand):
             pass
 
         if (end_time - start_time).total_seconds() > excessive_time:
-            print 'Excessive visualization compilation time: ' + str((end_time - start_time).total_seconds()) + ' seconds:'
+            print('Excessive visualization compilation time: ' + str((end_time - start_time).total_seconds()) + ' seconds:')
 
-            for key, times in time_spent.iteritems():
+            for key, times in list(time_spent.items()):
                 query = times['query_end'] - times['start']
                 spent = times['end'] - times['start']
 
-                print '  ' + key + ': Q->' + str(query.total_seconds()) + 's; T->' + str(spent.total_seconds()) + 's (' + times['app'] + ')'
+                print('  ' + key + ': Q->' + str(query.total_seconds()) + 's; T->' + str(spent.total_seconds()) + 's (' + times['app'] + ')')
 
-            print 'Loop Times: ' + str(json.dumps(loop_times, indent=2))
+            print('Loop Times: ' + str(json.dumps(loop_times, indent=2)))
 
             try:
                 excessive_time = settings.PDK_EXCESSIVE_VISUALIZATION_TIME
             except AttributeError:
-                print 'PDK_EXCESSIVE_VISUALIZATION_TIME not configured in site settings. Set to number of desired seconds to suppress this message.'
+                print('PDK_EXCESSIVE_VISUALIZATION_TIME not configured in site settings. Set to number of desired seconds to suppress this message.')

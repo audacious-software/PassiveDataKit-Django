@@ -1,4 +1,7 @@
 # pylint: disable=no-member,line-too-long
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
 
 from django.core.management.base import BaseCommand
 
@@ -31,7 +34,7 @@ class Command(BaseCommand):
             bundles = DataBundle.objects.filter(processed=True, pk__lte=start)
 
             while bundles.count() > 0:
-                print str(deleted) + ' / ' + str(total) + ' [' + str(start) + ']'
+                print(str(deleted) + ' / ' + str(total) + ' [' + str(start) + ']')
 
                 # deleted += bundles.delete()[0]
 

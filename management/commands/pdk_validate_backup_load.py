@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import base64
 import bz2
 import datetime
@@ -57,7 +61,7 @@ class Command(BaseCommand):
                             content = box.decrypt(content)
                         except CryptoError:
                             if warned is False:
-                                print 'Unable to decrypt "' + filename + '", attempting decompression of original (maybe unencrypted) content...'
+                                print('Unable to decrypt "' + filename + '", attempting decompression of original (maybe unencrypted) content...')
                                 warned = True
 
                         decompressed = bz2.decompress(content)
@@ -81,11 +85,11 @@ class Command(BaseCommand):
 
                             remaining_count -= 1
                 else:
-                    print 'Skipping ' + filename + '. Invalid file type.'
+                    print('Skipping ' + filename + '. Invalid file type.')
             else:
-                raise RuntimeError(file + ' does not exist.')
+                raise RuntimeError(filename + ' does not exist.')
 
             if seen < tested:
-                print 'Missing points (' + str(seen) + ' / ' + str(tested) + '): ' + filename
+                print('Missing points (' + str(seen) + ' / ' + str(tested) + '): ' + filename)
             else:
-                print 'OK (' + str(seen) + ' / ' + str(tested) + '): ' + filename
+                print('OK (' + str(seen) + ' / ' + str(tested) + '): ' + filename)

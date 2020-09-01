@@ -1,5 +1,10 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
@@ -8,6 +13,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 import pytz
@@ -76,8 +83,8 @@ def visualization(source, generator):
 
             value = {}
 
-            value['sunrise'] = properties['sunrise'] / 1000
-            value['sunset'] = properties['sunset'] / 1000
+            value['sunrise'] = old_div(properties['sunrise'], 1000)
+            value['sunset'] = old_div(properties['sunset'], 1000)
             value['start'] = time.mktime(start.timetuple())
             value['end'] = time.mktime(end.timetuple())
 
@@ -118,8 +125,8 @@ def data_table(source, generator):
 
         properties['is_day'] = (properties['observed'] > properties['sunrise']) and (properties['observed'] < properties['sunset'])
         properties['created'] = point.created
-        properties['sunrise'] = properties['sunrise'] / 1000
-        properties['sunset'] = properties['sunset'] / 1000
+        properties['sunrise'] = old_div(properties['sunrise'], 1000)
+        properties['sunset'] = old_div(properties['sunset'], 1000)
 
         properties['json'] = str(properties)
 
@@ -131,7 +138,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:

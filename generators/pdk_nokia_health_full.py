@@ -1,11 +1,17 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import csv
 import json
 import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 import requests
@@ -18,7 +24,7 @@ REFRESH_ENDPOINT = 'https://account.health.nokia.com/oauth2/token'
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     if generator == 'pdk-nokia-health-full':
         with ZipFile(filename, 'w') as export_file:
@@ -122,7 +128,7 @@ def fetch_intraday(source, start, access_token): # pylint: disable=too-many-loca
                 if results['body']['series'] == []:
                     return None
 
-                for timestamp, values in results['body']['series'].iteritems():
+                for timestamp, values in list(results['body']['series'].items()):
                     row = []
 
                     row.append(source)

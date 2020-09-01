@@ -1,5 +1,10 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
@@ -9,6 +14,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 
@@ -103,7 +110,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
@@ -128,7 +135,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             points_count = len(point_ids)
 
-            splits = int(math.ceil(points_count / SPLIT_SIZE))
+            splits = int(math.ceil(old_div(points_count, SPLIT_SIZE)))
 
             for split_index in range(0, splits):
                 identifier = slugify(generator + '__' + source)

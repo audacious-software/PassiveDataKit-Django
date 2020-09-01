@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import csv
 import calendar
 import datetime
@@ -9,6 +13,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 import pytz
@@ -25,7 +31,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:
@@ -40,18 +46,18 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [
-                    u'Source',
-                    u'Created Timestamp',
-                    u'Created Date',
-                    u'Recorded Timestamp',
-                    u'Recorded Date',
-                    u'Visit ID',
-                    u'URL',
-                    u'Protocol',
-                    u'Host',
-                    u'Title',
-                    u'Transition Type',
-                    u'Referrer Visit ID',
+                    'Source',
+                    'Created Timestamp',
+                    'Created Date',
+                    'Recorded Timestamp',
+                    'Recorded Date',
+                    'Visit ID',
+                    'URL',
+                    'Protocol',
+                    'Host',
+                    'Title',
+                    'Transition Type',
+                    'Referrer Visit ID',
                 ]
 
                 writer.writerow(columns)

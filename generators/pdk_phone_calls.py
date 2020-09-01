@@ -1,11 +1,17 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
 import json
 import tempfile
 import time
+
+from past.utils import old_div
 
 import pytz
 
@@ -76,7 +82,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     if 'timezone' in properties['passive-data-metadata']:
                         point_tz = pytz.timezone(properties['passive-data-metadata']['timezone'])
 
-                    created = datetime.datetime.fromtimestamp(properties['call_timestamp'] / 1000, tz=default_tz)
+                    created = datetime.datetime.fromtimestamp(old_div(properties['call_timestamp'], 1000), tz=default_tz)
 
                     row = []
 

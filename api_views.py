@@ -1,5 +1,9 @@
 # pylint: disable=no-member, line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import json
 
@@ -54,7 +58,7 @@ def pdk_request_token(request):
             try:
                 token_duration = datetime.timedelta(seconds=settings.PDK_TOKEN_LIFESPAN)
             except AttributeError:
-                print 'Unable to locate PDK_TOKEN_LIFESPAN in settings'
+                print('Unable to locate PDK_TOKEN_LIFESPAN in settings')
 
             token = DataServerApiToken(user=user, expires=(now + token_duration))
             token.save()
@@ -93,7 +97,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.iteritems():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -111,7 +115,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.iteritems():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -184,7 +188,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.iteritems():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -199,7 +203,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.iteritems():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime

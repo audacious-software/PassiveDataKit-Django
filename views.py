@@ -1,5 +1,7 @@
 # pylint: disable=no-member, line-too-long
 
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import importlib
 import json
@@ -185,7 +187,7 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
                                     content_type='application/json', \
                                     status=400)
 
-        for key, value in request.FILES.iteritems(): # pylint: disable=unused-variable
+        for key, value in list(request.FILES.items()): # pylint: disable=unused-variable
             data_file = DataFile(data_bundle=bundle)
             data_file.identifier = value.name
             data_file.content_type = value.content_type

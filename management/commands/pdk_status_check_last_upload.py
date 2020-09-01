@@ -1,5 +1,10 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+from __future__ import print_function
+
+from past.utils import old_div
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -18,15 +23,15 @@ class Command(BaseCommand):
 
 
     @handle_lock
-    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements
+    def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
         try:
             if (DATA_CHECK in settings.PDK_ENABLED_CHECKS) is False:
                 DataSourceAlert.objects.filter(generator_identifier=DATA_CHECK, active=True).update(active=False)
 
                 return
         except AttributeError:
-            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
-            print 'Example: PDK_ENABLED_CHECKS = (\'' + DATA_CHECK + '\',)'
+            print('Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.')
+            print('Example: PDK_ENABLED_CHECKS = (\'' + DATA_CHECK + '\',)')
 
         now = timezone.now()
 
@@ -50,24 +55,24 @@ class Command(BaseCommand):
                     if delta.total_seconds() >= CRITICAL_HOURS * 3600:
                         alert_name = 'Data upload is critically overdue'
 
-                        hours = delta.total_seconds() / 3600
+                        hours = old_div(delta.total_seconds(), 3600)
 
                         if hours < 24:
                             alert_details['message'] = 'Latest data was uploaded ' + "{0:.2f}".format(hours) + ' hours ago.'
                         else:
-                            days = hours / 24
+                            days = old_div(hours, 24)
 
                             alert_details['message'] = 'Latest data was uploaded ' + "{0:.2f}".format(days) + ' days ago.'
                         alert_level = 'critical'
                     elif delta.total_seconds() >= WARNING_HOURS * 3600:
                         alert_name = 'Data upload is overdue'
 
-                        hours = delta.total_seconds() / 3600
+                        hours = old_div(delta.total_seconds(), 3600)
 
                         if hours < 24:
                             alert_details['message'] = 'Latest data was uploaded ' + "{0:.2f}".format(hours) + ' hours ago.'
                         else:
-                            days = hours / 24
+                            days = old_div(hours, 24)
 
                             alert_details['message'] = 'Latest data was uploaded ' + "{0:.2f}".format(days) + ' days ago.'
 
