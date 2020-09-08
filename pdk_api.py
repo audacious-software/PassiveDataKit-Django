@@ -17,7 +17,7 @@ import tempfile
 import time
 import traceback
 
-import io
+from io import BytesIO, StringIO
 
 import dropbox
 import paramiko
@@ -268,7 +268,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                             file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
                             traceback.print_exc()
 
@@ -293,7 +293,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
+                        key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
                         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -306,7 +306,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                         file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
                             traceback.print_exc()
 
@@ -434,7 +434,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = io.StringIO()
+        buf = BytesIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
