@@ -11,7 +11,7 @@ import json
 import logging
 import traceback
 
-from io import StringIO
+from io import BytesIO
 
 import requests
 import six
@@ -129,7 +129,7 @@ class Command(BaseCommand):
                                     compressed = base64.b64decode(decrypted)
 
                                     if bundle.compression == 'gzip':
-                                        fio = StringIO(compressed)  # io.BytesIO for Python 3
+                                        fio = BytesIO(compressed)  # io.BytesIO for Python 3
                                         gzip_file_obj = gzip.GzipFile(fileobj=fio)
                                         payload = gzip_file_obj.read()
                                         gzip_file_obj.close()
@@ -147,7 +147,7 @@ class Command(BaseCommand):
                             compressed = base64.b64decode(bundle.properties['payload'])
 
                             if bundle.compression == 'gzip':
-                                fio = StringIO(compressed)  # io.BytesIO for Python 3
+                                fio = BytesIO(compressed)  # io.BytesIO for Python 3
                                 gzip_file_obj = gzip.GzipFile(fileobj=fio)
                                 payload = gzip_file_obj.read()
                                 gzip_file_obj.close()
