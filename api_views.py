@@ -1,4 +1,4 @@
-# pylint: disable=no-member, line-too-long
+# pylint: disable=no-member, line-too-long, consider-using-in
 
 from __future__ import print_function
 
@@ -31,8 +31,8 @@ def valid_pdk_token_required(function):
 
         if DataServerApiToken.objects.filter(token=token).filter(expires).count() > 0:
             return function(request, *args, **kwargs)
-        else:
-            raise PermissionDenied('Invalid Token')
+
+        raise PermissionDenied('Invalid Token')
 
     wrap.__doc__ = function.__doc__
     wrap.__name__ = function.__name__

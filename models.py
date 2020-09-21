@@ -1,4 +1,4 @@
-# pylint: disable=no-member, line-too-long, too-many-lines
+# pylint: disable=no-member, line-too-long, too-many-lines, super-with-arguments, useless-object-inheritance
 
 from __future__ import print_function
 from __future__ import division
@@ -394,29 +394,29 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     def fetch_secondary_identifier(self, skip_save=False, properties=None):
         if self.secondary_identifier is not None:
             return self.secondary_identifier
-        else:
-            if properties is None:
-                properties = self.fetch_properties()
 
-            generator_name = generator_slugify(self.generator_identifier)
+        if properties is None:
+            properties = self.fetch_properties()
 
-            for app in settings.INSTALLED_APPS:
-                try:
-                    generator = importlib.import_module(app + '.generators.' + generator_name)
+        generator_name = generator_slugify(self.generator_identifier)
 
-                    identifier = generator.extract_secondary_identifier(properties)
+        for app in settings.INSTALLED_APPS:
+            try:
+                generator = importlib.import_module(app + '.generators.' + generator_name)
 
-                    if identifier is not None:
-                        self.secondary_identifier = identifier
+                identifier = generator.extract_secondary_identifier(properties)
 
-                        if skip_save is False:
-                            self.save()
+                if identifier is not None:
+                    self.secondary_identifier = identifier
 
-                    return self.secondary_identifier
-                except ImportError:
-                    pass
-                except AttributeError:
-                    pass
+                    if skip_save is False:
+                        self.save()
+
+                return self.secondary_identifier
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
 
         return None
 
@@ -534,7 +534,7 @@ class DataBundle(models.Model):
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', on_delete=models.CASCADE)
     data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
@@ -1015,7 +1015,7 @@ class DataSourceAlert(models.Model):
     else:
         alert_details = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    data_source = models.ForeignKey(DataSource, related_name='alerts')
+    data_source = models.ForeignKey(DataSource, related_name='alerts', on_delete=models.CASCADE)
     generator_identifier = models.CharField(max_length=1024, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
@@ -1093,7 +1093,7 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
 class ReportJob(models.Model):
     objects = ReportJobManager()
 
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -1121,7 +1121,7 @@ def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-a
 
 
 class ReportDestination(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations', on_delete=models.CASCADE)
 
     destination = models.CharField(max_length=4096)
     description = models.CharField(max_length=4096, null=True, blank=True)
@@ -1163,7 +1163,7 @@ def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unu
         destination.parameters = json.dumps(parameters, indent=2)
 
 class ReportJobBatchRequest(models.Model):
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -1413,7 +1413,7 @@ class DataServerApiToken(models.Model):
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 
-    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens')
+    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens', on_delete=models.CASCADE)
     token = models.CharField(max_length=1024, null=True, blank=True)
     expires = models.DateTimeField(null=True, blank=True)
 
@@ -1469,9 +1469,9 @@ class DeviceModel(models.Model):
         return str(self.model + ' (' + self.manufacturer + ')')
 
 class Device(models.Model):
-    source = models.ForeignKey(DataSource, related_name='devices')
+    source = models.ForeignKey(DataSource, related_name='devices', on_delete=models.CASCADE)
 
-    model = models.ForeignKey(DeviceModel, related_name='devices')
+    model = models.ForeignKey(DeviceModel, related_name='devices', on_delete=models.CASCADE)
     platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
@@ -1508,7 +1508,7 @@ class Device(models.Model):
         self.save()
 
 class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
-    device = models.ForeignKey(Device, related_name='issues')
+    device = models.ForeignKey(Device, related_name='issues', on_delete=models.CASCADE)
 
     state = models.CharField(max_length=1024, choices=DEVICE_ISSUE_STATE_CHOICES, default='opened')
     created = models.DateTimeField()
