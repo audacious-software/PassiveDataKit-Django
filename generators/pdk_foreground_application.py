@@ -135,7 +135,7 @@ def data_table(source, generator): # pylint: disable=too-many-locals
             update = True
 
         if update:
-            if last_start != None:
+            if last_start is not None:
                 value = {
                     'screen_active': last_active,
                     'application': last_application,

@@ -172,7 +172,7 @@ class Command(BaseCommand):
                                             if data_start is not None and data_start > start:
                                                 start = data_start
 
-                                            if data_end is not None and data_end < data_end:
+                                            if data_end is not None and data_end < end:
                                                 end = data_end
 
                                             while start <= end:

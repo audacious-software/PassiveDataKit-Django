@@ -11,6 +11,8 @@ from past.utils import old_div
 
 import arrow
 
+from future.utils import raise_from
+
 from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -24,9 +26,8 @@ register = template.Library()
 def sources_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, query = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return SourcesTableNode(query)
 
@@ -46,9 +47,8 @@ class SourcesTableNode(template.Node):
 def latest_point(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' %
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return LatestPointNode(source)
 
@@ -70,9 +70,8 @@ class LatestPointNode(template.Node):
 def point_count(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return PointCountNode(source)
 
@@ -90,9 +89,8 @@ class PointCountNode(template.Node):
 def point_hz(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return PointHzNode(source)
 
@@ -144,9 +142,8 @@ class PointHzNode(template.Node):
 def to_hz(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, frequency = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return ToHzNode(frequency)
 
@@ -193,9 +190,8 @@ class ToHzNode(template.Node):
 def date_ago(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, date_obj = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return DateAgoNode(date_obj)
 
@@ -235,9 +231,8 @@ class DateAgoNode(template.Node):
 def tag_human_duration(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, seconds_obj = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return HumanDurationNode(seconds_obj)
 
@@ -269,9 +264,8 @@ class HumanDurationNode(template.Node):
 def tag_human_duration_from_ms(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, milliseconds_obj = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return HumanMSDurationNode(milliseconds_obj)
 
@@ -306,9 +300,8 @@ class HumanMSDurationNode(template.Node):
 def generators_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return GeneratorsTableNode(source)
 
@@ -328,9 +321,8 @@ class GeneratorsTableNode(template.Node):
 def generator_label(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, generator_id = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return GeneratorLabelNode(generator_id)
 
@@ -380,9 +372,8 @@ class SystemAlertsCountBadge(template.Node):
 def source_alerts_table(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return SourceAlertsTableNode(source)
 
@@ -401,9 +392,9 @@ class SourceAlertsTableNode(template.Node):
 def source_alerts_badge(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
+
     return SourceAlertsCountBadge(source)
 
 class SourceAlertsCountBadge(template.Node):
@@ -424,9 +415,9 @@ class SourceAlertsCountBadge(template.Node):
 def generator_name(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, generator = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
+
     return GeneratorName(generator)
 
 class GeneratorName(template.Node):
@@ -476,9 +467,8 @@ def to_datetime_from_iso(value):
 def hour_minute_to_time(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, hour, minute = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return HourMinuteTimeNode(hour, minute)
 
@@ -498,9 +488,8 @@ class HourMinuteTimeNode(template.Node):
 def points_visualization(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source, generator = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires 2 arguments' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires 2 arguments' % token.contents.split()[0]), val_err)
 
     return PointsVisualizationNode(source, generator)
 
@@ -547,9 +536,8 @@ def to_gb(value):
 def additional_home_actions(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires 1 source arguments' % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single source argument' % token.contents.split()[0]), val_err)
 
     return AdditionalHomeActionsNode(source)
 
@@ -608,9 +596,8 @@ def pdk_parse_json(value):
 def pdk_custom_source_header(parser, token): # pylint: disable=unused-argument
     try:
         tag_name, source = token.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires 1 source arguments" % \
-                                           token.contents.split()[0])
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single source argument' % token.contents.split()[0]), val_err)
 
     return CustomSourceHeaderNode(source)
 
@@ -674,12 +661,11 @@ class CustomHomeHeaderNode(template.Node):
 
 
 @register.tag(name='pdk_user_token')
-def pdk_user_token(parser, args): # pylint: disable=unused-argument
+def pdk_user_token(parser, token): # pylint: disable=unused-argument
     try:
-        tag_name, user = args.split_contents() # pylint: disable=unused-variable
-    except ValueError:
-        raise template.TemplateSyntaxError('%r tag requires a single argument' %
-                                           args.contents.split()[0])
+        tag_name, user = token.split_contents() # pylint: disable=unused-variable
+    except ValueError as val_err:
+        raise_from(template.TemplateSyntaxError('%r tag requires a single argument' % token.contents.split()[0]), val_err)
 
     return PDKUserToken(user)
 

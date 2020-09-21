@@ -27,10 +27,7 @@ class Command(BaseCommand):
         for point in pending:
             identifier = point.generator_identifier
 
-            extract_method = None
-
-            if identifier in can_populate:
-                extract_method = can_populate[identifier]
+            extract_method = can_populate.get(identifier, None)
 
             if extract_method is None:
                 for app in settings.INSTALLED_APPS:
