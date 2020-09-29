@@ -347,6 +347,8 @@ class DataPointManager(models.Manager):
         point.fetch_source_reference()
         point.fetch_secondary_identifier()
 
+        return point
+
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta: # pylint: disable=old-style-class, no-init, too-few-public-methods
