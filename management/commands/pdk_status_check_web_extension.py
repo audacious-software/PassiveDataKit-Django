@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import Q
@@ -38,8 +42,8 @@ class Command(BaseCommand):
 
                 return
         except AttributeError:
-            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
-            print 'Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)'
+            print('Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.')
+            print('Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)')
 
         event_query = None
 

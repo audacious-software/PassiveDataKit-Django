@@ -1,12 +1,16 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-device-battery'
 CRITICAL_LEVEL = 20
@@ -23,14 +27,17 @@ class Command(BaseCommand):
 
                 return
         except AttributeError:
-            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
-            print 'Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)'
+            print('Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.')
+            print('Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)')
 
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
             else:
-                last_battery = DataPoint.objects.filter(source=source.identifier, generator_identifier=GENERATOR).order_by('-created').first()
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
+                generator_definition = DataGeneratorDefinition.definition_for_identifier(GENERATOR)
+
+                last_battery = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created').first()
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
                 alert_name = None

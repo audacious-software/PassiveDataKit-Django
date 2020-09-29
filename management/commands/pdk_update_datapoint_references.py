@@ -1,5 +1,9 @@
 # pylint: disable=no-member, line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import sys
 
 from django.core.management.base import BaseCommand
@@ -23,7 +27,7 @@ class Command(BaseCommand):
 
         remaining = DataPoint.objects.filter(query).count()
 
-        print 'Pending: ' + str(remaining)
+        print('Pending: ' + str(remaining))
         sys.stdout.flush()
 
         while remaining > 0:
@@ -44,11 +48,11 @@ class Command(BaseCommand):
 
             now = timezone.now()
 
-            print 'Elapsed: ' + str((now - last_check).total_seconds())
+            print('Elapsed: ' + str((now - last_check).total_seconds()))
             sys.stdout.flush()
             last_check = now
 
             remaining = DataPoint.objects.filter(query).count()
 
-            print 'Pending: ' + str(remaining)
+            print('Pending: ' + str(remaining))
             sys.stdout.flush()

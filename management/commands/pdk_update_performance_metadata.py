@@ -1,9 +1,9 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, line-too-long
 
 from django.core.management.base import BaseCommand
 
 from ...decorators import handle_lock, log_scheduled_event
-from ...models import DataSource
+from ...models import DataSource, DataServer
 
 class Command(BaseCommand):
     help = 'Updates each user performance metadata measurements on a round-robin basis'
@@ -18,16 +18,24 @@ class Command(BaseCommand):
     @handle_lock
     @log_scheduled_event
     def handle(self, *args, **options):
-        source = None
+        servers = []
 
-        if options['source'] != 'any':
-            source = DataSource.objects.filter(identifier=options['source']).first()
+        for server in DataServer.objects.all():
+            servers.append(server)
 
-        if source is None:
-            source = DataSource.objects.filter(performance_metadata_updated=None).first()
+        servers.append(None)
 
-        if source is None:
-            source = DataSource.objects.all().order_by('performance_metadata_updated').first()
+        for server in servers:
+            source = None
 
-        if source is not None:
-            source.update_performance_metadata()
+            if options['source'] != 'any':
+                source = DataSource.objects.filter(identifier=options['source']).first()
+
+            if source is None:
+                source = DataSource.objects.filter(server=server, performance_metadata_updated=None, suppress_alerts=False).first()
+
+            if source is None:
+                source = DataSource.objects.filter(server=server, suppress_alerts=False).order_by('performance_metadata_updated').first()
+
+            if source is not None:
+                source.update_performance_metadata()

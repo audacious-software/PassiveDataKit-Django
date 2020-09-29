@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import os
@@ -7,6 +11,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 
@@ -74,8 +80,8 @@ def visualization(source, generator):
 
     context['values'] = values
 
-    context['center_latitude'] = (min_latitude + max_latitude) / 2
-    context['center_longitude'] = (min_longitude + max_longitude) / 2
+    context['center_latitude'] = old_div((min_latitude + max_latitude), 2)
+    context['center_longitude'] = old_div((min_longitude + max_longitude), 2)
 
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(end.timetuple())
@@ -93,7 +99,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         seen_sources = []

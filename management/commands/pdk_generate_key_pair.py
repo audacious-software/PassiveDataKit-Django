@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
 import base64
 
 from nacl.public import PrivateKey
@@ -16,5 +18,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         key = PrivateKey.generate()
 
-        print 'PRIVATE: ' + base64.b64encode(key.encode())
-        print 'PUBLIC:  ' + base64.b64encode(key.public_key.encode())
+        print('PRIVATE: ' + base64.b64encode(key.encode()))
+        print('PUBLIC:  ' + base64.b64encode(key.public_key.encode()))

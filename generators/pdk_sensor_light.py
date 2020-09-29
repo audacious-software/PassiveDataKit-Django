@@ -1,5 +1,10 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
+
 import calendar
 import csv
 import datetime
@@ -9,6 +14,8 @@ import tempfile
 import time
 
 from zipfile import ZipFile
+
+from past.utils import old_div
 
 import arrow
 
@@ -28,7 +35,10 @@ def fetch_values(source, generator, start, end):
     index = start
     current_value = None
 
-    for point in DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gt=start, created__lte=end).order_by('created'):
+    source_reference = DataSourceReference.reference_for_source(source.identifier)
+    generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+
+    for point in DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition, created__gt=start, created__lte=end).order_by('created'):
         if (point.created - index).total_seconds() > WINDOW_SIZE:
             if current_value is not None and current_value['min_value'] != -1: # pylint: disable=unsubscriptable-object
                 values.append(current_value)
@@ -100,7 +110,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(now.microsecond / 1e6) + '.zip'
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
@@ -125,7 +135,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             points_count = len(point_ids)
 
-            splits = int(math.ceil(points_count / SPLIT_SIZE))
+            splits = int(math.ceil(old_div(points_count, SPLIT_SIZE)))
 
             for split_index in range(0, splits):
                 identifier = slugify(generator + '__' + source)

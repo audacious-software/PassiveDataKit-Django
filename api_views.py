@@ -1,4 +1,8 @@
-# pylint: disable=no-member, line-too-long
+# pylint: disable=no-member, line-too-long, consider-using-in
+
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
 import json
@@ -14,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate
 
-from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource
+from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource, DataSourceReference, DataGeneratorDefinition
 
 
 def valid_pdk_token_required(function):
@@ -27,8 +31,8 @@ def valid_pdk_token_required(function):
 
         if DataServerApiToken.objects.filter(token=token).filter(expires).count() > 0:
             return function(request, *args, **kwargs)
-        else:
-            raise PermissionDenied('Invalid Token')
+
+        raise PermissionDenied('Invalid Token')
 
     wrap.__doc__ = function.__doc__
     wrap.__name__ = function.__name__
@@ -54,7 +58,7 @@ def pdk_request_token(request):
             try:
                 token_duration = datetime.timedelta(seconds=settings.PDK_TOKEN_LIFESPAN)
             except AttributeError:
-                print 'Unable to locate PDK_TOKEN_LIFESPAN in settings'
+                print('Unable to locate PDK_TOKEN_LIFESPAN in settings')
 
             token = DataServerApiToken(user=user, expires=(now + token_duration))
             token.save()
@@ -70,7 +74,7 @@ def pdk_request_token(request):
 
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -93,10 +97,16 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.iteritems():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+                    elif field == 'source':
+                        value = DataSourceReference.reference_for_source(value)
+                        field = 'source_reference'
+                    elif field == 'generator_identifier':
+                        value = DataGeneratorDefinition.definition_for_identifier(value)
+                        field = 'generator_definition'
 
                 processed_filter[field] = value
 
@@ -105,10 +115,16 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.iteritems():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+                    elif field == 'source':
+                        value = DataSourceReference.reference_for_source(value)
+                        field = 'source_reference'
+                    elif field == 'generator_identifier':
+                        value = DataGeneratorDefinition.definition_for_identifier(value)
+                        field = 'generator_definition'
 
                 processed_exclude[field] = value
 
@@ -172,7 +188,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for filter_obj in filters:
             processed_filter = {}
 
-            for field, value in filter_obj.iteritems():
+            for field, value in list(filter_obj.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
@@ -187,7 +203,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
         for exclude in excludes:
             processed_exclude = {}
 
-            for field, value in exclude.iteritems():
+            for field, value in list(exclude.items()):
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime

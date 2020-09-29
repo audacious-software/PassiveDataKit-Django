@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import base64
 import json
 
@@ -39,7 +43,7 @@ class Command(BaseCommand):
         # Remove bundles
 
         if options['skip_bundle']:
-            print 'Skipped inspecting and removing DataBundle objects.'
+            print('Skipped inspecting and removing DataBundle objects.')
         else:
             deleted = 0
             partial_bundles = 0
@@ -50,7 +54,7 @@ class Command(BaseCommand):
             total = DataBundle.objects.all().count()
 
             while index < total:
-                print 'Inspecting DataBundle ' + str(index) + ' of ' + str(total)
+                print('Inspecting DataBundle ' + str(index) + ' of ' + str(total))
 
                 for bundle in DataBundle.objects.all().order_by('recorded')[index:(index + PAGE_SIZE)]:
                     if supports_json is False:
@@ -72,10 +76,10 @@ class Command(BaseCommand):
 
                             bundle.properties = json.loads(decrypted)
                         elif 'encrypted' in bundle.properties:
-                            print 'Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
                             break
                         elif 'nonce' in bundle.properties:
-                            print 'Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...'
+                            print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
                             break
 
                     total_points = len(bundle.properties)
@@ -94,31 +98,31 @@ class Command(BaseCommand):
             for bundle_pk in to_delete:
                 DataBundle.objects.get(pk=bundle_pk).delete()
 
-            print 'Removed ' + str(len(to_delete)) + ' DataBundle objects.'
-            print 'Found ' + str(partial_bundles) + ' partial DataBundle objects (not removed).'
+            print('Removed ' + str(len(to_delete)) + ' DataBundle objects.')
+            print('Found ' + str(partial_bundles) + ' partial DataBundle objects (not removed).')
 
         source_reference = DataSourceReference.reference_for_source(source)
 
         if source_reference is not None:
             deleted = DataPoint.objects.filter(source_reference=source_reference).delete()
 
-            print 'Removed ' + str(deleted[0]) + ' DataPoint objects by source reference.'
+            print('Removed ' + str(deleted[0]) + ' DataPoint objects by source reference.')
 
         source_reference.delete()
 
-        print 'Removed DataSourceReference object.'
+        print('Removed DataSourceReference object.')
 
         points_query = DataPoint.objects.filter(source=source)
 
         index = 0
         total = points_query.count()
 
-        print 'Matching DataPoint objects by source identifier: ' + str(total)
+        print('Matching DataPoint objects by source identifier: ' + str(total))
 
         to_delete = []
 
         while index < total:
-            print 'Queuing DataPoint objects for deletion: ' + str(index) + ' of ' + str(total)
+            print('Queuing DataPoint objects for deletion: ' + str(index) + ' of ' + str(total))
 
             for point in points_query.order_by('pk')[index:(index + PAGE_SIZE)]:
                 to_delete.append(point.pk)
@@ -129,22 +133,22 @@ class Command(BaseCommand):
         total = len(to_delete)
 
         while index < total:
-            print 'Removing DataPoint objects: ' + str(index) + ' of ' + str(total)
+            print('Removing DataPoint objects: ' + str(index) + ' of ' + str(total))
 
             for point_pk in to_delete[index:(index + PAGE_SIZE)]:
                 DataPoint.objects.get(pk=point_pk).delete()
 
             index += PAGE_SIZE
 
-        print 'Removed ' + str(len(to_delete)) + ' DataPoint objects by source match.'
+        print('Removed ' + str(len(to_delete)) + ' DataPoint objects by source match.')
 
         source_obj = DataSource.objects.filter(identifier=source).first()
 
         if source_obj is not None:
             deleted = DataSourceAlert.objects.filter(data_source=source_obj).delete()
 
-            print 'Removed ' + str(deleted[0]) + ' DataSourceAlert objects by source match.'
+            print('Removed ' + str(deleted[0]) + ' DataSourceAlert objects by source match.')
 
             source_obj.delete()
 
-            print 'Removed DataSource object.'
+            print('Removed DataSource object.')

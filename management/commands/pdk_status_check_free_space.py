@@ -1,12 +1,17 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import division
+from __future__ import print_function
+
+from past.utils import old_div
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from ...decorators import handle_lock
 
-from ...models import DataPoint, DataSource, DataSourceAlert
+from ...models import DataPoint, DataSource, DataSourceAlert, DataSourceReference, DataGeneratorDefinition
 
 GENERATOR = 'pdk-device-free-space'
 CRITICAL_LEVEL = 256 * 1024 * 1024
@@ -23,14 +28,17 @@ class Command(BaseCommand):
 
                 return
         except AttributeError:
-            print 'Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.'
-            print 'Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)'
+            print('Did not find PDK_ENABLED_CHECKS in Django settings. Please define with a list of generators with status checks to enable.')
+            print('Example: PDK_ENABLED_CHECKS = (\'' + GENERATOR + '\',)')
 
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
             if source.should_suppress_alerts():
                 DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).update(active=False)
             else:
-                last_status = DataPoint.objects.filter(source=source.identifier, generator_identifier='pdk-system-status').order_by('-created').first()
+                source_reference = DataSourceReference.reference_for_source(source.identifier)
+                generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-system-status')
+
+                last_status = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition).order_by('-created').first()
                 last_alert = DataSourceAlert.objects.filter(data_source=source, generator_identifier=GENERATOR, active=True).order_by('-created').first()
 
                 alert_name = None
@@ -43,11 +51,11 @@ class Command(BaseCommand):
                     if 'storage_available' in properties:
                         if properties['storage_available'] < CRITICAL_LEVEL:
                             alert_name = 'Available Space Critical'
-                            alert_details['message'] = 'Device only has ' + '{:,}'.format(int(properties['storage_available'] / (1024 * 1024))) + ' MB free.'
+                            alert_details['message'] = 'Device only has ' + '{:,}'.format(int(old_div(properties['storage_available'], (1024 * 1024)))) + ' MB free.'
                             alert_level = 'critical'
                         elif properties['storage_available'] < WARNING_LEVEL:
                             alert_name = 'Available Space Low'
-                            alert_details['message'] = 'Device only has ' + '{:,}'.format(int(properties['storage_available'] / (1024 * 1024))) + ' MB free.'
+                            alert_details['message'] = 'Device only has ' + '{:,}'.format(int(old_div(properties['storage_available'], (1024 * 1024)))) + ' MB free.'
                             alert_level = 'warning'
 
                         if alert_name is not None:

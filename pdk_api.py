@@ -1,5 +1,9 @@
 # pylint: disable=line-too-long, no-member
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+from builtins import range # pylint: disable=redefined-builtin
 import bz2
 import calendar
 import csv
@@ -10,9 +14,10 @@ import json
 import os
 import sys
 import tempfile
+import time
 import traceback
 
-import StringIO
+from io import BytesIO, StringIO
 
 import dropbox
 import paramiko
@@ -111,7 +116,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
         try:
             output_file = generator_module.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
         except TypeError:
-            print 'TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!'
+            print('TODO: Update ' + generator + '.compile_report to support data_start, data_end, and date_type parameters!')
 
             output_file = generator_module.compile_report(generator, sources)
 
@@ -216,8 +221,20 @@ def extract_location_method(identifier):
 
     return None
 
-def send_to_destination(destination, report_path):
+def send_to_destination(destination, report_path): # pylint: disable=too-many-branches, too-many-statements
     file_sent = False
+
+    sleep_durations = [
+        0,
+        60,
+        120,
+        300,
+    ]
+
+    try:
+        sleep_durations = settings.PDK_UPLOAD_SLEEP_DURATIONS
+    except AttributeError:
+        pass # Use defaults above.
 
     if destination.destination == 'dropbox':
         try:
@@ -241,10 +258,20 @@ def send_to_destination(destination, report_path):
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
-                with open(report_path, 'rb') as report_file:
-                    client.files_upload(report_file.read(), path)
+                for duration in sleep_durations:
+                    time.sleep(duration)
 
-                file_sent = True
+                    try:
+                        with open(report_path, 'rb') as report_file:
+                            client.files_upload(report_file.read(), path)
+
+                            file_sent = True
+                    except: # pylint: disable=bare-except
+                        if duration == sleep_durations[-1]:
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+
+                            traceback.print_exc()
+
         except BaseException:
             traceback.print_exc()
     elif destination.destination == 'sftp':
@@ -262,22 +289,32 @@ def send_to_destination(destination, report_path):
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
-                key = paramiko.RSAKey.from_private_key(StringIO.StringIO(parameters['key']))
+                for duration in sleep_durations:
+                    time.sleep(duration)
 
-                ssh_client = paramiko.SSHClient()
-                ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+                    try:
+                        key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
 
-                ftp_client = ssh_client.open_sftp()
-                ftp_client.put(report_path, path)
-                ftp_client.close()
+                        ssh_client = paramiko.SSHClient()
+                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                        ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
-                file_sent = True
+                        ftp_client = ssh_client.open_sftp()
+                        ftp_client.put(report_path, path)
+                        ftp_client.close()
+
+                        file_sent = True
+                    except: # pylint: disable=bare-except
+                        if duration == sleep_durations[-1]:
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+
+                            traceback.print_exc()
+
         except BaseException:
             traceback.print_exc()
 
     if file_sent is False:
-        print 'Unable to transmit report to destination "' + destination.destination + '".'
+        print('Unable to transmit report to destination "' + destination.destination + '".')
 
 def annotate_source_definition(source, definition):
     active_alerts = []
@@ -331,18 +368,34 @@ def load_backup(filename, content):
 
         os.remove(path)
     elif 'pdk-bundle' in filename:
-        bundle = DataBundle(recorded=timezone.now())
+        backup_content = json.loads(content)
 
-        if install_supports_jsonfield():
-            bundle.properties = json.loads(content)
-        else:
-            bundle.properties = content
+        bundle_index = 0
 
-        bundle.save()
+        while backup_content:
+            bundle_content = []
+
+            if (bundle_index % 50) == 0:
+                print('[passive_data_kit.pdk_api.load_backup] ' + str(len(backup_content)) + ' items remaining to write...')
+
+            while backup_content and len(bundle_content) < 100:
+                bundle_content.append(backup_content.pop(0))
+
+            if bundle_content:
+                bundle = DataBundle(recorded=timezone.now())
+
+                if install_supports_jsonfield():
+                    bundle.properties = bundle_content
+                else:
+                    bundle.properties = json.dumps(bundle_content, indent=2)
+
+                bundle.save()
+
+                bundle_index += 1
     else:
-        print '[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename
+        print('[passive_data_kit.pdk_api.load_backup] Unknown file type: ' + filename)
 
-def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements
+def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     to_transmit = []
     to_clear = []
 
@@ -378,10 +431,10 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         pass
 
     for app in dumpdata_apps:
-        print '[passive_data_kit] Backing up ' + app + '...'
+        print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = StringIO.StringIO()
+        buf = BytesIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
@@ -414,9 +467,16 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     try:
         bundle_size = settings.PDK_BACKUP_BUNDLE_SIZE
     except AttributeError:
-        print 'Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.'
+        print('Define PDK_BACKUP_BUNDLE_SIZE in the settings to define the size of backup payloads.')
 
-    query = Q(generator_identifier__startswith='pdk-')
+    query = None
+
+    for definition in DataGeneratorDefinition.objects.all():
+        if definition.generator_identifier.startswith('pdk-'):
+            if query is None:
+                query = Q(generator_definition=definition)
+            else:
+                query = query | Q(generator_definition=definition)
 
     if 'start_date' in parameters:
         query = query & Q(recorded__gte=parameters['start_date'])
@@ -429,7 +489,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     if 'clear_archived' in parameters and parameters['clear_archived']:
         clear_archived = True
 
-    print '[passive_data_kit] Fetching count of data points...'
+    print('[passive_data_kit] Fetching count of data points...')
     sys.stdout.flush()
 
     count = DataPoint.objects.filter(query).count()
@@ -439,7 +499,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     while index < count:
         filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
 
-        print '[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...'
+        print('[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...')
         sys.stdout.flush()
 
         bundle = []
@@ -463,9 +523,16 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
     return to_transmit, to_clear
 
-
 def clear_points(to_clear):
-    for point_id in to_clear:
+    point_count = len(to_clear)
+
+    for i in range(0, point_count):
+        if (i % 1000) == 0:
+            print('[passive_data_kit] Clearing points ' + str(i) + ' of ' + str(point_count) + '...')
+            sys.stdout.flush()
+
+        point_id = to_clear[i]
+
         point_pk = int(point_id.replace('pdk:', ''))
 
         DataPoint.objects.filter(pk=point_pk).delete()

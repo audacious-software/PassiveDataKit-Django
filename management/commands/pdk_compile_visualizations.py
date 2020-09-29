@@ -1,5 +1,9 @@
 # pylint: disable=no-member,line-too-long
 
+from __future__ import print_function
+
+from builtins import str # pylint: disable=redefined-builtin
+
 import datetime
 import importlib
 import json
@@ -36,6 +40,12 @@ class Command(BaseCommand):
                             default=10,
                             help='Number of times to repeat in a single run')
 
+        parser.add_argument('--mode',
+                            type=str,
+                            dest='mode',
+                            default='intelligent',
+                            help='Only update when new data is available ("intelligent", default), update oldest visualizations first ("oldest")')
+
     @handle_lock
     @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
@@ -53,50 +63,62 @@ class Command(BaseCommand):
 
         deltas = []
 
-        for source in sources:
-            source_identifiers = ['pdk-data-frequency']
+        if options['mode'] == 'intelligent':
+            for source in sources:
+                source_identifiers = ['pdk-data-frequency']
 
-            if options['generator'] == 'all':
-                for identifier in DataPoint.objects.generator_identifiers_for_source(source):
-                    source_identifiers.append(identifier)
-            else:
-                source_identifiers.append(options['generator'])
+                if options['generator'] == 'all':
+                    for identifier in DataPoint.objects.generator_identifiers_for_source(source):
+                        source_identifiers.append(identifier)
+                else:
+                    source_identifiers.append(options['generator'])
 
-            for identifier in source_identifiers:
-                if DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).count() == 0:
-                    new_visualization = DataPointVisualization(source=source, generator_identifier=identifier)
+                for identifier in source_identifiers:
+                    if DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).count() == 0:
+                        new_visualization = DataPointVisualization(source=source, generator_identifier=identifier)
 
-                    new_visualization.last_updated = pytz.timezone('UTC').localize(datetime.datetime.min + datetime.timedelta(days=1))
-                    new_visualization.save()
+                        new_visualization.last_updated = pytz.timezone('UTC').localize(datetime.datetime.min + datetime.timedelta(days=1))
+                        new_visualization.save()
 
-                visualizations = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier)
+                    visualizations = DataPointVisualization.objects.filter(source=source, generator_identifier=identifier).order_by('last_updated')
 
-                if visualizations.count() > 1:
-                    print 'Removing extra ' + source + '@' + identifier + ' visualizations...'
+                    if visualizations.count() > 1:
+                        print('Removing extra ' + source + '@' + identifier + ' visualizations...')
 
-                    first = visualizations.order_by('pk').first()
+                        first = visualizations.order_by('pk').first()
 
-                    visualizations.exclude(pk=first.pk).delete()
+                        visualizations.exclude(pk=first.pk).delete()
 
-                delta = {
-                    'visualization': visualizations.first()
-                }
+                    delta = {
+                        'visualization': visualizations.first()
+                    }
 
-                if delta['visualization'].last_updated > timezone.now():
-                    delta['visualization'].last_updated = timezone.now()
-                    delta['visualization'].save()
+                    if delta['visualization'].last_updated > timezone.now():
+                        delta['visualization'].last_updated = timezone.now()
+                        delta['visualization'].save()
 
+                    # last_point = DataPoint.objects.latest_point(source, identifier)
 
-                last_point = DataPoint.objects.latest_point(source, identifier)
+                    # if last_point is not None:
+                    #    delta['elapsed'] = (last_point.recorded - delta['visualization'].last_updated).total_seconds()
 
-                if last_point is not None:
-                    delta['elapsed'] = (last_point.recorded - delta['visualization'].last_updated).total_seconds()
+                    #    deltas.append(delta)
+                    # elif identifier == 'pdk-data-frequency':
+                    #    delta['elapsed'] = (timezone.now() - delta['visualization'].last_updated).total_seconds()
 
-                    deltas.append(delta)
-                elif identifier == 'pdk-data-frequency':
+                    #    deltas.append(delta)
+
                     delta['elapsed'] = (timezone.now() - delta['visualization'].last_updated).total_seconds()
 
                     deltas.append(delta)
+        elif options['mode'] == 'oldest':
+            for visualization in DataPointVisualization.objects.all().order_by('last_updated')[:repeat]:
+                delta = {
+                    'visualization': visualization,
+                    'elapsed': (timezone.now() - visualization.last_updated).total_seconds()
+                }
+
+                deltas.append(delta)
 
         deltas.sort(key=lambda delta: delta['elapsed'], reverse=True)
 
@@ -170,8 +192,6 @@ class Command(BaseCommand):
 
             loop_times.append(computed_id + ': ' + str((repeat_end - repeat_start).total_seconds()))
 
-            repeat -= 1
-
         end_time = timezone.now()
 
         excessive_time = 15
@@ -182,17 +202,17 @@ class Command(BaseCommand):
             pass
 
         if (end_time - start_time).total_seconds() > excessive_time:
-            print 'Excessive visualization compilation time: ' + str((end_time - start_time).total_seconds()) + ' seconds:'
+            print('Excessive visualization compilation time: ' + str((end_time - start_time).total_seconds()) + ' seconds:')
 
-            for key, times in time_spent.iteritems():
+            for key, times in list(time_spent.items()):
                 query = times['query_end'] - times['start']
                 spent = times['end'] - times['start']
 
-                print '  ' + key + ': Q->' + str(query.total_seconds()) + 's; T->' + str(spent.total_seconds()) + 's (' + times['app'] + ')'
+                print('  ' + key + ': Q->' + str(query.total_seconds()) + 's; T->' + str(spent.total_seconds()) + 's (' + times['app'] + ')')
 
-            print 'Loop Times: ' + str(json.dumps(loop_times, indent=2))
+            print('Loop Times: ' + str(json.dumps(loop_times, indent=2)))
 
             try:
                 excessive_time = settings.PDK_EXCESSIVE_VISUALIZATION_TIME
             except AttributeError:
-                print 'PDK_EXCESSIVE_VISUALIZATION_TIME not configured in site settings. Set to number of desired seconds to suppress this message.'
+                print('PDK_EXCESSIVE_VISUALIZATION_TIME not configured in site settings. Set to number of desired seconds to suppress this message.')
