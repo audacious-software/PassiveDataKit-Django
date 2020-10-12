@@ -274,7 +274,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
 
         except BaseException:
             traceback.print_exc()
-    elif destination.destination == 'sftp':
+    elif destination.destination == 'sftp': # pylint: disable=too-many-nested-blocks
         try:
             parameters = destination.fetch_parameters()
 

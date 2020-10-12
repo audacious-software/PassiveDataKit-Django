@@ -254,7 +254,7 @@ class Command(BaseCommand):
                             for child_file in zip_file.namelist():
                                 with zip_file.open(child_file) as child_stream:
                                     zip_output.writestr(child_file, child_stream.read())
-                
+
                 report.report.save(filename.split('/')[-1], File(open(filename, 'rb')))
                 report.completed = timezone.now()
                 report.save()
