@@ -39,9 +39,7 @@ requirejs(['./common'], function (common) {
 			var name = $(this).attr("data-source-name");
 			var pk = $(this).attr("data-source-pk");
 			
-			console.log("remove: " + name + " -- " + pk);
-
-			$("#remove_source_name").html(name);
+			$("#remove_source_name").text(name);
 			
 			$("#delete_source_modal").modal("show");
 			

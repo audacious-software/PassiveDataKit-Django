@@ -296,7 +296,17 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                         key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
-                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                        trust_host_keys = True
+
+                        try:
+                            trust_host_keys = settings.PDK_API_TRUST_HOST_KEYS
+                        except AttributeError:
+                            pass
+
+                        if trust_host_keys:
+                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+
                         ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
                         ftp_client = ssh_client.open_sftp()
