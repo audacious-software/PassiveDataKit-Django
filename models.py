@@ -32,6 +32,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.text import slugify
 
 from django.contrib.auth import get_user_model
@@ -118,14 +119,14 @@ def install_supports_jsonfield():
 
     return DB_SUPPORTS_JSON
 
-
+@python_2_unicode_compatible
 class DataGeneratorDefinition(models.Model):
     generator_identifier = models.CharField(max_length=1024)
 
     name = models.CharField(max_length=1024)
     description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.generator_identifier
 
     @classmethod
@@ -155,10 +156,11 @@ class DataGeneratorDefinition(models.Model):
             return definition
 
 
+@python_2_unicode_compatible
 class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.source)
 
     @classmethod
@@ -544,18 +546,20 @@ class DataFile(models.Model):
     content_file = models.FileField(upload_to='data_files')
 
 
+@python_2_unicode_compatible
 class DataSourceGroup(models.Model):
     name = models.CharField(max_length=1024, db_index=True)
 
     suppress_alerts = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def refresh_performance_metadata(self):
         for member in self.sources.all():
             member.refresh_performance_metadata()
 
+@python_2_unicode_compatible
 class DataServer(models.Model):
     name = models.CharField(max_length=1024, unique=True)
     upload_url = models.URLField(max_length=1024, unique=True)
@@ -563,7 +567,7 @@ class DataServer(models.Model):
 
     request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.name)
 
 class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
@@ -577,6 +581,7 @@ class DataSourceManager(models.Manager): # pylint: disable=too-few-public-method
         return source_list
 
 
+@python_2_unicode_compatible
 class DataSource(models.Model):
     objects = DataSourceManager()
 
@@ -596,7 +601,7 @@ class DataSource(models.Model):
 
     server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name + ' (' + self.identifier + ')'
 
     def details_url(self):
@@ -1459,6 +1464,7 @@ class DataServerAccessRequestPending(models.Model):
         self.processed = True
         self.save()
 
+@python_2_unicode_compatible
 class DeviceModel(models.Model):
     model = models.CharField(max_length=1024, unique=True)
     manufacturer = models.CharField(max_length=1024)
@@ -1467,9 +1473,10 @@ class DeviceModel(models.Model):
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.model + ' (' + self.manufacturer + ')')
 
+@python_2_unicode_compatible
 class Device(models.Model):
     source = models.ForeignKey(DataSource, related_name='devices', on_delete=models.CASCADE)
 
@@ -1478,7 +1485,7 @@ class Device(models.Model):
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
 
     def populate_device(self):
