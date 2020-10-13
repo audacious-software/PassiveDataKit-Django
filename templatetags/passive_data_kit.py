@@ -82,7 +82,7 @@ class PointCountNode(template.Node):
     def render(self, context):
         source = self.source.resolve(context)
 
-        return source.point_count()
+        return str(source.point_count())
 
 
 @register.tag(name='point_hz')

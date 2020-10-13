@@ -127,7 +127,7 @@ class DataGeneratorDefinition(models.Model):
     description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
     def __str__(self):
-        return self.generator_identifier
+        return str(self.generator_identifier)
 
     @classmethod
     def definition_for_identifier(cls, generator_identifier):
@@ -553,7 +553,7 @@ class DataSourceGroup(models.Model):
     suppress_alerts = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def refresh_performance_metadata(self):
         for member in self.sources.all():
