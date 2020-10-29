@@ -27,7 +27,7 @@ from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource
 def pdk_add_data_point(request):
     response = {'message': 'Data point added successfully.'}
 
-    if request.method == 'CREATE': # pylint: disable=no-else-return
+    if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', \
                                 status=201)
         response['Access-Control-Allow-Origin'] = '*'
@@ -40,7 +40,7 @@ def pdk_add_data_point(request):
         data_point = DataPoint(recorded=timezone.now())
         data_point.source = point['passive-data-metadata']['source']
         data_point.generator = point['passive-data-metadata']['generator']
-        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
+        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone()) # pylint: disable=line-too-long
 
         if install_supports_jsonfield():
             data_point.properties = point
@@ -65,7 +65,7 @@ def pdk_add_data_point(request):
         data_point = DataPoint(recorded=timezone.now())
         data_point.source = point['passive-data-metadata']['source']
         data_point.generator = point['passive-data-metadata']['generator']
-        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
+        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone()) # pylint: disable=line-too-long
 
         if install_supports_jsonfield():
             data_point.properties = point
@@ -96,7 +96,7 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
     supports_json = install_supports_jsonfield()
 
-    if request.method == 'CREATE': # pylint: disable=no-else-return
+    if request.method == 'CREATE':
         response = HttpResponse(json.dumps(response, indent=2), \
                                 content_type='application/json', \
                                 status=201)
@@ -393,7 +393,7 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
     return HttpResponseNotFound()
 
 
-# @staff_member_required
+@staff_member_required
 def pdk_download_report(request, report_id): # pylint: disable=unused-argument
     job = get_object_or_404(ReportJob, pk=int(report_id))
 
@@ -499,7 +499,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
             context['message_type'] = 'error'
 
             if len(export_generators) == 0: # pylint: disable=len-as-condition
-                context['message'] = 'Please select one or more sources and generators to export data.'
+                context['message'] = 'Please select one or more sources and generators to export data.' # pylint: disable=line-too-long
             else:
                 context['message'] = 'Please select one or more sources to export data.'
         elif len(export_generators) == 0: # pylint: disable=len-as-condition
@@ -515,14 +515,14 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
             date_type = request.POST['date_type']
 
-            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw, data_start, data_end, date_type) # pylint: disable=assignment-from-no-return
+            created = ReportJob.objects.create_jobs(request.user, export_sources, export_generators, export_raw, data_start, data_end, date_type)
 
             context['message_type'] = 'ok'
 
             if created == 1:
-                context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=
+                context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=line-too-long
             else:
-                context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.'
+                context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.' # pylint: disable=line-too-long
 
     return render(request, 'pdk_export.html', context=context)
 
