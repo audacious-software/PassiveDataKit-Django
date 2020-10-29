@@ -13,6 +13,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, Http
                         FileResponse, UnreadablePostError
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.utils.encoding import smart_str
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -392,7 +393,7 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
     return HttpResponseNotFound()
 
 
-@staff_member_required
+# @staff_member_required
 def pdk_download_report(request, report_id): # pylint: disable=unused-argument
     job = get_object_or_404(ReportJob, pk=int(report_id))
 
@@ -400,7 +401,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
     response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
 
-    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + str(job.pk) + '.zip'
+    download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + smart_str(job.pk) + '.zip'
 
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = 'attachment; filename=' + download_name
