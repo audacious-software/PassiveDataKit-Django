@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 if 'suffix' in parameters:
                     suffix = parameters['suffix']
 
-                filename = smart_str(tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip')
+                filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
 
                 zips_to_merge = []
 
