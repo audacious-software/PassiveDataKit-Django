@@ -1,6 +1,6 @@
 //Load common code that includes config, then load the app logic for this page.
 requirejs(['./common'], function (common) {
-    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table", "moment", "rickshaw", "jquery"], function (bootstrap, bs_typeahead, bs_table, moment, rickshaw, jquery)
+    requirejs(["bootstrap", "bootstrap-typeahead", "bootstrap-table", "moment", "rickshaw", "jquery", "jquery-ui"], function (bootstrap, bs_typeahead, bs_table, moment, rickshaw, jquery)
     {
     	window.$ = jquery;
     	window.moment = moment;
@@ -39,9 +39,7 @@ requirejs(['./common'], function (common) {
 			var name = $(this).attr("data-source-name");
 			var pk = $(this).attr("data-source-pk");
 			
-			console.log("remove: " + name + " -- " + pk);
-
-			$("#remove_source_name").html(name);
+			$("#remove_source_name").text(name);
 			
 			$("#delete_source_modal").modal("show");
 			

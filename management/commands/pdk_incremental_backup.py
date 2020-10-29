@@ -10,7 +10,7 @@ import importlib
 import os
 import sys
 
-import io
+from io import BytesIO
 
 import dropbox
 import pytz
@@ -175,7 +175,7 @@ class Command(BaseCommand):
                             box = SecretBox(key)
 
                             with open(path, 'rb') as backup_file:
-                                backup_io = io.StringIO()
+                                backup_io = BytesIO()
                                 backup_io.write(backup_file.read())
                                 backup_io.seek(0)
 
