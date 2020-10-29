@@ -23,7 +23,6 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.encoding import smart_str
 
 from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
