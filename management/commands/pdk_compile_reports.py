@@ -23,7 +23,7 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.encoding import smart_str
+from django.utils.encoding import smart_str, force_text
 
 from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
@@ -255,7 +255,7 @@ class Command(BaseCommand):
                                 with zip_file.open(child_file) as child_stream:
                                     zip_output.writestr(child_file, child_stream.read())
 
-                report.report.save(filename.split('/')[-1], File(open(filename, 'rb')))
+                report.report.save(force_text(filename.split('/')[-1]), File(open(filename, 'rb')))
                 report.completed = timezone.now()
                 report.save()
 
