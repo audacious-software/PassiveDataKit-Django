@@ -31,17 +31,6 @@ from django.utils.text import slugify
 
 from .models import DataPoint, DataBundle, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
 
-# def name_for_generator(identifier):
-#    if identifier == 'web-historian':
-#        return 'Web Historian Web Visits'
-#
-#    return None
-
-# def compile_visualization(identifier, points_query, folder):
-#
-#    if identifier == 'web-historian':
-#
-
 def visualization(source, generator):
     try:
         generator_module = importlib.import_module('.generators.' + generator.replace('-', '_'), package='passive_data_kit')

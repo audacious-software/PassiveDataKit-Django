@@ -23,7 +23,7 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.encoding import smart_str, force_text
+from django.utils.encoding import force_text
 
 from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
@@ -205,23 +205,29 @@ class Command(BaseCommand):
                                                 output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
 
                                                 if output_file is not None:
-                                                    if output_file.lower().endswith('.zip'):
-                                                        zips_to_merge.append(output_file)
+                                                    if generator != 'pdk-personal-data':
+                                                        if output_file.lower().endswith('.zip'):
+                                                            zips_to_merge.append(output_file)
 
-                                                        # with zipfile.ZipFile(output_file, 'r') as source_file:
-                                                        #    for name in source_file.namelist():
-                                                        #        data_file = source_file.open(name)
+                                                            # with zipfile.ZipFile(output_file, 'r') as source_file:
+                                                            #    for name in source_file.namelist():
+                                                            #        data_file = source_file.open(name)
 
-                                                        #        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                            #        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                        else:
+                                                            name = os.path.basename(os.path.normpath(output_file))
+
+                                                            export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
+
+                                                            to_delete.append(output_file)
                                                     else:
                                                         name = os.path.basename(os.path.normpath(output_file))
 
                                                         export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
 
-                                                        to_delete.append(output_file)
-
                                                     # to_delete.append(output_file)
                                             except TypeError as exception:
+                                                traceback.print_exc()
                                                 print('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
                                                 raise exception
                                         except ImportError:

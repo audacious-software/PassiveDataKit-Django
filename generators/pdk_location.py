@@ -1,20 +1,25 @@
 # pylint: disable=line-too-long, no-member
 
 from __future__ import division
+from __future__ import print_function
 
 from builtins import str # pylint: disable=redefined-builtin
 
 import calendar
 import csv
+import json
 import os
 import tempfile
 import time
+import traceback
+import zipfile
 
 from zipfile import ZipFile
 
 from past.utils import old_div
 
 import arrow
+import pytz
 
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
@@ -235,3 +240,122 @@ def extract_location(point):
     if latitude is not None and longitude is not None:
         point.generated_at = GEOSGeometry('POINT(' + str(longitude) + ' ' + str(latitude) + ')')
         point.save()
+
+
+def compile_personal_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, unused-argument
+    now = arrow.get()
+
+    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+
+    try:
+        with zipfile.ZipFile(filename, 'w', allowZip64=True) as export_file:
+            for source in sources:
+                source_reference = DataSourceReference.reference_for_source(source)
+                generator_definition = DataGeneratorDefinition.definition_for_identifier('pdk-location')
+
+                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+
+                if data_start is not None:
+                    if date_type == 'recorded':
+                        points = points.filter(recorded__gte=data_start)
+                    else:
+                        points = points.filter(created__gte=data_start)
+
+                if data_end is not None:
+                    if date_type == 'recorded':
+                        points = points.filter(recorded__lte=data_end)
+                    else:
+                        points = points.filter(created__lte=data_end)
+
+                points = points.order_by('source', 'created')
+
+                root_geojson = {
+                    'type': 'FeatureCollection',
+                    'crs': {
+                        'type': 'name',
+                        'properties': {
+                            'name': 'urn:ogc:def:crs:OGC:1.3:CRS84'
+                        }
+                    }
+                }
+
+                features = []
+
+                last_timestamp = 0
+
+                for point in points.order_by('created'):
+                    properties = point.fetch_properties()
+
+                    here_tz = pytz.timezone(settings.TIME_ZONE)
+
+                    if 'timezone' in properties['passive-data-metadata']:
+                        here_tz = pytz.timezone(properties['passive-data-metadata']['timezone'])
+
+                    created_date = point.created.astimezone(here_tz)
+
+                    timestamp = calendar.timegm(created_date.utctimetuple())
+
+                    if (timestamp - last_timestamp) >= 300:
+                        last_timestamp = timestamp
+
+                        feature = {
+                            'type': 'Feature',
+                            'properties': {
+                                'id': 'pk:' + str(point.pk),
+                                'timestamp': timestamp,
+                                'datetime': created_date.isoformat()
+                            }
+                        }
+
+                        try:
+                            feature['properties']['provider'] = properties['provider']
+                        except KeyError:
+                            pass
+
+                        try:
+                            feature['properties']['accuracy'] = properties['accuracy']
+                        except KeyError:
+                            pass
+
+                        try:
+                            feature['properties']['speed'] = properties['speed']
+                        except KeyError:
+                            pass
+
+                        try:
+                            feature['properties']['bearing'] = properties['bearing']
+                        except KeyError:
+                            pass
+
+                        coordinates = [properties['longitude'], properties['latitude'], 0]
+
+                        try:
+                            feature['properties']['altitude'] = properties['altitude']
+                            coordinates[2] = properties['altitude']
+                        except KeyError:
+                            pass
+
+                        feature['geometry'] = {
+                            'type': 'Point',
+                            'coordinates': coordinates
+                        }
+
+                        features.append(feature)
+
+                root_geojson['features'] = features
+
+                export_file.writestr('data/pdk-location.json', 'var data = ' + json.dumps(root_geojson, indent=2) + ';', zipfile.ZIP_DEFLATED)
+
+                path = os.path.abspath(__file__)
+
+                dir_path = os.path.dirname(path)
+
+                assets_path = dir_path + '/../assets/pdk_personal_data'
+
+                export_file.write(os.path.join(assets_path, 'pdk-location.html'), 'pdk-location.html')
+    except: # pylint: disable=bare-except
+        traceback.print_exc()
+
+        filename = None
+
+    return filename
