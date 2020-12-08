@@ -110,7 +110,7 @@ class Command(BaseCommand):
                 if 'suffix' in parameters:
                     suffix = parameters['suffix']
 
-                filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
+                filename = tempfile.gettempdir() + os.path.sep + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
 
                 zips_to_merge = []
 
@@ -254,7 +254,7 @@ class Command(BaseCommand):
                                 with zip_file.open(child_file) as child_stream:
                                     zip_output.writestr(child_file, child_stream.read())
 
-                report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
+                report.report.save(filename.split(os.path.sep)[-1], File(open(filename, 'r')))
                 report.completed = timezone.now()
                 report.save()
 

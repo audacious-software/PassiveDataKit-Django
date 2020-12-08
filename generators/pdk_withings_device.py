@@ -79,12 +79,12 @@ def extract_secondary_identifier(properties):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     if generator == 'pdk-withings-device':
         with ZipFile(filename, 'w') as export_file:
             for secondary_identifier in SECONDARY_FIELDS:
-                secondary_filename = tempfile.gettempdir() + '/' + generator + '-' + \
+                secondary_filename = tempfile.gettempdir() + os.path.sep + generator + '-' + \
                                      secondary_identifier + '.txt'
 
                 with open(secondary_filename, 'w') as outfile:
@@ -148,7 +148,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                             index += 5000
 
-                export_file.write(secondary_filename, secondary_filename.split('/')[-1])
+                export_file.write(secondary_filename, secondary_filename.split(os.path.sep)[-1])
 
                 os.remove(secondary_filename)
 

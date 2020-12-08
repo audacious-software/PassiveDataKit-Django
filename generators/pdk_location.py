@@ -99,7 +99,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         seen_sources = []
@@ -137,7 +137,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             identifier = slugify(generator + '__' + source)
 
-            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+            secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
             with open(secondary_filename, 'w') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')

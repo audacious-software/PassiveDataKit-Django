@@ -8,6 +8,7 @@ import calendar
 import csv
 import datetime
 import json
+import os
 import tempfile
 import time
 
@@ -31,7 +32,7 @@ def extract_secondary_identifier(properties):
     return None
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
-    filename = tempfile.gettempdir() + '/pdk_' + generator + '.txt'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_' + generator + '.txt'
 
     default_tz = timezone.get_default_timezone()
 
@@ -120,7 +121,7 @@ def data_table(source, generator):
     return render_to_string('pdk_phone_calls_table_template.html', context)
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-phone-calls/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-phone-calls/timestamp-counts.json'
 
     with open(filename) as infile:
         data = json.load(infile)
@@ -174,5 +175,5 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)

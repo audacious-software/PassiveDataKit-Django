@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from builtins import str # pylint: disable=redefined-builtin
 from builtins import range # pylint: disable=redefined-builtin
+
 import bz2
 import calendar
 import csv
@@ -127,7 +128,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     except AttributeError:
         pass
 
-    filename = tempfile.gettempdir() + '/' + generator + '.txt'
+    filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with open(filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')

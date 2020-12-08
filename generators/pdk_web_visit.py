@@ -31,7 +31,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         for source in sources:
@@ -40,7 +40,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             identifier = slugify(generator + '__' + source)
 
-            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+            secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
             with open(secondary_filename, 'w') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
@@ -122,7 +122,7 @@ def data_table(source, generator):
 
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-web-visit/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-web-visit' + os.path.sep + 'timestamp-counts.json'
 
     try:
         with open(filename) as infile:
@@ -180,5 +180,5 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)

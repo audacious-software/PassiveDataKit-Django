@@ -36,12 +36,12 @@ def generator_name(identifier): # pylint: disable=unused-argument
 def visualization(source, generator): # pylint: disable=unused-argument
     context = {}
 
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-device-battery/battery-level.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'battery-level.json'
 
     with open(filename) as infile:
         context['data'] = json.load(infile)
 
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-device-battery/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'timestamp-counts.json'
 
     try:
         with open(filename) as infile:
@@ -83,7 +83,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     context['start'] = calendar.timegm(start.timetuple())
     context['end'] = calendar.timegm(now.timetuple())
 
-    with open(folder + '/battery-level.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'battery-level.json', 'w') as outfile:
         json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
@@ -133,7 +133,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def data_table(source, generator):
@@ -155,7 +155,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         seen_sources = []
@@ -174,7 +174,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             identifier = slugify(generator + '__' + export_source)
 
-            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+            secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
             with open(secondary_filename, 'w') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
