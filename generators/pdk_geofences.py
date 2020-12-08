@@ -40,7 +40,7 @@ def extract_value(pattern, properties):
 
         match = re.search(pattern, key)
 
-        if match:
+        if match: # pylint: disable=no-else-return
             return float(value)
         elif isinstance(value, collections.Mapping):
             found_value = extract_value(pattern, value)

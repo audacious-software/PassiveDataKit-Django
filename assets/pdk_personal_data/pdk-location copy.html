@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>Passive Data Kit | Location</title>
+
+		<script src="static/jquery-3.5.1.min.js"></script>
+		<script src="static/moment.js"></script>
+		
+		<link href="static/bootstrap/bootstrap-lux.min.css" rel="stylesheet" />
+		<script src='static/bootstrap/bootstrap.js'></script>
+		
+		<link href="static/jquery-ui/jquery-ui.css" rel="stylesheet" />
+		<link href="static/jquery-ui/jquery-ui.structure.css" rel="stylesheet" />
+		<link href="static/jquery-ui/jquery-ui.theme.css" rel="stylesheet" />
+		<script src='static/jquery-ui/jquery-ui.js'></script>
+
+		<link href="static/bootstrap-datepicker/css/bootstrap-datepicker.css" rel="stylesheet" />
+		<script src='static/bootstrap-datepicker/js/bootstrap-datepicker.js'></script>
+
+		<link href="https://fonts.googleapis.com/css?family=Play" rel="stylesheet">
+
+		<script src='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js'></script>
+		<link href='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css' rel='stylesheet' />
+
+		<script src='data/pdk-location.json' type="application/javascript"></script>
+		
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+		
+		<style>
+			.datepicker-inline {
+				width: auto;
+			}
+			
+			.navbar-header a {
+				color: #FAFAFA;
+				text-decoration: none;
+				background-color: transparent;
+				font-weight: 200;
+			}
+
+			.navbar-header a:hover {
+				color: #FFFFFF;
+			}
+		</style>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" style="background-image: none; background-color: #000000;">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="index.html" style="display: inline-block;">
+						<!-- <img src="/static/pdk/icons/pdk-header-logo-40.png" style="width: 40px; height: 40px; padding: 5px; margin-top: -13px; margin-bottom: -10px; margin-left: -10px; display: inline-block; background-color: #ffffff; border-radius: 10px;" /> -->
+						<img src="static/icons/pdk-header-logo-light-40.png" style="width: 40px; height: 40px; padding: 5px; margin-top: -13px; margin-bottom: -10px; margin-left: -10px; display: inline-block;" /> 
+						<span style="font-family: 'Play', sans-serif;">Passive Data Kit: Location</span>
+					</a>
+				</div>
+				<div id="navbar" class="navbar-collapse collapse">
+					<ul class="nav navbar-nav navbar-right">
+						<li>{{ source }}</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+
+		<div class="container-fluid">
+			<div class="row" style="height: 100%;">
+				<div class="col-sm-3 col-md-2 sidebar">
+					<ul class="nav nav-sidebar pt-1">
+						<li><a href="index.html">{{ source }}</a></li>
+						{% for output_tuple in outputs %}
+							<li><a href="{{ output_tuple.1 }}.html">{{ output_tuple.2 }}</a></li>
+						{% endfor %}
+					</ul>
+				</div>
+				<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+					<div class="row">
+						<div class="col-md-12" style="height: 100%; padding-right: 0;">
+							<div id='map' style='width: 100%; height: 480px;'></div>
+
+							<div id="layer_menu" class="btn-group btn-group-toggle" data-toggle="buttons" style="position: absolute; top: 10px; left: 25px; border-radius: 4px;">
+								<label class="btn btn-dark active">
+									<input id="streets-v11" type="radio" name="rtoggle"	value="streets" checked="checked" /> <i class="fa fa-road" aria-hidden="true"></i>
+								</label>
+								<label class="btn btn-dark">
+									<input id="satellite-v9" type="radio" name="rtoggle" value="satellite" /> <i class="fa fa-tree" aria-hidden="true"></i>
+								</label>
+							</div>
+							
+							<div style="position: absolute; top: 10px; right: 50px; background-color: #ffffff; border-radius: 4px; padding: 10px;">
+								<div id="datepicker" data-date="12/03/2012"></div>
+							
+								<a class="btn btn-dark" style="width: 100%;" id="reset_button">Reset</a>
+							</div>
+							
+							<script>
+								$(document).ready(function() {
+									mapboxgl.accessToken = '{{ settings.MAPBOX_KEY }}';
+
+									var map = new mapboxgl.Map({
+										container: 'map',
+										style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
+										center: [-74.5, 40], // starting position [lng, lat]
+										zoom: 9 // starting zoom,
+									});
+								
+									var updateHeat = function() {
+										if (map.getSource("points-source") == undefined) {
+											map.addSource("points-source", {
+												'type': 'geojson',
+												'data': data
+											});
+										}
+
+										if (map.getLayer("points-heat") == undefined) {
+											map.addLayer({
+												'id': 'points-heat',
+												'type': 'heatmap',
+												'source': 'points-source',
+	//											'maxzoom': 9,
+												'paint': {
+													'heatmap-weight': 1,
+													'heatmap-intensity': [
+														'interpolate',
+														['linear'],
+														['zoom'],
+														0,
+														1,
+														9,
+														3
+													],
+													// Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+													// Begin color ramp at 0-stop with a 0-transparancy color
+													// to create a blur-like effect.
+													'heatmap-color': [
+														'interpolate',
+														['linear'],
+														['heatmap-density'],
+														0,
+														'rgba(33,102,172,0)',
+														0.2,
+														'rgb(103,169,207)',
+														0.4,
+														'rgb(209,229,240)',
+														0.6,
+														'rgb(253,219,199)',
+														0.8,
+														'rgb(239,138,98)',
+														1,
+														'rgb(178,24,43)'
+													],
+													'heatmap-radius': [
+														'interpolate',
+														['linear'],
+														['zoom'],
+														7,
+														5,
+														9,
+														10
+													],
+													'heatmap-opacity': [
+														'interpolate',
+														['linear'],
+														['zoom'],
+														15,
+														1,
+														18,
+														0.25
+													]
+												},
+												'filter': ['any', ['in', '1970-01-01', ['get', 'datetime']]]
+											});										
+										}
+
+										if (map.getLayer("points-point") == undefined) {
+											map.addLayer({
+												'id': 'points-point',
+												'type': 'circle',
+												'source': 'points-source',
+												'minzoom': 12,
+												'paint': {
+													'circle-radius': 3,
+													'circle-color': '#304FFE',
+													'circle-stroke-color': '#FFFFFF',
+													'circle-stroke-width': 2,
+													// Transition from heatmap to circle layer by zoom level
+													'circle-opacity': [
+														'interpolate',
+														['linear'],
+														['zoom'],
+														15,
+														0,
+														18,
+														1
+													],
+													'circle-stroke-opacity': [
+														'interpolate',
+														['linear'],
+														['zoom'],
+														15,
+														0,
+														18,
+														1
+													]
+												}, 
+												'filter': ['any', ['in', '1970-01-01', ['get', 'datetime']]]
+											});
+										}
+									};
+
+									map.on('load', function () {
+										map.addControl(new mapboxgl.NavigationControl());									
+										
+										updateHeat();
+									});
+
+									map.on('styledata', function () {
+										updateHeat();
+									});
+
+									var layerList = document.getElementById('layer_menu');
+									var inputs = layerList.getElementsByTagName('input');
+ 
+									function switchLayer(layer) {
+										var layerId = layer.target.id;
+										map.setStyle('mapbox://styles/mapbox/' + layerId);
+									}
+ 
+									for (var i = 0; i < inputs.length; i++) {
+										inputs[i].onclick = switchLayer;
+									}
+
+									map.on('click', 'points-point', function (e) {
+										var coordinates = e.features[0].geometry.coordinates.slice();
+										
+										var description = moment(e.features[0].properties.timestamp * 1000).format('LLLL');
+ 
+										while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+											coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+										}
+ 
+										new mapboxgl.Popup()
+											.setLngLat(coordinates)
+											.setHTML(description)
+											.addTo(map);
+									});
+ 
+									map.on('mouseenter', 'points-point', function () {
+										map.getCanvas().style.cursor = 'pointer';
+									});
+ 
+									map.on('mouseleave', 'points-point', function () {
+										map.getCanvas().style.cursor = '';
+									});
+
+									var dates = [];
+								
+									var dateFeatures = {};
+								
+									data['features'].forEach(function(feature) {
+										var dateStr = feature['properties']['datetime'];
+									
+										var index = dateStr.indexOf('T');
+									
+										dateStr = dateStr.substring(0, index);
+									
+										if (dates.indexOf(dateStr) == -1) {
+									
+											dates.push(dateStr);
+
+											dateFeatures[dateStr] = [];
+										}
+									
+										dateFeatures[dateStr].push(feature);
+									});
+								
+									dates.sort();
+								
+									var missing = [];
+								
+									var start = moment(dates[0]);
+									var end = moment(dates[dates.length - 1]);
+								
+									var indexDate = moment(dates[0]);
+								
+									while (indexDate.valueOf() < end.valueOf()) {
+										var dateStr = indexDate.format('YYYY-MM-DD');
+									
+										if (dates.indexOf(dateStr) == -1) {
+											missing.push(dateStr);
+										}
+									
+										indexDate = indexDate.add(1, 'd');
+									}
+									
+									var selectedDates = [];
+								
+									$('#datepicker').datepicker({
+										multidate: true,
+										format: 'yyyy-mm-dd',
+										startDate: start.format('YYYY-MM-DD'),
+										endDate: end.format('YYYY-MM-DD'),
+										defaultViewDate: end.format('YYYY-MM-DD'),
+										datesDisabled: missing
+									});
+								
+									$('#datepicker').on('changeDate', function() {
+										var dates = $('#datepicker').datepicker('getDates');
+									
+										var dateKeys = [];
+
+										var filter = ["any"];
+									
+										dates.forEach(function(date) {
+											var dateStr = date.toISOString();
+										
+											var index = dateStr.indexOf('T');
+										
+											dateStr = dateStr.substring(0, index);
+										
+											dateKeys.push(dateStr);
+										
+											filter.push(["in", dateStr, ['get', "datetime"]]);
+										});
+									
+										dateKeys.sort();
+
+										var heat = map.getLayer("points-heat");
+									
+										if (heat != undefined) {
+											map.setFilter('points-heat', filter);
+										}
+
+										var points = map.getLayer("points-point");
+									
+										if (points != undefined) {
+											map.setFilter('points-point', filter);
+										}
+									
+										var points = [];
+									
+										dateKeys.forEach(function(dateKey) {
+											var features = dateFeatures[dateKey];
+										
+											if (features != undefined) {
+												features.forEach(function(feature) {
+													var point = feature['geometry']['coordinates'];
+											
+													points.push(point);
+												});
+											}
+										});
+									
+										if (points.length == 1) {
+											map.setCenter(points[0]);
+										} else if (points.length > 1) {
+											var bounds = new mapboxgl.LngLatBounds();
+										
+											points.forEach(function(point) {
+												bounds.extend([point[0], point[1]]);
+											});
+										
+											map.fitBounds(bounds, {
+												padding: 50
+											});
+										}
+									});
+
+									var resize = function() {
+										$("#map").css({
+											"height": ($(window).height() - 86) // $("nav").height())
+										});
+									
+										map.resize();
+									}
+									
+									$("#reset_button").click(function(eventObj) {
+										eventObj.preventDefault();
+										
+										$('#datepicker').datepicker('setDates', end.toDate());
+									});
+								
+									$(window).resize(resize);							
+
+									window.setTimeout(function() {
+										resize();
+
+										$("#reset_button").click();
+									}, 2500);
+								});
+							</script>						
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

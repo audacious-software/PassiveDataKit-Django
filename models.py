@@ -1,4 +1,4 @@
-# pylint: disable=no-member, line-too-long, too-many-lines
+# pylint: disable=no-member, line-too-long, too-many-lines, super-with-arguments, useless-object-inheritance
 
 from __future__ import print_function
 from __future__ import division
@@ -32,6 +32,7 @@ from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.text import slugify
 
 from django.contrib.auth import get_user_model
@@ -118,15 +119,15 @@ def install_supports_jsonfield():
 
     return DB_SUPPORTS_JSON
 
-
+@python_2_unicode_compatible
 class DataGeneratorDefinition(models.Model):
     generator_identifier = models.CharField(max_length=1024)
 
     name = models.CharField(max_length=1024)
     description = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
-        return self.generator_identifier
+    def __str__(self):
+        return str(self.generator_identifier)
 
     @classmethod
     def definition_for_identifier(cls, generator_identifier):
@@ -155,10 +156,11 @@ class DataGeneratorDefinition(models.Model):
             return definition
 
 
+@python_2_unicode_compatible
 class DataSourceReference(models.Model):
     source = models.CharField(max_length=1024)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.source)
 
     @classmethod
@@ -362,6 +364,8 @@ class DataPointManager(models.Manager):
         point.fetch_source_reference()
         point.fetch_secondary_identifier()
 
+        return point
+
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
@@ -394,29 +398,29 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     def fetch_secondary_identifier(self, skip_save=False, properties=None):
         if self.secondary_identifier is not None:
             return self.secondary_identifier
-        else:
-            if properties is None:
-                properties = self.fetch_properties()
 
-            generator_name = generator_slugify(self.generator_identifier)
+        if properties is None:
+            properties = self.fetch_properties()
 
-            for app in settings.INSTALLED_APPS:
-                try:
-                    generator = importlib.import_module(app + '.generators.' + generator_name)
+        generator_name = generator_slugify(self.generator_identifier)
 
-                    identifier = generator.extract_secondary_identifier(properties)
+        for app in settings.INSTALLED_APPS:
+            try:
+                generator = importlib.import_module(app + '.generators.' + generator_name)
 
-                    if identifier is not None:
-                        self.secondary_identifier = identifier
+                identifier = generator.extract_secondary_identifier(properties)
 
-                        if skip_save is False:
-                            self.save()
+                if identifier is not None:
+                    self.secondary_identifier = identifier
 
-                    return self.secondary_identifier
-                except ImportError:
-                    pass
-                except AttributeError:
-                    pass
+                    if skip_save is False:
+                        self.save()
+
+                return self.secondary_identifier
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
 
         return None
 
@@ -534,7 +538,7 @@ class DataBundle(models.Model):
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', on_delete=models.CASCADE)
     data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
@@ -542,18 +546,20 @@ class DataFile(models.Model):
     content_file = models.FileField(upload_to='data_files')
 
 
+@python_2_unicode_compatible
 class DataSourceGroup(models.Model):
     name = models.CharField(max_length=1024, db_index=True)
 
     suppress_alerts = models.BooleanField(default=False)
 
-    def __unicode__(self):
-        return self.name
+    def __str__(self):
+        return str(self.name)
 
     def refresh_performance_metadata(self):
         for member in self.sources.all():
             member.refresh_performance_metadata()
 
+@python_2_unicode_compatible
 class DataServer(models.Model):
     name = models.CharField(max_length=1024, unique=True)
     upload_url = models.URLField(max_length=1024, unique=True)
@@ -561,7 +567,7 @@ class DataServer(models.Model):
 
     request_key = models.CharField(max_length=1024, default='', null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.name)
 
 class DataSourceManager(models.Manager): # pylint: disable=too-few-public-methods
@@ -575,6 +581,7 @@ class DataSourceManager(models.Manager): # pylint: disable=too-few-public-method
         return source_list
 
 
+@python_2_unicode_compatible
 class DataSource(models.Model):
     objects = DataSourceManager()
 
@@ -594,7 +601,7 @@ class DataSource(models.Model):
 
     server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name + ' (' + self.identifier + ')'
 
     def details_url(self):
@@ -1015,7 +1022,7 @@ class DataSourceAlert(models.Model):
     else:
         alert_details = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
 
-    data_source = models.ForeignKey(DataSource, related_name='alerts')
+    data_source = models.ForeignKey(DataSource, related_name='alerts', on_delete=models.CASCADE)
     generator_identifier = models.CharField(max_length=1024, null=True, blank=True)
 
     created = models.DateTimeField(db_index=True)
@@ -1093,7 +1100,7 @@ class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
 class ReportJob(models.Model):
     objects = ReportJobManager()
 
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -1121,7 +1128,7 @@ def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-a
 
 
 class ReportDestination(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='pdk_report_destinations', on_delete=models.CASCADE)
 
     destination = models.CharField(max_length=4096)
     description = models.CharField(max_length=4096, null=True, blank=True)
@@ -1163,7 +1170,7 @@ def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unu
         destination.parameters = json.dumps(parameters, indent=2)
 
 class ReportJobBatchRequest(models.Model):
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL)
+    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     requested = models.DateTimeField(db_index=True)
     started = models.DateTimeField(db_index=True, null=True, blank=True)
@@ -1413,7 +1420,7 @@ class DataServerApiToken(models.Model):
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 
-    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens')
+    user = models.ForeignKey(get_user_model(), related_name='pdk_api_tokens', on_delete=models.CASCADE)
     token = models.CharField(max_length=1024, null=True, blank=True)
     expires = models.DateTimeField(null=True, blank=True)
 
@@ -1457,6 +1464,7 @@ class DataServerAccessRequestPending(models.Model):
         self.processed = True
         self.save()
 
+@python_2_unicode_compatible
 class DeviceModel(models.Model):
     model = models.CharField(max_length=1024, unique=True)
     manufacturer = models.CharField(max_length=1024)
@@ -1465,18 +1473,19 @@ class DeviceModel(models.Model):
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.model + ' (' + self.manufacturer + ')')
 
+@python_2_unicode_compatible
 class Device(models.Model):
-    source = models.ForeignKey(DataSource, related_name='devices')
+    source = models.ForeignKey(DataSource, related_name='devices', on_delete=models.CASCADE)
 
-    model = models.ForeignKey(DeviceModel, related_name='devices')
+    model = models.ForeignKey(DeviceModel, related_name='devices', on_delete=models.CASCADE)
     platform = models.CharField(max_length=(1024 * 1024), null=True, blank=True)
 
     notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(str(self.source.identifier) + ': ' + str(self.model.model) + ' (' + str(self.platform) + ')')
 
     def populate_device(self):
@@ -1508,7 +1517,7 @@ class Device(models.Model):
         self.save()
 
 class DeviceIssue(models.Model): # pylint: disable=too-many-instance-attributes
-    device = models.ForeignKey(Device, related_name='issues')
+    device = models.ForeignKey(Device, related_name='issues', on_delete=models.CASCADE)
 
     state = models.CharField(max_length=1024, choices=DEVICE_ISSUE_STATE_CHOICES, default='opened')
     created = models.DateTimeField()

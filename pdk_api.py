@@ -18,7 +18,7 @@ import tempfile
 import time
 import traceback
 
-import io
+from io import BytesIO, StringIO
 
 import dropbox
 import paramiko
@@ -31,17 +31,6 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from .models import DataPoint, DataBundle, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
-
-# def name_for_generator(identifier):
-#    if identifier == 'web-historian':
-#        return 'Web Historian Web Visits'
-#
-#    return None
-
-# def compile_visualization(identifier, points_query, folder):
-#
-#    if identifier == 'web-historian':
-#
 
 def visualization(source, generator):
     try:
@@ -269,13 +258,13 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                             file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
                             traceback.print_exc()
 
         except BaseException:
             traceback.print_exc()
-    elif destination.destination == 'sftp':
+    elif destination.destination == 'sftp': # pylint: disable=too-many-nested-blocks
         try:
             parameters = destination.fetch_parameters()
 
@@ -294,10 +283,20 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
+                        key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
-                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                        trust_host_keys = True
+
+                        try:
+                            trust_host_keys = settings.PDK_API_TRUST_HOST_KEYS
+                        except AttributeError:
+                            pass
+
+                        if trust_host_keys:
+                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+
                         ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
                         ftp_client = ssh_client.open_sftp()
@@ -307,7 +306,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                         file_sent = True
                     except: # pylint: disable=bare-except
                         if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + duration + ' seconds.)')
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
                             traceback.print_exc()
 
@@ -435,7 +434,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = io.StringIO()
+        buf = BytesIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 

@@ -1,7 +1,7 @@
 # pylint: disable=line-too-long
 
 from django.conf.urls import url
-from django.contrib.auth.views import logout
+from django.contrib.auth.views import LogoutView
 from django.conf import settings
 
 from .views import pdk_add_data_point, pdk_add_data_bundle, pdk_app_config, pdk_issues, \
@@ -40,7 +40,7 @@ try:
         urlpatterns.append(url(r'^issues.json$', pdk_issues_json, name='pdk_issues_json'))
         urlpatterns.append(url(r'^issues$', pdk_issues, name='pdk_issues'))
         urlpatterns.append(url(r'^unmatched-sources.json$', pdk_unmatched_sources, name='pdk_unmatched_sources'))
-        urlpatterns.append(url(r'^logout$', logout, name='pdk_logout'))
+        urlpatterns.append(url(r'^logout$', LogoutView.as_view(), name='pdk_logout'))
         urlpatterns.append(url(r'^$', pdk_home, name='pdk_home'))
 except AttributeError:
     pass

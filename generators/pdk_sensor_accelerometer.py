@@ -78,7 +78,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
                         for key in keys:
                             key_end = float(key) + 600
 
-                            if timestamp >= float(key) and timestamp <= key_end:
+                            if float(key) <= timestamp <= key_end:
                                 timestamp_counts[key] += 1
                 except KeyError:
                     pass
