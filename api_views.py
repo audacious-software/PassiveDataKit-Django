@@ -149,7 +149,12 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         matches = []
 
         for item in query[(page_index * page_size):((page_index + 1) * page_size)]:
-            matches.append(item.fetch_properties())
+            properties = item.fetch_properties()
+
+            properties['passive-data-metadata']['pdk_server_created'] = arrow.get(item.created).timestamp
+            properties['passive-data-metadata']['pdk_server_recorded'] = arrow.get(item.recorded).timestamp
+
+            matches.append(properties)
 
         payload['matches'] = matches
 
