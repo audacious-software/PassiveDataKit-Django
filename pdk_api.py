@@ -13,6 +13,7 @@ import gc
 import importlib
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -309,6 +310,25 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                             print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
                             traceback.print_exc()
+
+        except BaseException:
+            traceback.print_exc()
+
+    elif destination.destination == 'local':
+        try:
+            parameters = destination.fetch_parameters()
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+            if ('prepend_date' in parameters) and parameters['prepend_date']:
+                path = path + timezone.now().date().isoformat() + '-'
+
+            path = path + os.path.basename(os.path.normpath(report_path))
+
+            shutil.copyfile(report_path, path)
+
+            file_sent = True
 
         except BaseException:
             traceback.print_exc()
