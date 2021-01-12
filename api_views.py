@@ -179,7 +179,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -197,10 +197,10 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
-                    
+
                     if field == 'source':
                         field = 'source_reference'
-                        
+
                         value = DataSourceReference.reference_for_source(value)
 
                 processed_filter[field] = value
@@ -220,7 +220,7 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 
                     if field == 'source':
                         field = 'source_reference'
-                        
+
                         value = DataSourceReference.reference_for_source(value)
 
                 processed_exclude[field] = value
