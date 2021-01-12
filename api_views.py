@@ -197,6 +197,11 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+                    
+                    if field == 'source':
+                        field = 'source_reference'
+                        
+                        value = DataSourceReference.reference_for_source(value)
 
                 processed_filter[field] = value
 
@@ -212,6 +217,11 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+
+                    if field == 'source':
+                        field = 'source_reference'
+                        
+                        value = DataSourceReference.reference_for_source(value)
 
                 processed_exclude[field] = value
 
