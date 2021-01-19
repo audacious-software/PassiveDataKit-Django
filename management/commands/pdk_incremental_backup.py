@@ -48,6 +48,11 @@ class Command(BaseCommand):
                             action='store_true',
                             help='Delete backed-up content after successful transmission')
 
+        parser.add_argument('--skip-apps',
+                            dest='skip_apps',
+                            action='store_true',
+                            help='Skip backup of app data other than PDK data points')
+
 
     def folder_for_options(self, options): # pylint: disable=no-self-use
         folder_path_format = '%(start_date)s__%(end_date)s'
@@ -108,6 +113,7 @@ class Command(BaseCommand):
             options['end_date'] = today.isoformat()
 
         parameters['clear_archived'] = options['clear_archived']
+        parameters['skip_apps'] = options['skip_apps']
 
         key = None
 
