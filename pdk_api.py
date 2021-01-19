@@ -18,7 +18,7 @@ import tempfile
 import time
 import traceback
 
-from io import BytesIO, StringIO
+from io import StringIO
 
 import dropbox
 import paramiko
@@ -415,6 +415,9 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         'passive_data_kit.ReportDestination',
     )
 
+    if parameters['skip_apps']:
+        dumpdata_apps = ()
+
     prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
 
     if 'start_date' in parameters:
@@ -434,7 +437,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = BytesIO()
+        buf = StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
@@ -444,7 +447,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         gc.collect()
 
-        compressed_str = bz2.compress(database_dump)
+        compressed_str = bz2.compress(database_dump.encode('utf-8'))
 
         database_dump = None
 
@@ -512,7 +515,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         index += bundle_size
 
-        compressed_str = bz2.compress(json.dumps(bundle))
+        compressed_str = bz2.compress(json.dumps(bundle).encode('utf-8'))
 
         path = os.path.join(backup_staging, filename)
 
