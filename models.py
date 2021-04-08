@@ -1557,3 +1557,13 @@ def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-ar
 
     if issue.user_agent is None:
         issue.user_agent = issue.device.source.latest_user_agent()
+
+class PermissionsSupport(models.Model):
+    class Meta:
+        managed = False
+        default_permissions = ()
+
+        permissions = (
+            ('passive_data_kit_dashboard_access', 'Access Passive Data Kit dashboard'),
+            ('passive_data_kit_export_access', 'Create Passive Data Kit data exports'),
+        )
