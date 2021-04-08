@@ -1559,7 +1559,7 @@ def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-ar
         issue.user_agent = issue.device.source.latest_user_agent()
 
 class PermissionsSupport(models.Model):
-    class Meta:
+    class Meta: # pylint: disable=too-few-public-methods, old-style-class, no-init
         managed = False
         default_permissions = ()
 
