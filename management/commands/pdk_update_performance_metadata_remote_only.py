@@ -15,6 +15,12 @@ class Command(BaseCommand):
                             default='any',
                             help='Specific source to update')
 
+        parser.add_argument('--count',
+                            type=int,
+                            dest='count',
+                            default=1,
+                            help='Number of records to update')
+
     @handle_lock
     @log_scheduled_event
     def handle(self, *args, **options):
@@ -24,17 +30,18 @@ class Command(BaseCommand):
             servers.append(server)
 
         for server in servers:
-            source = None
+            for i in range(0, options['count']):
+                source = None
 
-            if options['source'] != 'any':
-                source = DataSource.objects.filter(identifier=options['source'], server=server).first()
+                if options['source'] != 'any':
+                    source = DataSource.objects.filter(identifier=options['source'], server=server).first()
 
-            if source is None:
-                source = DataSource.objects.filter(performance_metadata_updated=None, server=server).first()
+                if options['source'] == 'any':
+                    if source is None:
+                        source = DataSource.objects.filter(performance_metadata_updated=None, server=server).first()
 
-            if source is None:
-                source = DataSource.objects.filter(server=server).order_by('performance_metadata_updated').first()
+                    if source is None:
+                        source = DataSource.objects.filter(server=server).order_by('performance_metadata_updated').first()
 
-            if source is not None:
-                # print('SOURCE: ' + str(source))
-                source.update_performance_metadata()
+                if source is not None:
+                    source.update_performance_metadata()

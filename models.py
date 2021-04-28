@@ -650,12 +650,13 @@ class DataSource(models.Model):
 
         return {}
 
-    def should_suppress_alerts(self):
+    def should_suppress_alerts(self, skip_server_check=False):
         if self.suppress_alerts:
             return True
-
-        if self.server is not None:
-            return True
+            
+        if skip_server_check is False:
+            if self.server is not None:
+                return True
 
         if self.group and self.group.suppress_alerts:
             return True
@@ -869,7 +870,6 @@ class DataSource(models.Model):
                         pass
                     except AttributeError:
                         pass
-
             else:
                 print('Server code ' + str(identifier_post.status_code) + ' received for request for ' + self.identifier + ' metadata from ' + self.server.source_metadata_url)
 
@@ -888,6 +888,23 @@ class DataSource(models.Model):
         if self.server is None:
             if 'latest_point' in metadata:
                 return DataPoint.objects.filter(pk=metadata['latest_point']).first()
+
+            source_reference = DataSourceReference.reference_for_source(self.identifier)
+
+            if DataPoint.objects.filter(source_reference=source_reference).count() > 0: # Added for no-data condition scans of whole table for non-existent data...
+                point = DataPoint.objects.filter(source_reference=source_reference).order_by('-created').first()
+
+                if point is not None:
+                    metadata['latest_point'] = point.pk
+
+                    if install_supports_jsonfield():
+                        self.performance_metadata = metadata
+                    else:
+                        self.performance_metadata = json.dumps(metadata, indent=2)
+
+                    self.save()
+
+                    return point
         elif 'latest_point' in metadata and 'latest_point_created' in metadata:
             virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
             virtual_point.pk = metadata['latest_point'] # pylint: disable=invalid-name
@@ -904,11 +921,28 @@ class DataSource(models.Model):
         if self.server is None:
             if 'latest_point_recorded' in metadata:
                 return DataPoint.objects.filter(pk=metadata['latest_point_recorded']).first()
-        elif 'latest_point_recorded' in metadata and 'latest_point_recorded_time' in metadata:
+
+            source_reference = DataSourceReference.reference_for_source(self.identifier)
+
+            if DataPoint.objects.filter(source_reference=source_reference).count() > 0: # Added for no-data condition scans of whole table for non-existent data...
+                point = DataPoint.objects.filter(source_reference=source_reference).order_by('-recorded').first()
+
+                if point is not None:
+                    metadata['latest_point_recorded'] = point.pk
+
+                    if install_supports_jsonfield():
+                        self.performance_metadata = metadata
+                    else:
+                        self.performance_metadata = json.dumps(metadata, indent=2)
+
+                    self.save()
+
+                    return point
+        elif 'latest_point_recorded' in metadata and 'latest_point_recorded_created' in metadata:
             virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
-            virtual_point.pk = metadata['latest_point_recorded']
-            virtual_point.recorded = arrow.get(metadata['latest_point_recorded_time']).datetime
-            virtual_point.created = virtual_point.recorded
+            virtual_point.pk = metadata['latest_point_recorded'] # pylint: disable=invalid-name
+            virtual_point.created = arrow.get(metadata['latest_point_recorded_created']).datetime
+            virtual_point.recorded = virtual_point.created
 
             return virtual_point
 
@@ -918,24 +952,33 @@ class DataSource(models.Model):
     def earliest_point(self):
         metadata = self.fetch_performance_metadata()
 
-        if 'earliest_point' in metadata:
-            return DataPoint.objects.filter(pk=metadata['earliest_point']).first()
+        if self.server is None:
+            if 'earliest_point' in metadata:
+                return DataPoint.objects.filter(pk=metadata['earliest_point']).first()
 
-        source_reference = DataSourceReference.reference_for_source(self.identifier)
+            source_reference = DataSourceReference.reference_for_source(self.identifier)
 
-        point = DataPoint.objects.filter(source_reference=source_reference).order_by('created').first()
+            if DataPoint.objects.filter(source_reference=source_reference).count() > 0: # Added for no-data condition scans of whole table for non-existent data...
+                point = DataPoint.objects.filter(source_reference=source_reference).order_by('created').first()
 
-        if point is not None:
-            metadata['earliest_point'] = point.pk
+                if point is not None:
+                    metadata['earliest_point'] = point.pk
 
-            if install_supports_jsonfield():
-                self.performance_metadata = metadata
-            else:
-                self.performance_metadata = json.dumps(metadata, indent=2)
+                    if install_supports_jsonfield():
+                        self.performance_metadata = metadata
+                    else:
+                        self.performance_metadata = json.dumps(metadata, indent=2)
 
-            self.save()
+                    self.save()
 
-            return point
+                    return point
+        elif 'earliest_point' in metadata and 'earliest_point_created' in metadata:
+            virtual_point = DataPoint(generator_identifier='pdk-virtual-point')
+            virtual_point.pk = metadata['earliest_point'] # pylint: disable=invalid-name
+            virtual_point.created = arrow.get(metadata['earliest_point_created']).datetime
+            virtual_point.recorded = virtual_point.created
+
+            return virtual_point
 
         return None
 

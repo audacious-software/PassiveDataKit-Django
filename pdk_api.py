@@ -13,8 +13,8 @@ import gc
 import importlib
 import json
 import os
-import shutil
 import sys
+import shutil
 import tempfile
 import time
 import traceback
@@ -343,8 +343,8 @@ def annotate_source_definition(source, definition):
         active_alerts.append(alert.fetch_definition())
 
     definition['active_alerts'] = active_alerts
-
-    earliest_point = source.earliest_point()
+    
+    earliest_point = None # source.earliest_point()
 
     if earliest_point is not None:
         definition['earliest_point'] = {
@@ -356,7 +356,7 @@ def annotate_source_definition(source, definition):
     else:
         definition['earliest_point'] = None
 
-    latest_point = source.latest_point()
+    latest_point = None # source.latest_point()
 
     if latest_point is not None:
         definition['latest_point'] = {
