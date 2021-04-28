@@ -41,6 +41,11 @@ class Command(BaseCommand):
                             type=int,
                             help='Number of days for each backup job')
 
+        parser.add_argument('--skip-apps',
+                            dest='skip_apps',
+                            action='store_true',
+                            help='Skip backup of app data other than PDK data points')
+
 
     @handle_lock
     def handle(self, *args, **options):
@@ -69,6 +74,9 @@ class Command(BaseCommand):
 
             if options['clear_archived'] is not None and options['clear_archived'] is not False:
                 arguments.append('--clear-archived')
+
+            if options['skip_apps'] is not None and options['skip_apps'] is not False:
+                arguments.append('--skip-apps')
 
             print(str(arguments))
 
