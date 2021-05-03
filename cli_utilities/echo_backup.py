@@ -21,16 +21,16 @@ print(str(args))
 if args['key'] is None:
     args['key'] = getpass.getpass('Enter the backup encryption key: ')
 
-    key = base64.b64decode(args['key'])
+key = base64.b64decode(args['key'])
 
-    for file in args['file']:
-        box = SecretBox(key)
+for file in args['file']:
+    box = SecretBox(key)
 
-        with open(file, 'rb') as backup_file:
-            encrypted_content = backup_file.read()
+    with open(file, 'rb') as backup_file:
+        encrypted_content = backup_file.read()
 
-            content = box.decrypt(encrypted_content)
+        content = box.decrypt(encrypted_content)
 
-            decompressed = bz2.decompress(content)
+        decompressed = bz2.decompress(content)
 
-            print(decompressed)
+        print(decompressed)

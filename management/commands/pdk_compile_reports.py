@@ -201,9 +201,11 @@ class Command(BaseCommand):
                                             pdk_api = importlib.import_module(app + '.pdk_api')
 
                                             try:
-                                                output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
+                                                output_file = os.path.normpath(pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type))
 
                                                 if output_file is not None:
+                                                    output_file = os.path.normpath(output_file)
+
                                                     if generator != 'pdk-personal-data':
                                                         if output_file.lower().endswith('.zip'):
                                                             zips_to_merge.append(output_file)
