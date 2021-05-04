@@ -364,6 +364,23 @@ class DataPointManager(models.Manager):
         point.fetch_source_reference()
         point.fetch_secondary_identifier()
 
+        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+
+        if data_point_count is None:
+            count = DataPoint.objects.all().count()
+
+            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
+
+            data_point_count.value = str(count)
+            data_point_count.save()
+        else:
+            count = int(data_point_count.value)
+
+            count += 1
+
+            data_point_count.value = str(count)
+            data_point_count.save()
+
         return point
 
 
