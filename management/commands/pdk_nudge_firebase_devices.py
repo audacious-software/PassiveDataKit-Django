@@ -20,11 +20,12 @@ class Command(BaseCommand):
     help = 'Send silent notifications to Android Firebase devices to nudge power management systems for transmission.'
 
     def add_arguments(self, parser):
-        pass
+        parser.add_argument('--source', type=str, default=None)
+        parser.add_argument('--debug', action='store_const', const=True, dest='debug', default=False)
 
     @handle_lock
     @log_scheduled_event
-    def handle(self, *args, **options): # pylint: disable=too-many-locals
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches
         push_service = FCMNotification(api_key=settings.PDK_FIREBASE_API_KEY)
 
         event_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
@@ -42,10 +43,10 @@ class Command(BaseCommand):
 
         window_start = timezone.now() - datetime.timedelta(days=active_days_window)
 
-        while index < count:
+        if options['source'] is not None:
             tokens = {}
 
-            for source in DataSource.objects.all().order_by('identifier')[index:(index+128)]:
+            for source in DataSource.objects.filter(identifier=options['source']).order_by('identifier'):
                 source_reference = DataSourceReference.reference_for_source(source.identifier)
 
                 latest_point = source.latest_point()
@@ -68,8 +69,38 @@ class Command(BaseCommand):
 
             result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
 
-            index += 128
+            if settings.DEBUG or options['debug']:
+                print('Firebase nudge result: ' + str(result))
+                print('(Update settings.DEBUG to suppress...)')
+        else:
+            while index < count:
+                tokens = {}
 
-        if settings.DEBUG:
-            print('Firebase nudge result: ' + str(result))
-            print('(Update settings.DEBUG to suppress...)')
+                for source in DataSource.objects.all().order_by('identifier')[index:(index+128)]:
+                    source_reference = DataSourceReference.reference_for_source(source.identifier)
+
+                    latest_point = source.latest_point()
+
+                    if latest_point is not None and latest_point.created > window_start:
+                        point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token', created__gte=window_start).order_by('-created').first()
+
+                        if point is not None:
+                            properties = point.fetch_properties()
+
+                            tokens[source.identifier] = properties['event_details']['token']
+
+                token_list = []
+
+                for source, token in list(tokens.items()): # pylint: disable=unused-variable
+                    if (token in token_list) is False:
+                        token_list.append(token)
+
+                message = {'operation' : 'nudge', 'source': 'passive-data-kit'}
+
+                result = push_service.notify_multiple_devices(registration_ids=token_list, data_message=message)
+
+                index += 128
+
+                if settings.DEBUG or options['debug']:
+                    print('Firebase nudge result: ' + str(result))
+                    print('(Update settings.DEBUG to suppress...)')

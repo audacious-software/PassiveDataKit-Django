@@ -1,5 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
+import os
 import tempfile
 
 import xlsxwriter
@@ -10,7 +11,7 @@ def generator_name(identifier): # pylint: disable=unused-argument
     return 'Reported Issues'
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, unused-argument
-    filename = tempfile.gettempdir() + '/pdk_export_issues.xlsx'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_issues.xlsx'
 
     workbook = xlsxwriter.Workbook(filename)
 

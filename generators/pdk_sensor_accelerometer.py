@@ -94,7 +94,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
@@ -145,7 +145,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(now.timetuple())
 
-    with open(folder + '/accelerometer.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'accelerometer.json', 'w') as outfile:
         json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
@@ -154,13 +154,13 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 def visualization(source, generator): # pylint: disable=unused-argument
     context = {}
 
-    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-sensor-accelerometer/accelerometer.json'
+    filename = settings.MEDIA_ROOT + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'accelerometer.json'
 
     with open(filename) as infile:
         data = json.load(infile)
         context['viz_data'] = data
 
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-sensor-accelerometer/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'timestamp-counts.json'
 
     try:
         with open(filename) as infile:
@@ -174,7 +174,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
 
 def data_table(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + 'pdk_visualizations/' + source.identifier + '/pdk-sensor-accelerometer/accelerometer.json'
+    filename = settings.MEDIA_ROOT + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'accelerometer.json'
 
     with open(filename) as infile:
         data = json.load(infile)
@@ -185,7 +185,7 @@ def data_table(source, generator): # pylint: disable=unused-argument
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w', allowZip64=True) as export_file:
         for source in sources:
@@ -218,7 +218,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 if splits > 1:
                     identifier += '__' + str(split_index) + '_of_' + str(splits)
 
-                secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+                secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
                 with open(secondary_filename, 'w') as outfile:
                     writer = csv.writer(outfile, delimiter='\t')

@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from builtins import str # pylint: disable=redefined-builtin
 from builtins import range # pylint: disable=redefined-builtin
+
 import bz2
 import calendar
 import csv
@@ -12,12 +13,13 @@ import gc
 import importlib
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
 import traceback
 
-from io import BytesIO, StringIO
+from io import StringIO
 
 import dropbox
 import paramiko
@@ -116,7 +118,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     except AttributeError:
         pass
 
-    filename = tempfile.gettempdir() + '/' + generator + '.txt'
+    filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
     with open(filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
@@ -312,6 +314,25 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
         except BaseException:
             traceback.print_exc()
 
+    elif destination.destination == 'local':
+        try:
+            parameters = destination.fetch_parameters()
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+            if ('prepend_date' in parameters) and parameters['prepend_date']:
+                path = path + timezone.now().date().isoformat() + '-'
+
+            path = path + os.path.basename(os.path.normpath(report_path))
+
+            shutil.copyfile(report_path, path)
+
+            file_sent = True
+
+        except BaseException:
+            traceback.print_exc()
+
     if file_sent is False:
         print('Unable to transmit report to destination "' + destination.destination + '".')
 
@@ -414,6 +435,9 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         'passive_data_kit.ReportDestination',
     )
 
+    if parameters['skip_apps']:
+        dumpdata_apps = ()
+
     prefix = 'pdk_backup_' + settings.ALLOWED_HOSTS[0]
 
     if 'start_date' in parameters:
@@ -433,7 +457,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = BytesIO()
+        buf = StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
@@ -443,7 +467,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         gc.collect()
 
-        compressed_str = bz2.compress(database_dump)
+        compressed_str = bz2.compress(database_dump.encode('utf-8'))
 
         database_dump = None
 
@@ -511,7 +535,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         index += bundle_size
 
-        compressed_str = bz2.compress(json.dumps(bundle))
+        compressed_str = bz2.compress(json.dumps(bundle).encode('utf-8'))
 
         path = os.path.join(backup_staging, filename)
 

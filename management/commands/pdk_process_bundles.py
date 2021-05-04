@@ -181,6 +181,11 @@ class Command(BaseCommand):
                                     except AttributeError:
                                         pass # Optional method not defined
 
+                                    try:
+                                        settings.PDK_INSPECT_DATA_POINT_AT_INGEST(bundle_point)
+                                    except AttributeError:
+                                        pass # Optional method not defined
+
                                     server_url = None
 
                                     if source in sources:

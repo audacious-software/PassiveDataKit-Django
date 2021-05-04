@@ -79,7 +79,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
     # Plot times recorded
@@ -120,11 +120,11 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-recorded-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def visualization(source, generator): # pylint: disable=unused-argument
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-data-frequency' + os.path.sep + 'timestamp-counts.json'
 
     context = {}
 
@@ -137,7 +137,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
             context['updated'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(filename))
 
             try:
-                recorded_file = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-data-frequency/timestamp-recorded-counts.json'
+                recorded_file = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-data-frequency' + os.path.sep + 'timestamp-recorded-counts.json'
 
                 with open(recorded_file) as infile:
                     recorded_data = json.load(infile)

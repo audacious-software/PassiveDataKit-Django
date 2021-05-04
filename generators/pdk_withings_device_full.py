@@ -5,6 +5,7 @@ from __future__ import division
 from builtins import str # pylint: disable=redefined-builtin
 
 import csv
+import os
 import tempfile
 import time
 
@@ -22,7 +23,7 @@ from ..models import DataPoint
 
 def compile_report(generator, sources): # pylint: disable=too-many-locals
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     if generator == 'pdk-withings-device-full':
         with ZipFile(filename, 'w') as export_file:
@@ -37,11 +38,11 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
 
                         intraday_file = fetch_intraday(source, properties, arrow.get(first_point.created))
 
-                        export_file.write(intraday_file, source + '/' + intraday_file.split('/')[-1])
+                        export_file.write(intraday_file, source + '/' + intraday_file.split(os.path.sep)[-1])
 
                         sleep_file = fetch_sleep_measures(source, properties, arrow.get(first_point.created))
 
-                        export_file.write(sleep_file, source + '/' + sleep_file.split('/')[-1])
+                        export_file.write(sleep_file, source + '/' + sleep_file.split(os.path.sep)[-1])
 
         return filename
 
@@ -50,7 +51,7 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
 def fetch_intraday(source, properties, start): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     final_end = arrow.now()
 
-    intraday_filename = tempfile.gettempdir() + '/pdk-withings-device-full-intraday.txt'
+    intraday_filename = tempfile.gettempdir() + os.path.sep + 'pdk-withings-device-full-intraday.txt'
 
     with open(intraday_filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
@@ -145,7 +146,7 @@ def fetch_intraday(source, properties, start): # pylint: disable=too-many-locals
 def fetch_sleep_measures(source, properties, start): # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     final_end = arrow.now()
 
-    sleep_filename = tempfile.gettempdir() + '/pdk-withings-device-full-sleep.txt'
+    sleep_filename = tempfile.gettempdir() + os.path.sep + 'pdk-withings-device-full-sleep.txt'
 
     with open(sleep_filename, 'w') as outfile:
         writer = csv.writer(outfile, delimiter='\t')

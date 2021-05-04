@@ -38,7 +38,7 @@ def visualization(source, generator):
 
     context['values'] = DataPoint.objects.filter(source=source.identifier, generator_identifier=generator, created__gte=start).order_by('-created')
 
-    filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-system-status/timestamp-counts.json'
+    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-system-status' + os.path.sep + 'timestamp-counts.json'
 
     try:
         with open(filename) as infile:
@@ -63,7 +63,7 @@ def data_table(source, generator):
 
 def compile_report(generator, sources, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     now = arrow.get()
-    filename = tempfile.gettempdir() + '/pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
+    filename = tempfile.gettempdir() + os.path.sep + 'pdk_export_' + str(now.timestamp) + str(old_div(now.microsecond, 1e6)) + '.zip'
 
     with ZipFile(filename, 'w') as export_file:
         seen_sources = []
@@ -82,7 +82,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             identifier = slugify(generator + '__' + export_source)
 
-            secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
+            secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
             with open(secondary_filename, 'w') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
@@ -209,5 +209,5 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)

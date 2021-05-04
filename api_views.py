@@ -148,8 +148,16 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
         matches = []
 
-        for item in query[(page_index * page_size):((page_index + 1) * page_size)]:
-            matches.append(item.fetch_properties())
+        print('PAYLOAD: ' + json.dumps(payload, indent=2))
+
+        if payload['count'] > 0:
+            for item in query[(page_index * page_size):((page_index + 1) * page_size)]:
+                properties = item.fetch_properties()
+
+                properties['passive-data-metadata']['pdk_server_created'] = arrow.get(item.created).timestamp
+                properties['passive-data-metadata']['pdk_server_recorded'] = arrow.get(item.recorded).timestamp
+
+                matches.append(properties)
 
         payload['matches'] = matches
 
@@ -174,7 +182,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
 @csrf_exempt
 @valid_pdk_token_required
-def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches
+def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
@@ -193,6 +201,11 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
 
+                    if field == 'source':
+                        field = 'source_reference'
+
+                        value = DataSourceReference.reference_for_source(value)
+
                 processed_filter[field] = value
 
             if query is None:
@@ -207,6 +220,11 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
                 if value is not None:
                     if field == 'created' or field == 'recorded':
                         value = arrow.get(value).datetime
+
+                    if field == 'source':
+                        field = 'source_reference'
+
+                        value = DataSourceReference.reference_for_source(value)
 
                 processed_exclude[field] = value
 
