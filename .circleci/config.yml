@@ -1,16 +1,10 @@
 version: 2.1
 
 orbs:
-  # The python orb contains a set of prepackaged CircleCI configuration you can use repeatedly in your configuration files
-  # Orb commands and jobs help you with common scripting around a language/tool
-  # so you dont have to copy and paste it everywhere.
-  # See the orb documentation here: https://circleci.com/developer/orbs/orb/circleci/python
   python: circleci/python@1.2
 
 workflows:
-  build:  # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run. 
-    # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
+  build:
     jobs:
       - build
 
@@ -36,7 +30,7 @@ jobs:
             sudo apt-get update && sudo apt-get install -y gdal-bin python3-gdal
             python3 -m venv ../venv
             . ../venv/bin/activate
-            pip install -r requirements.txt
+            pip install -r requirements.txt --progress-bar off
             cd ..
             mv project passive_data_kit
             mkdir django
@@ -51,9 +45,9 @@ jobs:
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .            
+            bandit -r .      
       - save_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          key: deps1-{{ .Branch }}-{{ checksum "pdk/passive_data_kit/requirements.txt" }}
           paths:
             - "venv"
       - store_artifacts:
