@@ -41,6 +41,7 @@ jobs:
             ls
             pwd
             cp passive_data_kit/circle_settings.py pdk/settings.py
+            cp passive_data_kit/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py test
             cp passive_data_kit/.pylintrc .

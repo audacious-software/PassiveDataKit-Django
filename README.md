@@ -1,6 +1,6 @@
 # PassiveDataKit-Django
 
-[![Build Status](https://circleci.com/gh/audacious-software/PassiveDataKit-Django.svg?style=svg)](https://circleci.com/gh/audacious-software/PassiveDataKit-Django)
+![Build Status](https://circleci.com/gh/audacious-software/PassiveDataKit-Django.svg?style=svg)
 
 ## License and Other Project Information
 
