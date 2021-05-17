@@ -1,6 +1,6 @@
 # PassiveDataKit-Django
 
-![CircleCI](https://circleci.com/gh/audacious-software/PassiveDataKit-Django.svg?style=svg)
+[![CircleCI](https://circleci.com/gh/audacious-software/PassiveDataKit-Django.svg?style=svg)](https://circleci.com/gh/audacious-software/PassiveDataKit-Django)
 
 ## License and Other Project Information
 
