@@ -47,7 +47,7 @@ jobs:
             pylint passive_data_kit
             bandit -r .      
       - save_cache:
-          key: deps1-{{ .Branch }}-{{ checksum "pdk/passive_data_kit/requirements.txt" }}
+          key: deps1-{{ .Branch }}-{{ checksum "/home/circleci/project/pdk/passive_data_kit/requirements.txt" }}
           paths:
             - "venv"
       - store_test_results:
