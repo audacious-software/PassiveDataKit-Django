@@ -50,6 +50,8 @@ jobs:
           key: deps1-{{ .Branch }}-{{ checksum "pdk/passive_data_kit/requirements.txt" }}
           paths:
             - "venv"
+      - store_test_results:
+          path: test-results/
       - store_artifacts:
           path: test-reports/
           destination: python_app
