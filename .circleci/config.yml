@@ -6,11 +6,11 @@ orbs:
 workflows:
   build:
     jobs:
-      - build-3.8
-      - build-2.7
+      - build-38
+      - build-27
 
 jobs:
-  build-3.8:
+  build-38:
     docker:
       - image: cimg/python:3.8
       - image: circleci/postgres:9.6.9-postgis
@@ -58,7 +58,7 @@ jobs:
           path: test-reports/
           destination: python_app
 
-  build-2.7:
+  build-27:
     docker:
       - image: cimg/python:2.7
       - image: circleci/postgres:9.6.9-postgis
