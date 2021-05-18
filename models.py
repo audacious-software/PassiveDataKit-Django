@@ -1,4 +1,4 @@
-# pylint: disable=no-member, line-too-long, too-many-lines, super-with-arguments, useless-object-inheritance
+# pylint: disable=no-member, line-too-long, too-many-lines, super-with-arguments, useless-object-inheritance, bad-option-value
 
 from __future__ import print_function
 from __future__ import division
