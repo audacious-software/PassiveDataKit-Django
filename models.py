@@ -385,7 +385,7 @@ class DataPointManager(models.Manager):
 
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         index_together = []
 
     objects = DataPointManager()
@@ -524,7 +524,7 @@ def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=u
         pass
 
 class DataServerMetadatum(models.Model):
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         verbose_name_plural = "data server metadata"
 
     key = models.CharField(max_length=1024, db_index=True)
@@ -1406,7 +1406,7 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = json.dumps(parameters, indent=2)
 
 class AppConfiguration(models.Model):
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         index_together = [
             ['is_valid', 'is_enabled'],
             ['is_valid', 'is_enabled', 'evaluate_order'],
@@ -1433,7 +1433,7 @@ class AppConfiguration(models.Model):
         return json.loads(self.configuration_json)
 
 class DataServerApiToken(models.Model):
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         verbose_name = "data server API token"
         verbose_name_plural = "data server API tokens"
 
@@ -1576,7 +1576,7 @@ def device_issue_pre_save_handler(sender, **kwargs): # pylint: disable=unused-ar
         issue.user_agent = issue.device.source.latest_user_agent()
 
 class PermissionsSupport(models.Model):
-    class Meta: # pylint: disable=too-few-public-methods, old-style-class, no-init
+    class Meta: # pylint: disable=too-few-public-methods, old-style-class, no-init, bad-option-value
         managed = False
         default_permissions = ()
 
