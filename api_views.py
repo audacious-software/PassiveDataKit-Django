@@ -1,4 +1,4 @@
-# pylint: disable=no-member, line-too-long, consider-using-in
+# pylint: disable=no-member, line-too-long, consider-using-in, bad-option-value
 
 from __future__ import print_function
 

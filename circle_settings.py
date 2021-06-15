@@ -1,23 +1,21 @@
 # pylint: skip-file
 
 """
-Settings.py for deploying standalone site on Aptible.
+Settings.py for testing on Circle CI.
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
 
-import dj_database_url
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'foobar' # nosec
 
-DEBUG = True
-ADMINS = []
+DEBUG = False
+ADMINS = [('Chris Karr', 'chris@audacious-software.com')]
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 # Application definition
 
@@ -32,19 +30,18 @@ INSTALLED_APPS = (
     'passive_data_kit'
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 )
 
-ROOT_URLCONF = 'passive_data_kit.travis_urls'
+ROOT_URLCONF = 'passive_data_kit.circle_urls'
 
 TEMPLATES = [
     {
@@ -64,8 +61,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pdk.wsgi.application'
 
-DATABASES = {'default': dj_database_url.config()}
-DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES = {
+    'default': {
+        'ENGINE':   'django.contrib.gis.db.backends.postgis',
+        'NAME':     'circle_test',
+        'USER':     'root',
+        'PASSWORD': '',
+        'HOST':     'localhost',
+        'PORT':     '',
+    }
+}
+
+# if 'test' in sys.argv or 'test_coverage' in sys.argv: #Covers regular testing and django-coverage
+#    DATABASES['default']['ENGINE'] = 'django.contrib.gis.db.backends.spatialite'
+#     SPATIALITE_LIBRARY_PATH = 'mod_spatialite'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -84,6 +93,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-STATIC_ROOT = 'staticfiles'
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
+STATIC_ROOT = 'static'
+

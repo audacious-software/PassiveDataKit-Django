@@ -95,7 +95,7 @@ Logs timestamp to Nagios monitoring system for last run of scheduled job.
 def log_scheduled_event(handle):
     def wrapper(self, *args, **options):
         try:
-            from nagios_monitor.models import ScheduledEvent # pylint: disable=import-error, import-outside-toplevel
+            from nagios_monitor.models import ScheduledEvent # pylint: disable=import-error, import-outside-toplevel, bad-option-value
 
             event_name = self.__module__.split('.').pop()
 
