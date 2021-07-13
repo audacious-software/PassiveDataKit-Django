@@ -30,7 +30,7 @@ class Command(BaseCommand):
             servers.append(server)
 
         for server in servers:
-            for i in range(0, options['count']):
+            while options['count'] > 0:
                 source = None
 
                 if options['source'] != 'any':
@@ -45,3 +45,5 @@ class Command(BaseCommand):
 
                 if source is not None:
                     source.update_performance_metadata()
+
+                options['count'] -= 1

@@ -343,7 +343,7 @@ def annotate_source_definition(source, definition):
         active_alerts.append(alert.fetch_definition())
 
     definition['active_alerts'] = active_alerts
-    
+
     earliest_point = None # source.earliest_point()
 
     if earliest_point is not None:

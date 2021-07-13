@@ -670,7 +670,7 @@ class DataSource(models.Model):
     def should_suppress_alerts(self, skip_server_check=False):
         if self.suppress_alerts:
             return True
-            
+
         if skip_server_check is False:
             if self.server is not None:
                 return True
