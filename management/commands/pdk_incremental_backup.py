@@ -170,8 +170,6 @@ class Command(BaseCommand):
 
                                 with open(encrypted_path, 'wb') as encrypted_file:
                                     encrypted_file.write(encrypted_str)
-
-                            os.remove(path)
                     elif destination_url.scheme == 'dropbox':
                         access_token = destination_url.netloc
 
@@ -195,10 +193,11 @@ class Command(BaseCommand):
                                 sys.stdout.flush()
 
                                 client.files_upload(box.encrypt(backup_io.read()), dropbox_path)
-
-                            os.remove(path)
                     else:
                         print('Unknown destination: ' + destination)
+
+                for path in to_transmit:
+                    os.remove(path)
 
                 pdk_api.clear_points(to_clear)
 

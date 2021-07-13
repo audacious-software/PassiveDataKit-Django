@@ -5,6 +5,7 @@ from __future__ import print_function
 from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
+import json
 
 from pyfcm import FCMNotification
 
@@ -79,15 +80,12 @@ class Command(BaseCommand):
                 for source in DataSource.objects.all().order_by('identifier')[index:(index+128)]:
                     source_reference = DataSourceReference.reference_for_source(source.identifier)
 
-                    latest_point = source.latest_point()
+                    point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token', created__gte=window_start).order_by('-created').first()
 
-                    if latest_point is not None and latest_point.created > window_start:
-                        point = DataPoint.objects.filter(generator_definition=event_definition, source_reference=source_reference, secondary_identifier='pdk-firebase-token', created__gte=window_start).order_by('-created').first()
+                    if point is not None:
+                        properties = point.fetch_properties()
 
-                        if point is not None:
-                            properties = point.fetch_properties()
-
-                            tokens[source.identifier] = properties['event_details']['token']
+                        tokens[source.identifier] = properties['event_details']['token']
 
                 token_list = []
 
@@ -102,5 +100,5 @@ class Command(BaseCommand):
                 index += 128
 
                 if settings.DEBUG or options['debug']:
-                    print('Firebase nudge result: ' + str(result))
+                    print('Firebase nudge result: ' + json.dumps(result, indent=2))
                     print('(Update settings.DEBUG to suppress...)')
