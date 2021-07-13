@@ -559,3 +559,38 @@ def clear_points(to_clear):
         point_pk = int(point_id.replace('pdk:', ''))
 
         DataPoint.objects.filter(pk=point_pk).delete()
+
+def update_data_type_definition(definition):
+    if 'passive-data-metadata.timestamp' in definition:
+        del definition['passive-data-metadata.timestamp']['range']
+
+        definition['passive-data-metadata.timestamp']['types'] = ['integer', 'real']
+
+        definition['passive-data-metadata.timestamp']['pdk_variable_name'] = 'Creation time'
+        definition['passive-data-metadata.timestamp']['pdk_variable_description'] = 'Unix timestamp (in seconds) encoding the moment in time the data point was generated. Note that this is NOT the same as the time when it was recorded on the server.'
+
+    if 'passive-data-metadata.source' in definition:
+        del definition['passive-data-metadata.source']['observed']
+
+        definition['passive-data-metadata.source']['is_freetext'] = True
+
+        definition['passive-data-metadata.source']['pdk_variable_name'] = 'Source identifier'
+        definition['passive-data-metadata.source']['pdk_variable_description'] = 'Unique identifier of the source of the data point. Often identifies specific people or devices engaged in passive data generation.'
+
+    if 'passive-data-metadata.generator-id' in definition:
+        definition['passive-data-metadata.generator-id']['is_freetext'] = True
+
+        definition['passive-data-metadata.generator-id']['pdk_variable_name'] = 'Generator identifier'
+        definition['passive-data-metadata.generator-id']['pdk_variable_description'] = 'Unique identifier of the data point type.'
+
+    if 'passive-data-metadata.generator' in definition:
+        del definition['passive-data-metadata.generator']['observed']
+
+        definition['passive-data-metadata.generator']['is_freetext'] = True
+
+        definition['passive-data-metadata.generator']['pdk_variable_name'] = 'Generator identifier (descriptive)'
+        definition['passive-data-metadata.generator']['pdk_variable_description'] = 'Identifies the data point type as well as the name and version of the software that generated the data point.'
+
+    if 'passive-data-metadata' in definition:
+        definition['passive-data-metadata']['pdk_variable_name'] = 'Standard Passive Data Kit metadata container'
+        definition['passive-data-metadata']['pdk_variable_description'] = 'Collection of values common across all data points, identifing the source, type, and software that produced a data point.'
