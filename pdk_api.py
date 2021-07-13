@@ -13,6 +13,7 @@ import gc
 import importlib
 import json
 import os
+import re
 import sys
 import shutil
 import tempfile
@@ -32,6 +33,56 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from .models import DataPoint, DataBundle, DataGeneratorDefinition, DataSourceReference, install_supports_jsonfield
+
+def filter_structure(pattern, structure, prefix=''):
+    if isinstance(structure, dict):
+        to_filter = []
+
+        for key in structure:
+            key_path = prefix + '.' + str(key)
+
+            while key_path.startswith('.'):
+                key_path = key_path[1:]
+
+            filter_structure(pattern, structure[key], prefix=key_path)
+
+            if pattern.match(key_path):
+                to_filter.append(key)
+
+        for key in to_filter:
+            del structure[key]
+
+    elif isinstance(structure, list):
+        to_filter = []
+
+        for key_index in range(0, len(structure)): # pylint: disable=consider-using-enumerate
+            key_path = prefix + '.' + str(key_index)
+
+            while key_path.startswith('.'):
+                key_path = key_path[1:]
+
+            filter_structure(pattern, structure[key_index], prefix=key_path)
+
+            if pattern.match(key_path):
+                to_filter.append(key_index)
+
+        for key_index in to_filter.reverse():
+            del structure[key_index]
+    else:
+        pass # Nothing to do for other variable types
+
+
+def filter_sensitive_fields(point, point_properties, parameters):
+    if hasattr(settings, 'PDK_SENSITIVE_FIELDS') and 'filter_sensitive' in parameters and parameters['filter_sensitive'] is not False:
+        if point.generator_identifier in settings.PDK_SENSITIVE_FIELDS:
+            sensitive_fields = settings.PDK_SENSITIVE_FIELDS[point.generator_identifier]
+
+            for sensitive_field in sensitive_fields:
+                filter_structure(re.compile(sensitive_field), point_properties)
+
+    return point_properties
+
+
 
 def visualization(source, generator):
     try:
@@ -528,7 +579,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         bundle = []
 
         for point in DataPoint.objects.filter(query).order_by('recorded')[index:(index + bundle_size)]:
-            bundle.append(point.fetch_properties())
+            bundle.append(filter_sensitive_fields(point, point.fetch_properties(), parameters))
 
             if clear_archived:
                 to_clear.append('pdk:' + str(point.pk))

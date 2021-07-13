@@ -53,6 +53,10 @@ class Command(BaseCommand):
                             action='store_true',
                             help='Skip backup of app data other than PDK data points')
 
+        parser.add_argument('--filter-sensitive-data',
+                            dest='filter_sensitive',
+                            action='store_true',
+                            help='Filter sensitive data from the backup data points written')
 
     def folder_for_options(self, options): # pylint: disable=no-self-use
         folder_path_format = '%(start_date)s__%(end_date)s'
@@ -114,6 +118,7 @@ class Command(BaseCommand):
 
         parameters['clear_archived'] = options['clear_archived']
         parameters['skip_apps'] = options['skip_apps']
+        parameters['filter_sensitive'] = options['filter_sensitive']
 
         key = None
 

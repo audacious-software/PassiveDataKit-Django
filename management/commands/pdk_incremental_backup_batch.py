@@ -46,6 +46,11 @@ class Command(BaseCommand):
                             action='store_true',
                             help='Skip backup of app data other than PDK data points')
 
+        parser.add_argument('--filter-sensitive-data',
+                            dest='filter_sensitive',
+                            action='store_true',
+                            help='Filter sensitive data from the backup data points written')
+
 
     @handle_lock
     def handle(self, *args, **options):
@@ -77,6 +82,9 @@ class Command(BaseCommand):
 
             if options['skip_apps'] is not None and options['skip_apps'] is not False:
                 arguments.append('--skip-apps')
+
+            if options['filter_sensitive'] is not None and options['filter_sensitive'] is not False:
+                arguments.append('--filter-sensitive-data')
 
             print(str(arguments))
 
