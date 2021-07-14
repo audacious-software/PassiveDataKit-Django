@@ -1177,6 +1177,9 @@ class ReportJob(models.Model):
 
     report = models.FileField(upload_to='pdk_reports', null=True, blank=True)
 
+    def get_absolute_url(self):
+        return reverse('pdk_download_report', args=[self.pk])
+
 @receiver(post_delete, sender=ReportJob)
 def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
     job = kwargs['instance']
