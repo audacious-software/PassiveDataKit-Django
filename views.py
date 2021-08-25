@@ -25,10 +25,22 @@ from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource
 
 @csrf_exempt
 def pdk_add_data_point(request):
-    response = {'message': 'Data point added successfully.'}
+    try:
+        if settings.PDK_DISABLE_DATA_UPLOAD:
+            response_payload = {'message': 'Data collection has been disabled and incoming transmissions are being discarded.'}
+
+            response = HttpResponse(json.dumps(response_payload, indent=2), content_type='application/json', status=201)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+            response['Access-Control-Request-Headers'] = 'Content-Type'
+            response['Access-Control-Allow-Headers'] = 'Content-Type'
+    except AttributeError:
+        pass
+
+    response_payload = {'message': 'Data point added successfully.'}
 
     if request.method == 'CREATE': # pylint: disable=no-else-return
-        response = HttpResponse(json.dumps(response, indent=2), content_type='application/json', \
+        response = HttpResponse(json.dumps(response_payload, indent=2), content_type='application/json', \
                                 status=201)
         response['Access-Control-Allow-Origin'] = '*'
         response['Access-Control-Allow-Methods'] = 'CREATE, POST'
@@ -89,7 +101,22 @@ def pdk_add_data_point(request):
 
 @csrf_exempt
 def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches
-    response = {
+    try:
+        if settings.PDK_DISABLE_DATA_UPLOAD:
+            response_payload = {
+                'message': 'Data collection has been disabled and incoming transmissions are being discarded.',
+                'added': True
+            }
+
+            response = HttpResponse(json.dumps(response_payload, indent=2), content_type='application/json', status=201)
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'CREATE, POST'
+            response['Access-Control-Request-Headers'] = 'Content-Type'
+            response['Access-Control-Allow-Headers'] = 'Content-Type'
+    except AttributeError:
+        pass
+
+    response_payload = {
         'message': 'Data bundle added successfully, and ready for processing.',
         'added': True
     }
@@ -97,7 +124,7 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
     supports_json = install_supports_jsonfield()
 
     if request.method == 'CREATE': # pylint: disable=no-else-return
-        response = HttpResponse(json.dumps(response, indent=2), \
+        response = HttpResponse(json.dumps(response_payload, indent=2), \
                                 content_type='application/json', \
                                 status=201)
 
