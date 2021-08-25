@@ -34,6 +34,8 @@ def pdk_add_data_point(request):
             response['Access-Control-Allow-Methods'] = 'CREATE, POST'
             response['Access-Control-Request-Headers'] = 'Content-Type'
             response['Access-Control-Allow-Headers'] = 'Content-Type'
+
+            return response
     except AttributeError:
         pass
 
@@ -63,7 +65,7 @@ def pdk_add_data_point(request):
 
         return response
     elif request.method == 'POST':
-        response = HttpResponse(json.dumps(response, indent=2), \
+        response = HttpResponse(json.dumps(response_payload, indent=2), \
                                 content_type='application/json', \
                                 status=201)
 
@@ -100,7 +102,7 @@ def pdk_add_data_point(request):
 
 
 @csrf_exempt
-def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches
+def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-many-branches, too-many-return-statements
     try:
         if settings.PDK_DISABLE_DATA_UPLOAD:
             response_payload = {
@@ -113,6 +115,8 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
             response['Access-Control-Allow-Methods'] = 'CREATE, POST'
             response['Access-Control-Request-Headers'] = 'Content-Type'
             response['Access-Control-Allow-Headers'] = 'Content-Type'
+
+            return response
     except AttributeError:
         pass
 
@@ -157,7 +161,7 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
         return response
 
     elif request.method == 'POST':
-        response = HttpResponse(json.dumps(response), \
+        response = HttpResponse(json.dumps(response_payload), \
                                 content_type='application/json', \
                                 status=201)
 
@@ -205,13 +209,13 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
             bundle.save()
         except ValueError:
-            response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response), \
+            response_payload = {'message': 'Unable to parse data bundle.'}
+            response = HttpResponse(json.dumps(response_payload), \
                                     content_type='application/json', \
                                     status=400)
         except UnreadablePostError:
-            response = {'message': 'Unable to parse data bundle.'}
-            response = HttpResponse(json.dumps(response), \
+            response_payload = {'message': 'Unable to parse data bundle.'}
+            response = HttpResponse(json.dumps(response_payload), \
                                     content_type='application/json', \
                                     status=400)
 
