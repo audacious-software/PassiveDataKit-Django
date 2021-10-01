@@ -334,7 +334,7 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
-    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None): # pylint: disable=no-self-use, too-many-arguments
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None, skip_save=False, skip_extract_secondary_identifier=False): # pylint: disable=no-self-use, too-many-arguments, invalid-name
         now = timezone.now()
 
         if created is None:
@@ -359,28 +359,33 @@ class DataPointManager(models.Manager):
 
         point.created = created
 
-        point.save()
+        point.fetch_generator_definition(skip_save)
+        point.fetch_source_reference(skip_save)
 
-        point.fetch_generator_definition()
-        point.fetch_source_reference()
-        point.fetch_secondary_identifier()
+        if skip_extract_secondary_identifier is False:
+            point.fetch_secondary_identifier()
 
-        data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
+        if skip_save is False:
+            point.save()
 
-        if data_point_count is None:
-            count = DataPoint.objects.all().count()
+            point.fetch_secondary_identifier()
 
-            data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
+            data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
-            data_point_count.value = str(count)
-            data_point_count.save()
-        else:
-            count = int(data_point_count.value)
+            if data_point_count is None:
+                count = DataPoint.objects.all().count()
 
-            count += 1
+                data_point_count = DataServerMetadatum(key=TOTAL_DATA_POINT_COUNT_DATUM)
 
-            data_point_count.value = str(count)
-            data_point_count.save()
+                data_point_count.value = str(count)
+                data_point_count.save()
+            else:
+                count = int(data_point_count.value)
+
+                count += 1
+
+                data_point_count.value = str(count)
+                data_point_count.save()
 
         return point
 
