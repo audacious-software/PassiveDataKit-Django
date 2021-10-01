@@ -553,10 +553,16 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
                 query = query | Q(generator_definition=definition)
 
     if 'start_date' in parameters:
-        query = query & Q(recorded__gte=parameters['start_date'])
+        if query is not None:
+            query = query & Q(recorded__gte=parameters['start_date'])
+        else:
+            query = Q(recorded__gte=parameters['start_date'])
 
     if 'end_date' in parameters:
-        query = query & Q(recorded__lt=parameters['end_date'])
+        if query is not None:
+            query = query & Q(recorded__lt=parameters['end_date'])
+        else:
+            query = Q(recorded__lt=parameters['end_date'])
 
     clear_archived = False
 
