@@ -3,6 +3,7 @@
 from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
+import io
 import json
 import time
 
@@ -62,7 +63,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + '/timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 # def compile_report(generator, sources): # pylint: disable=too-many-locals

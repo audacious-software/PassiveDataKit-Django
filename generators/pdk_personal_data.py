@@ -6,6 +6,7 @@ from __future__ import print_function
 from builtins import str # pylint: disable=redefined-builtin
 
 import importlib
+import io
 import os
 import tempfile
 import zipfile
@@ -80,21 +81,20 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                 for output_tuple in outputs:
                     zip_filename = output_tuple[0]
 
-                    zip_file = zipfile.ZipFile(zip_filename, 'r')
-
-                    for child_file in zip_file.namelist():
-                        with zip_file.open(child_file) as child_stream:
-                            if child_file.endswith('.html'):
-                                template = Template(child_stream.read())
-                                zip_output.writestr(child_file, template.render(context))
-                            else:
-                                zip_output.writestr(child_file, child_stream.read())
+                    with zipfile.ZipFile(zip_filename, 'r') as zip_file:
+                        for child_file in zip_file.namelist():
+                            with zip_file.open(child_file) as child_stream:
+                                if child_file.endswith('.html'):
+                                    template = Template(child_stream.read())
+                                    zip_output.writestr(child_file, template.render(context))
+                                else:
+                                    zip_output.writestr(child_file, child_stream.read())
 
                 for folder, subs, files in os.walk(assets_path): # pylint: disable=unused-variable
                     for asset_filename in files:
                         if asset_filename.endswith('.html'):
                             if asset_filename.endswith('index.html'):
-                                with open(os.path.join(folder, asset_filename), 'r') as src:
+                                with io.open(os.path.join(folder, asset_filename), 'r', encoding='utf-8') as src:
                                     template = Template(src.read())
 
                                     zip_output.writestr(os.path.join(folder.replace(assets_path, ''), asset_filename), template.render(context))

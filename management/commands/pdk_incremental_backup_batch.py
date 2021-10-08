@@ -67,8 +67,7 @@ class Command(BaseCommand):
         while start_date <= end_date:
             local_end_date = start_date + datetime.timedelta(days=(options['window_days'] - 1))
 
-            if local_end_date > end_date:
-                local_end_date = end_date
+            local_end_date = min(local_end_date, end_date)
 
             arguments = [
                 '--start-date',

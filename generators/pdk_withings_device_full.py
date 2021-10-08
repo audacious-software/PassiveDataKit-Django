@@ -5,6 +5,7 @@ from __future__ import division
 from builtins import str # pylint: disable=redefined-builtin
 
 import csv
+import io
 import os
 import tempfile
 import time
@@ -53,7 +54,7 @@ def fetch_intraday(source, properties, start): # pylint: disable=too-many-locals
 
     intraday_filename = tempfile.gettempdir() + os.path.sep + 'pdk-withings-device-full-intraday.txt'
 
-    with open(intraday_filename, 'w') as outfile:
+    with io.open(intraday_filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
 
         columns = [
@@ -148,7 +149,7 @@ def fetch_sleep_measures(source, properties, start): # pylint: disable=too-many-
 
     sleep_filename = tempfile.gettempdir() + os.path.sep + 'pdk-withings-device-full-sleep.txt'
 
-    with open(sleep_filename, 'w') as outfile:
+    with io.open(sleep_filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
 
         columns = [

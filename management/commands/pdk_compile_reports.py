@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
 import importlib
+import io
 import json
 import os
 import tempfile
@@ -256,14 +257,16 @@ class Command(BaseCommand):
                 if zips_to_merge:
                     with zipfile.ZipFile(filename, 'a') as zip_output:
                         for zip_filename in zips_to_merge:
-                            zip_file = zipfile.ZipFile(zip_filename, 'r')
+                            with zipfile.ZipFile(zip_filename, 'r') as zip_file:
+                                for child_file in zip_file.namelist():
+                                    with zip_file.open(child_file) as child_stream:
+                                        zip_output.writestr(child_file, child_stream.read())
 
-                            for child_file in zip_file.namelist():
-                                with zip_file.open(child_file) as child_stream:
-                                    zip_output.writestr(child_file, child_stream.read())
-
-                report.report.save(filename.split(os.path.sep)[-1], File(open(filename, 'rb')))
                 report.completed = timezone.now()
+
+                with io.open(filename, 'rb') as report_file:
+                    report.report.save(filename.split(os.path.sep)[-1], File(report_file))
+
                 report.save()
 
                 if report.requester.email is not None:

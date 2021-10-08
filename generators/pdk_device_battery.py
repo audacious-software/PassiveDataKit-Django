@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 import csv
 import calendar
 import datetime
+import io
 import json
 import os
 import tempfile
@@ -38,13 +39,13 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
     filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'battery-level.json'
 
-    with open(filename) as infile:
+    with io.open(filename, encoding='utf-8') as infile:
         context['data'] = json.load(infile)
 
     filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'timestamp-counts.json'
 
     try:
-        with open(filename) as infile:
+        with io.open(filename, encoding='utf-8') as infile:
             hz_data = json.load(infile)
 
             context['hz_data'] = hz_data
@@ -83,7 +84,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     context['start'] = calendar.timegm(start.timetuple())
     context['end'] = calendar.timegm(now.timetuple())
 
-    with open(folder + os.path.sep + 'battery-level.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'battery-level.json', 'w', encoding='utf-8') as outfile:
         json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
@@ -133,7 +134,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def data_table(source, generator):
@@ -176,7 +177,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
-            with open(secondary_filename, 'w') as outfile:
+            with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [

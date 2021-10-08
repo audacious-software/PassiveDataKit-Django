@@ -8,6 +8,7 @@ from builtins import range # pylint: disable=redefined-builtin
 import calendar
 import csv
 import datetime
+import io
 import json
 import math
 import os
@@ -94,7 +95,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
@@ -145,7 +146,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     context['start'] = time.mktime(start.timetuple())
     context['end'] = time.mktime(now.timetuple())
 
-    with open(folder + os.path.sep + 'accelerometer.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'accelerometer.json', 'w', encoding='utf-8') as outfile:
         json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
@@ -156,14 +157,14 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
     filename = settings.MEDIA_ROOT + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'accelerometer.json'
 
-    with open(filename) as infile:
+    with io.open(filename, encoding='utf-8') as infile:
         data = json.load(infile)
         context['viz_data'] = data
 
     filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'timestamp-counts.json'
 
     try:
-        with open(filename) as infile:
+        with io.open(filename, encoding='utf-8') as infile:
             hz_data = json.load(infile)
 
             context['hz_data'] = hz_data
@@ -176,7 +177,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
 def data_table(source, generator): # pylint: disable=unused-argument
     filename = settings.MEDIA_ROOT + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-sensor-accelerometer' + os.path.sep + 'accelerometer.json'
 
-    with open(filename) as infile:
+    with io.open(filename, encoding='utf-8') as infile:
         data = json.load(infile)
 
         return render_to_string('generators/pdk_sensor_accelerometer_table_template.html', data)
@@ -220,7 +221,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                 secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
-                with open(secondary_filename, 'w') as outfile:
+                with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                     writer = csv.writer(outfile, delimiter='\t')
 
                     columns = [

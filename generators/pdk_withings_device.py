@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 import calendar
 import csv
 import datetime
+import io
 import os
 import tempfile
 
@@ -83,11 +84,11 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     if generator == 'pdk-withings-device':
         with ZipFile(filename, 'w') as export_file:
-            for secondary_identifier in SECONDARY_FIELDS:
+            for secondary_identifier, identifier_columns in SECONDARY_FIELDS.items():
                 secondary_filename = tempfile.gettempdir() + os.path.sep + generator + '-' + \
                                      secondary_identifier + '.txt'
 
-                with open(secondary_filename, 'w') as outfile:
+                with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                     writer = csv.writer(outfile, delimiter='\t')
 
                     columns = [
@@ -98,7 +99,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                         'Recorded Date',
                     ]
 
-                    for column in SECONDARY_FIELDS[secondary_identifier]:
+                    for column in identifier_columns:
                         columns.append(column)
 
                     writer.writerow(columns)
@@ -138,7 +139,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
                                 properties = point.fetch_properties()
 
-                                for column in SECONDARY_FIELDS[secondary_identifier]:
+                                for column in identifier_columns:
                                     if column in properties:
                                         row.append(properties[column])
                                     else:

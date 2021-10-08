@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 import calendar
 import csv
 import datetime
+import io
 import json
 import os
 import tempfile
@@ -50,7 +51,7 @@ def visualization(source, generator):
     filename = settings.MEDIA_ROOT + '/pdk_visualizations/' + source.identifier + '/pdk-foreground-application/timestamp-counts.json'
 
     try:
-        with open(filename) as infile:
+        with io.open(filename, encoding='utf-8') as infile:
             hz_data = json.load(infile)
 
             context['hz_data'] = hz_data
@@ -95,7 +96,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + '/timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + '/timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def data_table(source, generator): # pylint: disable=too-many-locals
@@ -166,7 +167,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             secondary_filename = tempfile.gettempdir() + '/' + identifier + '.txt'
 
-            with open(secondary_filename, 'w') as outfile:
+            with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [
