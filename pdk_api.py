@@ -21,8 +21,6 @@ import tempfile
 import time
 import traceback
 
-from io import StringIO
-
 import dropbox
 import paramiko
 
@@ -336,7 +334,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
+                        key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
 
@@ -509,7 +507,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = StringIO()
+        buf = io.StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
