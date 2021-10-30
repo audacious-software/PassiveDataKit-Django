@@ -244,6 +244,8 @@ def compile_visualization(identifier, points, folder, source=None):
         try:
             generator_module.compile_visualization(identifier, points, folder, source)
         except TypeError:
+            print('identifier: ' + identifier)
+            traceback.print_exc()
             generator_module.compile_visualization(identifier, points, folder)
     except ImportError:
         pass

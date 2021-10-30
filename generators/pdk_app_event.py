@@ -125,7 +125,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
     return None
 
-def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
+def compile_visualization(identifier, points, folder, source=None): # pylint: disable=unused-argument
     now = timezone.now()
 
     now = now.replace(second=0, microsecond=0)
@@ -170,5 +170,5 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
-        json.dump(timestamp_counts, outfile, indent=2)
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
+        json.dump(timestamp_counts, outfile, ensure_ascii=False, indent=2)

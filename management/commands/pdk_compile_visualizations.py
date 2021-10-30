@@ -8,6 +8,7 @@ import datetime
 import importlib
 import json
 import os
+import traceback
 
 import pytz
 
@@ -168,6 +169,8 @@ class Command(BaseCommand):
 
                         completed = True
                     except TypeError:
+                        print('APP: ' + app)
+                        traceback.print_exc()
                         pdk_api.compile_visualization(visualization.generator_identifier, points, folder)
 
                         time_spent[computed_id]['app'] = app

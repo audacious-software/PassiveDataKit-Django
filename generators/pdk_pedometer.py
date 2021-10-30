@@ -95,7 +95,7 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
     context['start'] = calendar.timegm(start.timetuple())
     context['end'] = calendar.timegm(now.timetuple())
 
-    with io.open(folder + os.path.sep + 'pedometer.json', 'w', encoding='utf-8') as outfile:
+    with io.open(folder + os.path.sep + 'pedometer.json', 'wb') as outfile:
         json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
@@ -145,7 +145,7 @@ def compile_frequency_visualization(identifier, points, folder): # pylint: disab
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def data_table(source, generator):
