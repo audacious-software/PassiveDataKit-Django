@@ -169,7 +169,7 @@ class Command(BaseCommand):
 
                         completed = True
                     except TypeError:
-                        print('APP: ' + app)
+                        print('App with broken viz endpoint: ' + app)
                         traceback.print_exc()
                         pdk_api.compile_visualization(visualization.generator_identifier, points, folder)
 
