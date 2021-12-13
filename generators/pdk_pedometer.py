@@ -51,7 +51,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
 
     return render_to_string('generators/pdk_device_pedometer_template.html', context)
 
-def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
+def compile_visualization(identifier, points, folder, source=None): # pylint: disable=unused-argument
     context = {}
 
     values = []

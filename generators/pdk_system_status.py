@@ -160,7 +160,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     return filename
 
-def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
+def compile_visualization(identifier, points, folder, source=None): # pylint: disable=unused-argument, too-many-locals
     now = timezone.now()
 
     latest = points.order_by('-created').first()
