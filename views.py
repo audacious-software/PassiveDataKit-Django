@@ -4,6 +4,7 @@ from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
 import importlib
+import io
 import json
 import os
 import re
@@ -416,7 +417,7 @@ def pdk_visualization_data(request, source_id, generator_id, page): # pylint: di
         filename = 'visualization.json'
 
     try:
-        with open(folder + '/' + filename) as data_file:
+        with io.open(folder + '/' + filename, encoding='utf-8') as data_file:
             return HttpResponse(data_file.read(), content_type='application/json')
     except IOError:
         pass
@@ -430,7 +431,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
     filename = settings.MEDIA_ROOT + '/' + job.report.name
 
-    response = FileResponse(open(filename, 'rb'), content_type='application/octet-stream')
+    response = FileResponse(io.open(filename, 'rb', encoding='utf-8'), content_type='application/octet-stream') # pylint: disable=consider-using-with
 
     download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + smart_str(job.pk) + '.zip'
 

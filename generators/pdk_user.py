@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 import calendar
 import csv
 import datetime
+import io
 import json
 import os
 import tempfile
@@ -90,7 +91,7 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
 
             secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
-            with open(secondary_filename, 'w') as outfile:
+            with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [

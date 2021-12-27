@@ -274,9 +274,7 @@ class Command(BaseCommand):
                         else:
                             failed = False
 
-                            for server_url in xmit_points:
-                                points = xmit_points[server_url]
-
+                            for server_url, points in xmit_points.items():
                                 if len(points) > remote_bundle_size:
                                     payload = {
                                         'payload': json.dumps(points, indent=2)
@@ -318,9 +316,7 @@ class Command(BaseCommand):
                     bundle.errored = timezone.now()
                     bundle.save()
 
-        for server_url in xmit_points:
-            points = xmit_points[server_url]
-
+        for server_url, points in xmit_points.items():
             if points:
                 payload = {
                     'payload': json.dumps(points, indent=2)

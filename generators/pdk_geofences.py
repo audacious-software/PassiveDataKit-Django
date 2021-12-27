@@ -8,6 +8,7 @@ import calendar
 import collections
 import csv
 import datetime
+import io
 import json
 import os
 import re
@@ -101,7 +102,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
-            with open(secondary_filename, 'w') as outfile:
+            with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
                 columns = [

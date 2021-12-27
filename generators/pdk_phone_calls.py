@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 import calendar
 import csv
 import datetime
+import io
 import json
 import os
 import tempfile
@@ -36,7 +37,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     default_tz = timezone.get_default_timezone()
 
-    with open(filename, 'w') as outfile:
+    with io.open(filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
 
         writer.writerow([
@@ -123,7 +124,7 @@ def data_table(source, generator):
 def visualization(source, generator): # pylint: disable=unused-argument
     filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-phone-calls/timestamp-counts.json'
 
-    with open(filename) as infile:
+    with io.open(filename, encoding='utf-8') as infile:
         data = json.load(infile)
 
         context = {}
@@ -175,5 +176,5 @@ def compile_visualization(identifier, points, folder): # pylint: disable=unused-
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)

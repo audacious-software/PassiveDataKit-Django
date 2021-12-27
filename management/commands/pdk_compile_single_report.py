@@ -7,6 +7,7 @@ from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
 import importlib
+import io
 import json
 import os
 import tempfile
@@ -103,7 +104,7 @@ class Command(BaseCommand):
 
         filename = tempfile.gettempdir() + '/' + prefix + '_' + str(report.pk) + '_' + suffix + '.zip'
 
-        with open(filename, 'wb') as final_output_file:
+        with io.open(filename, 'wb') as final_output_file:
             with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                 to_delete = []
 
@@ -196,9 +197,8 @@ class Command(BaseCommand):
                                             if output_file.lower().endswith('.zip'):
                                                 with zipfile.ZipFile(output_file, 'r') as source_file:
                                                     for name in source_file.namelist():
-                                                        data_file = source_file.open(name)
-
-                                                        export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
+                                                        with source_file.open(name) as data_file:
+                                                            export_stream.write_iter(name, data_file, compress_type=zipfile.ZIP_DEFLATED)
                                             else:
                                                 name = os.path.basename(os.path.normpath(output_file))
 
@@ -219,8 +219,11 @@ class Command(BaseCommand):
                 for output_file in to_delete:
                     os.remove(output_file)
 
-        report.report.save(filename.split('/')[-1], File(open(filename, 'r')))
         report.completed = timezone.now()
+
+        with io.open(filename, 'rb') as report_file:
+            report.report.save(filename.split('/')[-1], File(report_file))
+
         report.save()
 
         if report.requester.email is not None:

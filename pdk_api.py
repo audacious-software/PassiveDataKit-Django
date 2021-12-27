@@ -11,6 +11,7 @@ import csv
 import datetime
 import gc
 import importlib
+import io
 import json
 import os
 import re
@@ -19,8 +20,6 @@ import shutil
 import tempfile
 import time
 import traceback
-
-from io import StringIO
 
 import dropbox
 import paramiko
@@ -171,7 +170,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
     filename = tempfile.gettempdir() + os.path.sep + generator + '.txt'
 
-    with open(filename, 'w') as outfile:
+    with io.open(filename, 'w', encoding='utf-8') as outfile:
         writer = csv.writer(outfile, delimiter='\t')
 
         writer.writerow([
@@ -245,6 +244,8 @@ def compile_visualization(identifier, points, folder, source=None):
         try:
             generator_module.compile_visualization(identifier, points, folder, source)
         except TypeError:
+            print('Generator with broken viz endpoint: ' + identifier)
+            traceback.print_exc()
             generator_module.compile_visualization(identifier, points, folder)
     except ImportError:
         pass
@@ -304,7 +305,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        with open(report_path, 'rb') as report_file:
+                        with io.open(report_path, 'rb') as report_file:
                             client.files_upload(report_file.read(), path)
 
                             file_sent = True
@@ -335,7 +336,7 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                     time.sleep(duration)
 
                     try:
-                        key = paramiko.RSAKey.from_private_key(StringIO(parameters['key']))
+                        key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
 
                         ssh_client = paramiko.SSHClient()
 
@@ -432,7 +433,7 @@ def load_backup(filename, content):
 
         path = os.path.join(tempfile.gettempdir(), filename)
 
-        with open(path, 'wb') as fixture_file:
+        with io.open(path, 'wb') as fixture_file:
             fixture_file.write(content)
 
         management.call_command('loaddata', path)
@@ -508,7 +509,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
         print('[passive_data_kit] Backing up ' + app + '...')
         sys.stdout.flush()
 
-        buf = StringIO()
+        buf = io.StringIO()
         management.call_command('dumpdata', app, stdout=buf)
         buf.seek(0)
 
@@ -528,7 +529,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         path = os.path.join(backup_staging, filename)
 
-        with open(path, 'wb') as fixture_file:
+        with io.open(path, 'wb') as fixture_file:
             fixture_file.write(compressed_str)
 
         to_transmit.append(path)
@@ -596,7 +597,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
 
         path = os.path.join(backup_staging, filename)
 
-        with open(path, 'wb') as compressed_file:
+        with io.open(path, 'wb') as compressed_file:
             compressed_file.write(compressed_str)
 
         to_transmit.append(path)

@@ -5,6 +5,7 @@ from __future__ import division
 from builtins import str # pylint: disable=redefined-builtin
 import calendar
 import datetime
+import io
 import json
 import os
 
@@ -79,7 +80,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + os.path.sep + 'timestamp-counts.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
     # Plot times recorded
@@ -120,7 +121,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'w') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'wb') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def visualization(source, generator): # pylint: disable=unused-argument
@@ -129,7 +130,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
     context = {}
 
     try:
-        with open(filename) as infile:
+        with io.open(filename, encoding='utf-8') as infile:
             data = json.load(infile)
 
             context['data'] = data
@@ -139,7 +140,7 @@ def visualization(source, generator): # pylint: disable=unused-argument
             try:
                 recorded_file = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-data-frequency' + os.path.sep + 'timestamp-recorded-counts.json'
 
-                with open(recorded_file) as infile:
+                with io.open(recorded_file, encoding='utf-8') as infile:
                     recorded_data = json.load(infile)
 
                     context['recorded'] = recorded_data
