@@ -431,7 +431,7 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 
     filename = settings.MEDIA_ROOT + '/' + job.report.name
 
-    response = FileResponse(io.open(filename, 'rb', encoding='utf-8'), content_type='application/octet-stream') # pylint: disable=consider-using-with
+    response = FileResponse(io.open(filename, 'rb'), content_type='application/octet-stream') # pylint: disable=consider-using-with
 
     download_name = 'pdk-export_' + job.started.date().isoformat() + '_' + smart_str(job.pk) + '.zip'
 
