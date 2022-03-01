@@ -64,6 +64,9 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     keys = []
 
+    if source is None:
+        source = 'passive-data-kit'
+
     source_reference = DataSourceReference.reference_for_source(source)
 
     points = DataPoint.objects.filter(source_reference=source_reference)
@@ -80,7 +83,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
     # Plot times recorded
@@ -121,7 +124,7 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'wb') as outfile:
+    with io.open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'w', encoding='utf-8') as outfile:
         json.dump(timestamp_counts, outfile, indent=2)
 
 def visualization(source, generator): # pylint: disable=unused-argument
