@@ -83,8 +83,8 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
-        json.dump(timestamp_counts, outfile, indent=2)
+    with io.open(folder + os.path.sep + 'timestamp-counts.json', 'wb') as outfile:
+        json.dump(timestamp_counts, outfile, indent=2, ensure_ascii=False, encoding='utf-8')
 
     # Plot times recorded
 
@@ -124,8 +124,8 @@ def compile_visualization(identifier, points, folder, source): # pylint: disable
 
     timestamp_counts['keys'] = keys
 
-    with io.open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'w', encoding='utf-8') as outfile:
-        json.dump(timestamp_counts, outfile, indent=2)
+    with io.open(folder + os.path.sep + 'timestamp-recorded-counts.json', 'wb') as outfile:
+        json.dump(timestamp_counts, outfile, indent=2, ensure_ascii=False, encoding='utf-8')
 
 def visualization(source, generator): # pylint: disable=unused-argument
     filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-data-frequency' + os.path.sep + 'timestamp-counts.json'
