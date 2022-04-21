@@ -60,7 +60,7 @@ def visualization(source, generator):
 
     return render_to_string('generators/pdk_foreground_application_template.html', context)
 
-def compile_visualization(identifier, points, folder): # pylint: disable=unused-argument
+def compile_visualization(identifier, points, folder, source=None): # pylint: disable=unused-argument
     now = timezone.now().astimezone(pytz.timezone(settings.TIME_ZONE))
 
     interval = DEFAULT_INTERVAL
