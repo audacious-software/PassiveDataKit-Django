@@ -98,7 +98,7 @@ class Command(BaseCommand):
 
                 raw_json = False
 
-                if ('raw_data' in parameters) and parameters['raw_data'] is True:
+                if ('raw_data' in parameters) and (parameters['raw_data'] is True or parameters['raw_data'] == 'on'):
                     raw_json = True
 
                 prefix = 'pdk_export_final'
