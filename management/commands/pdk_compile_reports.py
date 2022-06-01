@@ -76,8 +76,7 @@ class Command(BaseCommand):
                                                    0, \
                                                    0, \
                                                    0, \
-                                                   0, \
-                                                   tz_info)
+                                                   0).astimezone(tz_info)
 
                 if 'data_end' in parameters and parameters['data_end']:
                     tokens = parameters['data_end'].split('/')
@@ -88,8 +87,7 @@ class Command(BaseCommand):
                                                  23, \
                                                  59, \
                                                  59, \
-                                                 999999, \
-                                                 tz_info)
+                                                 999999).astimezone(tz_info)
 
                 date_type = 'created'
 
