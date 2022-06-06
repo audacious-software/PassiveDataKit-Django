@@ -452,7 +452,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
         for source in group.sources.all().order_by('name'):
             group_def[1].append(source)
-            
+
         if len(group_def[1]) > 0:
             groups.append(group_def)
 
