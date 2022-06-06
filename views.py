@@ -445,6 +445,26 @@ def pdk_download_report(request, report_id): # pylint: disable=unused-argument
 def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, too-many-statements
     context = {}
 
+    groups = []
+
+    for group in DataSourceGroup.objects.all().order_by('name'):
+        group_def = (group.name, [], group.pk)
+
+        for source in group.sources.all().order_by('name'):
+            group_def[1].append(source)
+            
+        if len(group_def[1]) > 0:
+            groups.append(group_def)
+
+    group_def = ('(Not in group)', [], 0)
+
+    for source in DataSource.objects.filter(group=None).order_by('name'):
+        group_def[1].append(source)
+
+    if len(group_def[1]) > 0:
+        groups.append(group_def)
+
+    context['groups'] = groups
     context['sources'] = sorted(DataPoint.objects.sources())
     context['generators'] = sorted(DataPoint.objects.generator_identifiers())
 

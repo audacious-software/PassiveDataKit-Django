@@ -22,6 +22,13 @@ requirejs(['./common'], function (common) {
 		{
 			$(".source_checkbox").prop("checked", $(this).is(":checked"));
 		});
+		
+		$('.group_select_members').change(function(eventObj)
+		{
+			 const id = $(this).attr('id')
+			 
+			$('.' + id).prop("checked", $(this).is(":checked"));
+		});
 
 		$('#generators_select_all').change(function() 
 		{

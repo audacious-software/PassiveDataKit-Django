@@ -55,11 +55,21 @@
                 </p>
                 
                 <div class="well" style="height: 40em; overflow-y: scroll; background-color: #ffffff;">
-                    {% for source in sources %}
-                        <p style="padding-bottom: 0.25em; margin: 0px;">
-                        	<input type="checkbox" name="source_{{ source }}" id="source_{{ source }}" class="source_checkbox" /> 
-                        	<label for="source_{{ source }}" style="font-weight: normal; normal; padding-left: 5px;">{{ source }}</label>
-                        </p>
+                    {% for group in groups %}
+                    	{% if forloop.counter0 > 0 %}
+                    		<div style="height: 1em;">&nbsp;</div>
+                    	{% endif %}
+						<p style="padding-bottom: 0.25em; margin: 0px;">
+							<input type="checkbox" name="group_{{ group.2 }}" id="group_{{ group.2 }}" class="group_select_members" /> 
+							<label for="group_{{ group.2 }}" style="font-weight: normal; normal; padding-left: 5px;"><strong>{{ group.0 }}</strong></label>
+						</p>
+
+                    	{% for source in group.1 %}
+							<p style="padding-bottom: 0.25em; margin: 0px;">
+								<input type="checkbox" name="source_{{ source.identifier }}" id="source_{{ source.identifier }}" class="source_checkbox group_{{ group.2 }}" /> 
+								<label for="source_{{ source.identifier }}" style="font-weight: normal; normal; padding-left: 5px;">{{ source }}</label>
+							</p>
+						{% endfor %}
                     {% endfor %}
                 </div>
             </div>
