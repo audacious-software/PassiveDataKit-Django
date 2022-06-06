@@ -453,7 +453,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         for source in group.sources.all().order_by('name'):
             group_def[1].append(source)
 
-        if len(group_def[1]) > 0:
+        if len(group_def[1]) > 0: # pylint: disable=len-as-condition
             groups.append(group_def)
 
     group_def = ('(Not in group)', [], 0)
@@ -461,7 +461,7 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     for source in DataSource.objects.filter(group=None).order_by('name'):
         group_def[1].append(source)
 
-    if len(group_def[1]) > 0:
+    if len(group_def[1]) > 0: # pylint: disable=len-as-condition
         groups.append(group_def)
 
     context['groups'] = groups
