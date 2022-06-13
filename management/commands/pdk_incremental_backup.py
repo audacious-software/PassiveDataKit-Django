@@ -205,10 +205,7 @@ class Command(BaseCommand):
                         try:
                             aws_config = Config(
                                 region_name=settings.PDK_BACKUP_AWS_REGION,
-                                retries = {
-                                    'max_attempts': 10,
-                                    'mode': 'standard'
-                                }
+                                retries={'max_attempts': 10, 'mode': 'standard'}
                             )
 
                             os.environ['AWS_ACCESS_KEY_ID'] = settings.PDK_BACKUP_AWS_ACCESS_KEY_ID
