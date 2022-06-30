@@ -1,5 +1,7 @@
 arrow==0.14.7; python_version < '3.0'
 arrow==1.2.0; python_version >= '3.0'
+azure-storage-blob==12.12.0; python_version >= '3.0'
+azure-storage-blob==12.9.0; python_version < '3.0'
 bandit==1.7.3; python_version >= '3.0'
 bandit==1.6.2; python_version < '3.0'
 boto==2.49.0
