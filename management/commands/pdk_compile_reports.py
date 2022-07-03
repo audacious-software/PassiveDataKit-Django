@@ -258,7 +258,7 @@ class Command(BaseCommand):
                             with zipfile.ZipFile(zip_filename, 'r') as zip_file:
                                 for child_file in zip_file.namelist():
                                     with zip_file.open(child_file) as child_stream:
-                                        zip_output.writestr(child_file, child_stream.read())
+                                        zip_output.writestr(child_file, child_stream.read(), compress_type=zipfile.ZIP_DEFLATED)
 
                 report.completed = timezone.now()
 
