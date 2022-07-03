@@ -17,6 +17,7 @@ import boto3
 import dropbox
 import pytz
 
+from azure.storage.blob import BlobServiceClient
 from botocore.config import Config
 from nacl.secret import SecretBox
 
@@ -233,6 +234,32 @@ class Command(BaseCommand):
                                     sys.stdout.flush()
 
                                     client.put_object(Body=box.encrypt(backup_io.read()), Bucket=s3_bucket, Key=final_filename)
+                        except: # pylint: disable=bare-except
+                            traceback.print_exc()
+                    elif destination_url.scheme == 'azure-blob':
+                        blob_service_client = BlobServiceClient.from_connection_string(settings.PDK_AZURE_CONNECTION_STRING)
+
+                        try:
+                            for path in to_transmit:
+                                box = SecretBox(key)
+
+                                with open(path, 'rb') as backup_file:
+                                    backup_io = BytesIO()
+                                    backup_io.write(backup_file.read())
+                                    backup_io.seek(0)
+
+                                    filename = os.path.basename(path) + '.encrypted'
+
+                                    final_folder = self.folder_for_options(options)
+
+                                    final_filename = final_folder + '/' + filename
+
+                                    blob_client = blob_service_client.get_blob_client(container=settings.PDK_AZURE_BLOB_CONTAINER, blob=final_filename)
+
+                                    print('Uploading to Azure Blob Service: ' + final_filename)
+                                    sys.stdout.flush()
+
+                                    blob_client.upload_blob(backup_io)
                         except: # pylint: disable=bare-except
                             traceback.print_exc()
                     else:
