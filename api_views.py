@@ -173,7 +173,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         access_request.request_metadata = json.dumps(request.POST, indent=2)
         access_request.successful = True
         access_request.save()
-        
+
         return HttpResponse(json.dumps(payload, indent=2), content_type='application/json')
 
     return HttpResponseNotAllowed(['POST'])
