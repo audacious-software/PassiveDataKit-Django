@@ -148,14 +148,12 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
         matches = []
 
-        print('PAYLOAD: ' + json.dumps(payload, indent=2))
-
         if payload['count'] > 0:
             for item in query[(page_index * page_size):((page_index + 1) * page_size)]:
                 properties = item.fetch_properties()
 
-                properties['passive-data-metadata']['pdk_server_created'] = arrow.get(item.created).timestamp
-                properties['passive-data-metadata']['pdk_server_recorded'] = arrow.get(item.recorded).timestamp
+                properties['passive-data-metadata']['pdk_server_created'] = arrow.get(item.created).timestamp()
+                properties['passive-data-metadata']['pdk_server_recorded'] = arrow.get(item.recorded).timestamp()
 
                 matches.append(properties)
 
@@ -175,8 +173,8 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         access_request.request_metadata = json.dumps(request.POST, indent=2)
         access_request.successful = True
         access_request.save()
-
-        return HttpResponse(json.dumps(payload), content_type='application/json')
+        
+        return HttpResponse(json.dumps(payload, indent=2), content_type='application/json')
 
     return HttpResponseNotAllowed(['POST'])
 
