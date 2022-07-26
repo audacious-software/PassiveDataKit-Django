@@ -118,6 +118,9 @@ class Command(BaseCommand):
                         to_delete = []
 
                         for generator in generators: # pylint: disable=too-many-nested-blocks
+                            if options.get('verbosity') > 0:
+                                print('Exporting %s for %s.' % (generator, sources))
+
                             if raw_json:
                                 for source in sources:
                                     data_source = DataSource.objects.filter(identifier=source).first()
@@ -317,4 +320,7 @@ class Command(BaseCommand):
                       .first()
 
         if request is not None:
+            if options.get('verbosity') > 0:
+                print('Splitting batch request %d.' % request.pk)
+
             request.process()
