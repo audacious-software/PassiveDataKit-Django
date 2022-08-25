@@ -5,6 +5,7 @@ from __future__ import print_function
 from builtins import str # pylint: disable=redefined-builtin
 
 import datetime
+import importlib
 import json
 
 import arrow
@@ -76,6 +77,19 @@ def pdk_request_token(request):
 @valid_pdk_token_required
 def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_plugin = importlib.import_module(app + '.pdk_api')
+
+                response = pdk_plugin.pdk_data_point_query(request)
+
+                if response is not None:
+                    return response
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
         page_size = int(request.POST['page_size'])
         page_index = int(request.POST['page_index'])
 

@@ -10,6 +10,7 @@ import os
 import re
 
 from django.conf import settings
+from django.db.utils import DataError
 from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse, HttpResponseNotFound, \
                         FileResponse, UnreadablePostError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -150,14 +151,20 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
             return response
 
-        bundle = DataBundle(recorded=timezone.now())
+        try:
+            bundle = DataBundle(recorded=timezone.now())
 
-        if supports_json:
-            bundle.properties = points
-        else:
-            bundle.properties = json.dumps(points)
+            if supports_json:
+                bundle.properties = points
+            else:
+                bundle.properties = json.dumps(points)
 
-        bundle.save()
+            bundle.save()
+        except DataError:
+            response = {'message': 'Unable to parse data bundle.'}
+            response = HttpResponse(json.dumps(response, indent=2), \
+                                    content_type='application/json', \
+                                    status=400)
 
         return response
 

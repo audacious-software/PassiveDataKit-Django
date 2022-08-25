@@ -260,8 +260,19 @@ class Command(BaseCommand):
                         for zip_filename in zips_to_merge:
                             with zipfile.ZipFile(zip_filename, 'r') as zip_file:
                                 for child_file in zip_file.namelist():
-                                    with zip_file.open(child_file) as child_stream:
-                                        zip_output.writestr(child_file, child_stream.read(), compress_type=zipfile.ZIP_DEFLATED)
+                                    child_filename = tempfile.gettempdir() + os.path.sep + child_file
+
+                                    print('Extracting %s to %s' % (child_file, child_filename))
+
+                                    zip_file.extract(child_file, path=tempfile.gettempdir())
+
+                                    print('Extracted %s to %s' % (child_file, child_filename))
+
+                                    zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_DEFLATED)
+
+                                    print('Finished writing %s' % child_file)
+
+                                    os.remove(child_filename)
 
                 report.completed = timezone.now()
 
