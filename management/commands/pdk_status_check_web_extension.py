@@ -54,7 +54,7 @@ class Command(BaseCommand):
                 if event_query is None:
                     event_query = Q(generator_definition=definition)
                 else:
-                    event_query = event_query | Q(generator_definition=definition)
+                    event_query = event_query | Q(generator_definition=definition) # pylint: disable=unsupported-binary-operation
 
         for source in DataSource.objects.all(): # pylint: disable=too-many-nested-blocks
             source_reference = DataSourceReference.objects.filter(source=source.identifier).first()

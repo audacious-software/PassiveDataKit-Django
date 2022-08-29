@@ -551,7 +551,7 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
             if query is None:
                 query = Q(generator_definition=definition)
             else:
-                query = query | Q(generator_definition=definition)
+                query = query | Q(generator_definition=definition) # pylint: disable=unsupported-binary-operation
 
     if 'start_date' in parameters:
         if query is not None:

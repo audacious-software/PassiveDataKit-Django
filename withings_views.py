@@ -42,7 +42,7 @@ def pdk_withings_auth(request):
         'redirect_uri': settings.PDK_WITHINGS_REDIRECT_URL,
     }
 
-    response = requests.post(ACCESS_TOKEN_URL, data=params)
+    response = requests.post(ACCESS_TOKEN_URL, data=params, timeout=120)
 
     point = DataPoint(source=source_id, generator='pdk-withings-server-auth', created=timezone.now())
     point.recorded = point.created

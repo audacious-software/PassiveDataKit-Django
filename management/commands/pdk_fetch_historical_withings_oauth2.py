@@ -33,7 +33,7 @@ def refresh_access_token(properties):
         'refresh_token': properties['refresh_token'],
     }
 
-    response = requests.post(REFRESH_TOKEN_URL, data=params)
+    response = requests.post(REFRESH_TOKEN_URL, data=params, timeout=120)
 
     # print('REFRESH RESPONSE: ' + json.dumps(response.json(), indent=2))
 

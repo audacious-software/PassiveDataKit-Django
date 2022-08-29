@@ -258,7 +258,7 @@ def fetch_app_genre(package_name):
 
     time.sleep(SLEEP_DELAY)
 
-    req = requests.get('https://play.google.com/store/apps/details?id=' + package_name)
+    req = requests.get('https://play.google.com/store/apps/details?id=' + package_name, timeout=120)
 
     if req.status_code == 200:
         soup = BeautifulSoup(req.text, "lxml")

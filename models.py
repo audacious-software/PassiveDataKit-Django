@@ -874,7 +874,7 @@ class DataSource(models.Model):
                 'request-key': self.server.request_key
             }
 
-            identifier_post = requests.post(self.server.source_metadata_url, data=payload)
+            identifier_post = requests.post(self.server.source_metadata_url, data=payload, timeout=120)
 
             if identifier_post.status_code >= 200 and identifier_post.status_code < 300:
                 metadata = identifier_post.json()
@@ -1332,7 +1332,7 @@ class ReportJobBatchRequest(models.Model):
                                     if generator_query is None:
                                         generator_query = Q(generator_definition=definition)
                                     else:
-                                        generator_query = generator_query |  Q(generator_definition=definition)
+                                        generator_query = generator_query |  Q(generator_definition=definition) # pylint: disable=unsupported-binary-operation
 
                                 had_extras = True
                         except TypeError as exception:
@@ -1349,7 +1349,7 @@ class ReportJobBatchRequest(models.Model):
                     if generator_query is None:
                         generator_query = Q(generator_definition=definition)
                     else:
-                        generator_query = generator_query | Q(generator_definition=definition)
+                        generator_query = generator_query | Q(generator_definition=definition) # pylint: disable=unsupported-binary-operation
 
             report_size = 0
 
