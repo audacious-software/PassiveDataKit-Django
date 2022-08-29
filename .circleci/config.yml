@@ -30,9 +30,9 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get install -y gdal-bin
             python3 -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
             pip install -U pip
             pip install wheel
-            . /home/circleci/venv/bin/activate
             pip install -r requirements.txt --progress-bar off
             cd ..
             mv project passive_data_kit
@@ -81,9 +81,9 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get install -y gdal-bin
             virtualenv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
             pip install -U pip
             pip install wheel
-            . /home/circleci/venv/bin/activate
             pip install -r requirements.txt --progress-bar off
             cd ..
             mv project passive_data_kit
