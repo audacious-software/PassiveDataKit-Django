@@ -43,7 +43,7 @@ def compile_report(generator, sources): # pylint: disable=too-many-locals
                             'refresh_token': properties['refresh_token'],
                         }
 
-                        api_request = requests.post(REFRESH_ENDPOINT, data=refresh_params)
+                        api_request = requests.post(REFRESH_ENDPOINT, data=refresh_params, timeout=120)
 
                         access_payload = api_request.json()
 
@@ -121,7 +121,7 @@ def fetch_intraday(source, start, access_token): # pylint: disable=too-many-loca
             api_url += '&startdate=' + str(start.timestamp)
             api_url += '&enddate=' + str(end.timestamp)
 
-            response = requests.get(url=api_url)
+            response = requests.get(url=api_url, timeout=120)
 
             results = response.json()
 
@@ -205,7 +205,7 @@ def fetch_sleep_measures(source, start, access_token): # pylint: disable=too-man
             api_url += '&startdate=' + str(start.timestamp)
             api_url += '&enddate=' + str(end.timestamp)
 
-            response = requests.get(url=api_url)
+            response = requests.get(url=api_url, timeout=120)
 
             results = response.json()
 
