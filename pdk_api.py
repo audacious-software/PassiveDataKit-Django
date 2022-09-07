@@ -21,8 +21,11 @@ import tempfile
 import time
 import traceback
 
+import boto3
 import dropbox
 import paramiko
+
+from botocore.config import Config
 
 from django.conf import settings
 from django.core import management
@@ -383,6 +386,35 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
             file_sent = True
 
         except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 's3':
+        try:
+            parameters = destination.fetch_parameters()
+
+            aws_config = Config(
+                region_name=parameters['region'],
+                retries={'max_attempts': 10, 'mode': 'standard'}
+            )
+
+            os.environ['AWS_ACCESS_KEY_ID'] = parameters['access_key_id']
+            os.environ['AWS_SECRET_ACCESS_KEY'] = parameters['secret_access_key']
+
+            client = boto3.client('s3', config=aws_config)
+
+            s3_bucket = parameters['bucket']
+
+            path = ''
+
+            if ('prepend_date' in parameters) and parameters['prepend_date']:
+                path = timezone.now().date().isoformat() + '/'
+
+            path = path + os.path.basename(os.path.normpath(report_path))
+
+            with io.open(report_path, 'rb') as report_file:
+                client.put_object(Body=report_file.read(), Bucket=s3_bucket, Key=path)
+
+                file_sent = True
+        except: # pylint: disable=bare-except
             traceback.print_exc()
 
     if file_sent is False:
