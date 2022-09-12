@@ -18,7 +18,7 @@ cffi==1.15.1
 chardet==4.0.0; python_version < '3.0'
 chardet==5.0.0; python_version >= '3.0'
 cryptography==2.9.2; python_version < '3.0'
-cryptography==37.0.4; python_version >= '3.0'
+cryptography==38.0.1; python_version >= '3.0'
 dj-database-url==1.0.0
 Django==1.11.29; python_version < '3.0'
 Django==3.2.15; python_version >= '3.0'
