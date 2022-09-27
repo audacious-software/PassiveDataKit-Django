@@ -201,46 +201,53 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     else:
                         points = points.filter(created__lte=data_end)
 
-                points = points.order_by('source', 'created')
+                point_count = points.count()
 
-                for point in points:
-                    properties = point.fetch_properties()
+                points = points.order_by('created')
 
-                    row = []
+                points_index = 0
 
-                    created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
-                    recorded = point.recorded.astimezone(pytz.timezone(settings.TIME_ZONE))
+                while points_index < point_count:
+                    for point in points[points_index:(points_index+1000)]:
+                        properties = point.fetch_properties()
 
-                    row.append(point.source)
-                    row.append(calendar.timegm(point.created.utctimetuple()))
-                    row.append(created.isoformat())
+                        row = []
 
-                    row.append(calendar.timegm(point.recorded.utctimetuple()))
-                    row.append(recorded.isoformat())
+                        created = point.created.astimezone(pytz.timezone(settings.TIME_ZONE))
+                        recorded = point.recorded.astimezone(pytz.timezone(settings.TIME_ZONE))
 
-                    properties = point.fetch_properties()
+                        row.append(point.source)
+                        row.append(calendar.timegm(point.created.utctimetuple()))
+                        row.append(created.isoformat())
 
-                    if 'application' in properties:
-                        row.append(properties['application'])
-                    else:
-                        row.append('')
+                        row.append(calendar.timegm(point.recorded.utctimetuple()))
+                        row.append(recorded.isoformat())
 
-                    if 'duration' in properties:
-                        row.append(str(properties['duration']))
-                    else:
-                        row.append('')
+                        properties = point.fetch_properties()
 
-                    if 'screen_active' in properties:
-                        row.append(str(properties['screen_active']))
-                    else:
-                        row.append('')
+                        if 'application' in properties:
+                            row.append(properties['application'])
+                        else:
+                            row.append('')
 
-                    if 'application' in properties:
-                        row.append(fetch_app_genre(properties['application']))
-                    else:
-                        row.append('')
+                        if 'duration' in properties:
+                            row.append(str(properties['duration']))
+                        else:
+                            row.append('')
 
-                    writer.writerow(row)
+                        if 'screen_active' in properties:
+                            row.append(str(properties['screen_active']))
+                        else:
+                            row.append('')
+
+                        if 'application' in properties:
+                            row.append(fetch_app_genre(properties['application']))
+                        else:
+                            row.append('')
+
+                        writer.writerow(row)
+
+                    points_index += 1000
 
             export_file.write(secondary_filename, slugify(generator) + '/' + slugify(source) + '.txt')
 
