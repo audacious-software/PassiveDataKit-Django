@@ -1185,6 +1185,12 @@ class ReportJob(models.Model):
     def get_absolute_url(self):
         return reverse('pdk_download_report', args=[self.pk])
 
+    def fetch_parameters(self):
+        if install_supports_jsonfield():
+            return self.parameters
+
+        return json.loads(self.parameters)
+
 @receiver(post_delete, sender=ReportJob)
 def report_job_post_delete_handler(sender, **kwargs): # pylint: disable=unused-argument
     job = kwargs['instance']
@@ -1213,12 +1219,12 @@ class ReportDestination(models.Model):
 
         return json.loads(self.parameters)
 
-    def transmit(self, report_file):
+    def transmit(self, report, report_file):
         for app in settings.INSTALLED_APPS:
             try:
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
-                pdk_api.send_to_destination(self, report_file)
+                pdk_api.send_to_destination(self, report, report_file)
             except ImportError:
                 pass
             except AttributeError:
@@ -1303,6 +1309,9 @@ class ReportJobBatchRequest(models.Model):
 
                 if 'email_subject' in params:
                     job_params['email_subject'] = params['email_subject']
+
+                if 'path' in params:
+                    job_params['path'] = params['path']
 
                 if install_supports_jsonfield():
                     job.parameters = job_params

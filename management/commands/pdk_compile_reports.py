@@ -26,7 +26,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from ...decorators import handle_lock, log_scheduled_event
-from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource, install_supports_jsonfield
+from ...models import DataPoint, ReportJob, ReportJobBatchRequest, DataGeneratorDefinition, DataSourceReference, DataSource
 
 REMOVE_SLEEP_MAX = 60 # Added to avoid "WindowsError: [Error 32] The process cannot access the file because it is being used by another process"
 
@@ -52,12 +52,7 @@ class Command(BaseCommand):
                 report.started = timezone.now()
                 report.save()
 
-                parameters = {}
-
-                if install_supports_jsonfield():
-                    parameters = report.parameters
-                else:
-                    parameters = json.loads(report.parameters)
+                parameters = report.fetch_parameters()
 
                 sources = parameters['sources']
                 generators = parameters['generators']
@@ -311,7 +306,7 @@ class Command(BaseCommand):
                               fail_silently=False)
 
                 for extra_destination in report.requester.pdk_report_destinations.all():
-                    extra_destination.transmit(filename)
+                    extra_destination.transmit(report, filename)
 
                 remove_sleep = 1.0
 

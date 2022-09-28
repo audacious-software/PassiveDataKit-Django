@@ -267,7 +267,7 @@ def extract_location_method(identifier):
 
     return None
 
-def send_to_destination(destination, report_path): # pylint: disable=too-many-branches, too-many-statements
+def send_to_destination(destination, report, report_path): # pylint: disable=too-many-branches, too-many-statements, too-many-locals
     file_sent = False
 
     sleep_durations = [
@@ -277,6 +277,12 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
         300,
     ]
 
+    report_parameters = report.fetch_parameters()
+
+    parameters = destination.fetch_parameters()
+
+    parameters.update(report_parameters)
+
     try:
         sleep_durations = settings.PDK_UPLOAD_SLEEP_DURATIONS
     except AttributeError:
@@ -284,8 +290,6 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
 
     if destination.destination == 'dropbox':
         try:
-            parameters = destination.fetch_parameters()
-
             if 'access_token' in parameters:
                 client = dropbox.Dropbox(parameters['access_token'])
 
@@ -294,13 +298,15 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
                 if 'path' in parameters:
                     path = parameters['path']
 
-                path = path + '/'
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                if ('prepend_date' in parameters) and parameters['prepend_date']:
+                    path = path + report.requested.date().isoformat() + '-'
 
                 if ('prepend_host' in parameters) and parameters['prepend_host']:
                     path = path + settings.ALLOWED_HOSTS[0] + '-'
 
-                if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + timezone.now().date().isoformat() + '-'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -322,16 +328,20 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
             traceback.print_exc()
     elif destination.destination == 'sftp': # pylint: disable=too-many-nested-blocks
         try:
-            parameters = destination.fetch_parameters()
-
             if ('username' in parameters) and ('host' in parameters) and ('key' in parameters):
                 path = ''
 
                 if 'path' in parameters:
                     path = parameters['path']
 
+                    if path[-1] != '/':
+                        path = path + '/'
+
                 if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + timezone.now().date().isoformat() + '-'
+                    path = path + report.requested.date().isoformat() + '-'
+
+                if ('prepend_host' in parameters) and parameters['prepend_host']:
+                    path = path + settings.ALLOWED_HOSTS[0] + '-'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -373,11 +383,19 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
         try:
             parameters = destination.fetch_parameters()
 
+            path = ''
+
             if 'path' in parameters:
                 path = parameters['path']
 
+                if path[-1] != '/':
+                    path = path + '/'
+
             if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = path + timezone.now().date().isoformat() + '-'
+                path = path + report.requested.date().isoformat() + '-'
+
+            if ('prepend_host' in parameters) and parameters['prepend_host']:
+                path = path + settings.ALLOWED_HOSTS[0] + '-'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -405,8 +423,19 @@ def send_to_destination(destination, report_path): # pylint: disable=too-many-br
 
             path = ''
 
+            if 'path' in parameters:
+                path = parameters['path']
+
+                if path[-1] != '/':
+                    path = path + '/'
+
             if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = timezone.now().date().isoformat() + '/'
+                path = path + report.requested.date().isoformat() + '-'
+
+            if ('prepend_host' in parameters) and parameters['prepend_host']:
+                path = path + settings.ALLOWED_HOSTS[0] + '-'
+
+                path = path + '/'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
