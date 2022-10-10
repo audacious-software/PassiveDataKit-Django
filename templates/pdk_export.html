@@ -93,7 +93,7 @@
                     {% endif %}
                 	<p><strong>Standard Generators</strong></p>
                     {% for generator in generators %}
-                        <p style="padding-bottom: 0.25em; margin: 0px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <p style="padding-bottom: 0.25em; margin: 0px; overflow: hidden; text-overflow: clip; white-space: nowrap;">
                         	<input type="checkbox" name="generator_{{ generator }}" id="generator_{{ generator }}" class="generator_checkbox" /> 
                         	<label for="generator_{{ generator }}" style="font-weight: normal; padding-left: 5px;">{% generator_name generator %} ({{ generator }})</label>
                         </p>
