@@ -109,9 +109,9 @@ class Command(BaseCommand):
                 zips_to_merge = []
 
                 with open(filename, 'wb') as final_output_file:
-                    with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
-                        to_delete = []
+                    to_delete = []
 
+                    with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                         for generator in generators: # pylint: disable=too-many-nested-blocks
                             if options.get('verbosity') > 0:
                                 print('Exporting %s for %s.' % (generator, sources))
@@ -222,8 +222,6 @@ class Command(BaseCommand):
                                                         name = os.path.basename(os.path.normpath(output_file))
 
                                                         export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
-
-                                                    # to_delete.append(output_file)
                                             except TypeError as exception:
                                                 traceback.print_exc()
                                                 print('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
@@ -235,20 +233,6 @@ class Command(BaseCommand):
 
                         for data in export_stream:
                             final_output_file.write(data)
-
-                        for output_file in to_delete:
-                            remove_sleep = 1.0
-
-                            while remove_sleep < REMOVE_SLEEP_MAX:
-                                try:
-                                    os.remove(output_file)
-
-                                    remove_sleep = REMOVE_SLEEP_MAX
-                                except OSError:
-                                    remove_sleep = remove_sleep * 2
-
-                                    if remove_sleep >= REMOVE_SLEEP_MAX:
-                                        traceback.print_exc()
 
                 if zips_to_merge:
                     with zipfile.ZipFile(filename, 'a') as zip_output:
@@ -268,6 +252,22 @@ class Command(BaseCommand):
                                     print('Finished writing %s' % child_file)
 
                                     os.remove(child_filename)
+
+                            to_delete.append(zip_filename)
+
+                for output_file in to_delete:
+                    remove_sleep = 1.0
+
+                    while remove_sleep < REMOVE_SLEEP_MAX:
+                        try:
+                            os.remove(output_file)
+
+                            remove_sleep = REMOVE_SLEEP_MAX
+                        except OSError:
+                            remove_sleep = remove_sleep * 2
+
+                            if remove_sleep >= REMOVE_SLEEP_MAX:
+                                traceback.print_exc()
 
                 report.completed = timezone.now()
 

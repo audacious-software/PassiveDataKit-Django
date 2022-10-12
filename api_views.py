@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate
 
-from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource, DataSourceReference, DataGeneratorDefinition
+from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAccessRequestPending, DataSource, DataSourceGroup, DataSourceReference, DataGeneratorDefinition
 
 
 def valid_pdk_token_required(function):
@@ -210,9 +210,6 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 
             for field, value in list(filter_obj.items()):
                 if value is not None:
-                    if field == 'created' or field == 'recorded':
-                        value = arrow.get(value).datetime
-
                     if field == 'source':
                         field = 'source_reference'
 
@@ -230,9 +227,6 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 
             for field, value in list(exclude.items()):
                 if value is not None:
-                    if field == 'created' or field == 'recorded':
-                        value = arrow.get(value).datetime
-
                     if field == 'source':
                         field = 'source_reference'
 
@@ -282,6 +276,95 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
             access_request.user_identifier = 'api_token: ' + request.POST['token']
 
         access_request.request_type = 'api-data-source-request'
+        access_request.request_time = timezone.now()
+        access_request.request_metadata = json.dumps(request.POST, indent=2)
+        access_request.successful = True
+        access_request.save()
+
+        return HttpResponse(json.dumps(payload), content_type='application/json')
+
+    return HttpResponseNotAllowed(['POST'])
+
+@csrf_exempt
+@valid_pdk_token_required
+def pdk_data_source_update(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    if request.method == 'POST': # pylint: disable=too-many-nested-blocks
+        filters = json.loads(request.POST['filters'])
+        excludes = json.loads(request.POST['excludes'])
+        updates = json.loads(request.POST['updates'])
+
+        query = None
+
+        for filter_obj in filters:
+            processed_filter = {}
+
+            for field, value in list(filter_obj.items()):
+                if value is not None:
+                    if field == 'source':
+                        field = 'source_reference'
+
+                        value = DataSourceReference.reference_for_source(value)
+
+                processed_filter[field] = value
+
+            if query is None:
+                query = DataSource.objects.filter(**processed_filter)
+            else:
+                query = query.filter(**processed_filter)
+
+        for exclude in excludes:
+            processed_exclude = {}
+
+            for field, value in list(exclude.items()):
+                if value is not None:
+                    if field == 'source':
+                        field = 'source_reference'
+
+                        value = DataSourceReference.reference_for_source(value)
+
+                processed_exclude[field] = value
+
+            if query is None:
+                query = DataSource.objects.exclude(**processed_exclude)
+            else:
+                query = query.exclude(**processed_exclude)
+
+        update_count = 0
+
+        for field_update in updates:
+            processed_update = {}
+
+            for field, value in list(field_update.items()):
+                if value is not None:
+                    if field == 'group':
+                        group_name = value
+
+                        value = DataSourceGroup.objects.filter(name=group_name).first()
+
+                        if value is None:
+                            value = DataSourceGroup.objects.create(name=group_name)
+
+                processed_update[field] = value
+
+            if query is None:
+                update_count = DataSource.objects.update(**processed_exclude)
+            else:
+                update_count = query.update(**processed_update)
+
+        payload = {
+            'updated': update_count,
+        }
+
+        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+
+        access_request = DataServerAccessRequestPending()
+
+        if token is not None:
+            access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
+        else:
+            access_request.user_identifier = 'api_token: ' + request.POST['token']
+
+        access_request.request_type = 'api-data-source-update'
         access_request.request_time = timezone.now()
         access_request.request_metadata = json.dumps(request.POST, indent=2)
         access_request.successful = True
