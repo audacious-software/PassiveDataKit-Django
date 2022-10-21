@@ -28,7 +28,7 @@ Django==3.2.16; python_version >= '3.0'
 django-mathfilters==1.0.0
 django-prettyjson==0.4.1
 django-user-agents==0.4.0
-dropbox==11.34.0
+dropbox==11.35.0
 future==0.18.2
 lockfile==0.12.2
 lxml==4.9.1
