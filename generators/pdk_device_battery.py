@@ -84,8 +84,8 @@ def compile_visualization(identifier, points, folder, source=None): # pylint: di
     context['start'] = calendar.timegm(start.timetuple())
     context['end'] = calendar.timegm(now.timetuple())
 
-    with io.open(folder + os.path.sep + 'battery-level.json', 'w', encoding='utf-8') as outfile:
-        outfile.write(json.dumps(context, indent=2, ensure_ascii=False))
+    with io.open(folder + os.path.sep + 'battery-level.json', 'wb') as outfile:
+        json.dump(context, outfile, indent=2)
 
     compile_frequency_visualization(identifier, points, folder)
 
