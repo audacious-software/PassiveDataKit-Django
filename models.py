@@ -392,7 +392,9 @@ class DataPointManager(models.Manager):
 
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
-        index_together = []
+        index_together = [
+            ['created', 'source_reference']
+        ]
 
     objects = DataPointManager()
 
