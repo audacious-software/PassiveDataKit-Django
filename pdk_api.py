@@ -679,7 +679,7 @@ def clear_points(to_clear):
 
         DataPoint.objects.filter(pk=point_pk).delete()
 
-def update_data_type_definition(definition):
+def update_data_type_definition(definition, data_type=None, override_existing=False): # pylint: disable=unused-argument
     if 'passive-data-metadata' in definition:
         del definition['passive-data-metadata']
 
@@ -696,6 +696,9 @@ def update_data_type_definition(definition):
         definition['passive-data-metadata.generator']['pdk_variable_description'] = 'Identifies the data point type as well as the name and version of the software that generated the data point. Example: "' + definition['passive-data-metadata.generator']['observed'][0] + '"'
         definition['passive-data-metadata.generator']['pdk_codebook_group'] = 'Passive Data Kit'
         definition['passive-data-metadata.generator']['pdk_codebook_order'] = 2
+
+        if len(definition['passive-data-metadata.generator']['observed']) > 8:
+            definition['passive-data-metadata.generator']['examples'] = definition['passive-data-metadata.generator']['observed'][:8]
 
     if 'passive-data-metadata.source' in definition:
         del definition['passive-data-metadata.source']['observed']
@@ -714,3 +717,27 @@ def update_data_type_definition(definition):
         definition['passive-data-metadata.timestamp']['pdk_variable_description'] = 'Unix timestamp (in seconds) encoding the moment in time the data point was generated. Note that this is NOT the same as the time when it was recorded on the server.'
         definition['passive-data-metadata.timestamp']['pdk_codebook_group'] = 'Passive Data Kit'
         definition['passive-data-metadata.timestamp']['pdk_codebook_order'] = 4
+
+    if 'passive-data-metadata.timezone' in definition:
+        # definition['passive-data-metadata.timestamp']['types'] = ['timestamp']
+
+        definition['passive-data-metadata.timezone']['pdk_variable_name'] = 'Time zone'
+        definition['passive-data-metadata.timezone']['pdk_variable_description'] = 'Time zone of the device submitting the data point.'
+        definition['passive-data-metadata.timezone']['pdk_codebook_group'] = 'Passive Data Kit'
+        definition['passive-data-metadata.timezone']['pdk_codebook_order'] = 5
+
+    if 'passive-data-metadata.timezone-offset' in definition:
+        # definition['passive-data-metadata.timestamp']['types'] = ['timestamp']
+
+        definition['passive-data-metadata.timezone-offset']['pdk_variable_name'] = 'Time offset'
+        definition['passive-data-metadata.timezone-offset']['pdk_variable_description'] = 'Time zone offset in seconds from UTC.'
+        definition['passive-data-metadata.timezone-offset']['pdk_codebook_group'] = 'Passive Data Kit'
+        definition['passive-data-metadata.timezone-offset']['pdk_codebook_order'] = 6
+
+    if 'passive-data-metadata.encrypted_transmission' in definition:
+        # definition['passive-data-metadata.timestamp']['types'] = ['timestamp']
+
+        definition['passive-data-metadata.encrypted_transmission']['pdk_variable_name'] = 'Device Encryption Used'
+        definition['passive-data-metadata.encrypted_transmission']['pdk_variable_description'] = 'Indictates whether the data point was encrypted prior to transmission'
+        definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_group'] = 'Passive Data Kit'
+        definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_order'] = 7
