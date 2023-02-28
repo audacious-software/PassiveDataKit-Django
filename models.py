@@ -545,7 +545,7 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         if self.generator_identifier != 'pdk-virtual-point':
             super(DataPoint, self).save(force_insert, force_update, using, update_fields)
         else:
-            raise Exception('Attempting to save pdk-virtual-point.')
+            raise TypeError('Attempting to save pdk-virtual-point.')
 
 @receiver(post_save, sender=DataPoint)
 def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument

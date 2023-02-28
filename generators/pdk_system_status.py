@@ -100,6 +100,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Total Storage',
                     'App Runtime',
                     'System Runtime',
+                    'Pending Points',
                 ]
 
                 writer.writerow(columns)
@@ -137,20 +138,15 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row.append(calendar.timegm(point.recorded.utctimetuple()))
                     row.append(recorded.isoformat())
 
-                    row.append(properties['storage_available'])
-                    row.append(properties['storage_other'])
-                    row.append(properties['storage_app'])
-                    row.append(properties['storage_total'])
+                    row.append(properties.get('storage_available', None))
+                    row.append(properties.get('storage_other', None))
+                    row.append(properties.get('storage_app', None))
+                    row.append(properties.get('storage_total', None))
 
-                    if 'runtime' in properties:
-                        row.append(properties['runtime'])
-                    else:
-                        row.append(None)
+                    row.append(properties.get('runtime', None))
+                    row.append(properties.get('system_runtime', None))
 
-                    if 'system_runtime' in properties:
-                        row.append(properties['system_runtime'])
-                    else:
-                        row.append(None)
+                    row.append(properties.get('pending_points', None))
 
                     writer.writerow(row)
 

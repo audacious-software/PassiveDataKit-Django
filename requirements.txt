@@ -7,12 +7,12 @@ bandit==1.7.4; python_version >= '3.7'
 bandit==1.7.1; python_version == '3.6'
 bandit==1.6.2; python_version < '3.0'
 boto==2.49.0
-boto3==1.26.54; python_version >= '3.7'
+boto3==1.26.74; python_version >= '3.7'
 boto3==1.23.10; python_version >= '3.0' and python_version < '3.7'
 boto3==1.17.112; python_version < '3.0'
 bcrypt==3.1.7; python_version < '3.0'
 bcrypt==4.0.1; python_version >= '3.0'
-beautifulsoup4==4.11.1; python_version >= '3.0'
+beautifulsoup4==4.11.2; python_version >= '3.0'
 beautifulsoup4==4.9.3; python_version < '3.0'
 caniusepython3==7.3.0
 certifi==2021.10.8; python_version < '3.0'
@@ -22,11 +22,11 @@ chardet==4.0.0; python_version < '3.0'
 chardet==5.0.0; python_version >= '3.0' and python_version < '3.7'
 chardet==5.1.0; python_version >= '3.7'
 cryptography==2.9.2; python_version < '3.0'
-cryptography==39.0.0; python_version >= '3.0'
+cryptography==39.0.1; python_version >= '3.0'
 dj-database-url==0.5.0; python_version < '3.0'
 dj-database-url==1.2.0; python_version >= '3.0'
 Django==1.11.29; python_version < '3.0'
-Django==3.2.16; python_version >= '3.0'
+Django==3.2.18; python_version >= '3.0'
 django-mathfilters==1.0.0
 django-prettyjson==0.4.1
 django-user-agents==0.4.0
@@ -37,19 +37,19 @@ lxml==4.9.2
 numpy==1.16.6; python_version < '3.0'
 numpy==1.19.5; python_version == '3.6'
 numpy==1.21.6; python_version == '3.7'
-numpy==1.24.1; python_version >= '3.8'
+numpy==1.24.2; python_version >= '3.8'
 oauth2client==4.1.3
 oauthlib==3.1.0; python_version < '3.0'
 oauthlib==3.2.2; python_version >= '3.0'
 paramiko==2.6.0; python_version < '3.0'
-paramiko==2.12.0; python_version >= '3.0'
+paramiko==3.0.0; python_version >= '3.0'
 pbr==5.11.1
 psutil==5.9.4
 psycopg2-binary==2.9.5; python_version >= '3.0'
 psycopg2-binary==2.8.6; python_version < '3.0'
 pushjack==1.6.0
 pyfcm==1.5.4
-pylint==2.15.10; python_version >= '3.7.2'
+pylint==2.16.2; python_version >= '3.7.2'
 pylint==2.14.5; python_version >= '3.7' and python_version < '3.7.2'
 pylint==2.13.9; python_version == '3.6'
 pylint==1.9.5; python_version < '3.0'
@@ -65,7 +65,7 @@ rsa==4.9; python_version >= '3.0'
 rsa==4.0; python_version < '3.0'
 six==1.16.0
 standardjson==0.3.1
-urllib3==1.26.13
+urllib3==1.26.14
 XlsxWriter==2.0.0; python_version < '3.4'
-XlsxWriter==3.0.6; python_version >= '3.4'
+XlsxWriter==3.0.8; python_version >= '3.4'
 zipstream==1.1.4
