@@ -229,9 +229,9 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         for key, value in list(request.FILES.items()): # pylint: disable=unused-variable
             data_file = DataFile(data_bundle=bundle)
-            data_file.identifier = value.name
+            data_file.identifier = key
             data_file.content_type = value.content_type
-            data_file.content_file.save(value.name, value)
+            data_file.content_file.save(key, value)
             data_file.save()
 
         return response

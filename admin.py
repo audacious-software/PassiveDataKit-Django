@@ -103,8 +103,9 @@ class DataBundleAdmin(admin.OSMGeoAdmin):
 
 @admin.register(DataFile)
 class DataFileAdmin(admin.OSMGeoAdmin):
-    list_display = ('content_file', 'content_type', 'identifier', 'data_point', 'data_bundle',)
+    list_display = ('identifier', 'content_file', 'content_type', 'data_point', 'data_bundle',)
     list_filter = ('content_type',)
+    readonly_fields = ['data_point', 'data_bundle']
 
 @admin.register(DataSourceGroup)
 class DataSourceGroupAdmin(admin.OSMGeoAdmin):
