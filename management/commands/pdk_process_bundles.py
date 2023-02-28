@@ -103,6 +103,10 @@ class Command(BaseCommand):
 
                 original_properties = bundle.properties
 
+                bundle_files = bundle.data_files.all()
+
+                has_bundles = (bundle_files.count() > 0)
+
                 try:
                     with transaction.atomic():
                         if supports_json is False:
@@ -240,6 +244,9 @@ class Command(BaseCommand):
                                         point.fetch_source_reference(skip_save=True)
 
                                         point.save()
+
+                                        if has_bundles:
+                                            point.fetch_bundle_files(bundle_files)
 
                                         if (point.source in seen_sources) is False:
                                             seen_sources.append(point.source)
