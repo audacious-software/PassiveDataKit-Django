@@ -149,11 +149,12 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
         'requested',
         'sequence_index',
         'sequence_count',
+        'priority',
         'started',
         'completed'
     )
 
-    list_filter = ('requested', 'started', 'completed',)
+    list_filter = ('requested', 'started', 'completed', 'priority',)
 
     actions = [reset_report_jobs]
     search_fields = ('parameters',)
@@ -161,8 +162,8 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
 
 @admin.register(ReportJobBatchRequest)
 class ReportJobBatchRequestAdmin(admin.OSMGeoAdmin):
-    list_display = ('requester', 'requested', 'started', 'completed')
-    list_filter = ('requested', 'started', 'completed', 'requester')
+    list_display = ('requester', 'requested', 'priority', 'started', 'completed')
+    list_filter = ('requested', 'started', 'completed', 'priority', 'requester')
 
 
 @admin.register(DataServerMetadatum)

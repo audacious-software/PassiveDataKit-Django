@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
         while pending.count() > 0:
             report = ReportJob.objects.filter(started=None, completed=None)\
-                                      .order_by('requested', 'pk')\
+                                      .order_by('-priority', 'requested', 'pk')\
                                       .first()
 
             if report is not None:
@@ -322,7 +322,7 @@ class Command(BaseCommand):
                             traceback.print_exc()
 
         request = ReportJobBatchRequest.objects.filter(started=None, completed=None)\
-                      .order_by('requested', 'pk')\
+                      .order_by('-priority', 'requested', 'pk')\
                       .first()
 
         if request is not None:

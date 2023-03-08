@@ -1177,6 +1177,8 @@ class ReportJob(models.Model):
     sequence_index = models.IntegerField(default=1)
     sequence_count = models.IntegerField(default=1)
 
+    priority = models.IntegerField(default=0)
+
     if install_supports_jsonfield():
         parameters = JSONField()
     else:
@@ -1253,6 +1255,8 @@ class ReportJobBatchRequest(models.Model):
     started = models.DateTimeField(db_index=True, null=True, blank=True)
     completed = models.DateTimeField(db_index=True, null=True, blank=True)
 
+    priority = models.IntegerField(default=0)
+
     if install_supports_jsonfield():
         parameters = JSONField()
     else:
@@ -1292,7 +1296,7 @@ class ReportJobBatchRequest(models.Model):
             while page < len(sources):
                 pending_sources = sources[page:(page + sources_per_job)]
 
-                job = ReportJob(requester=self.requester, requested=requested)
+                job = ReportJob(requester=self.requester, requested=requested, priority=self.priority)
 
                 job_params = {}
 
@@ -1382,7 +1386,7 @@ class ReportJobBatchRequest(models.Model):
 
                     report_size += query_size
                 else:
-                    job = ReportJob(requester=self.requester, requested=requested)
+                    job = ReportJob(requester=self.requester, requested=requested, priority=self.priority)
 
                     job_params = {}
 
@@ -1412,7 +1416,7 @@ class ReportJobBatchRequest(models.Model):
                     report_sources = [source]
 
             if report_sources:
-                job = ReportJob(requester=self.requester, requested=requested)
+                job = ReportJob(requester=self.requester, requested=requested, priority=self.priority)
 
                 job_params = {}
 
