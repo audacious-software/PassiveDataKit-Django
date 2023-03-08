@@ -518,6 +518,29 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
 
         return CACHED_SOURCE_REFERENCES[self.source]
 
+    def attach_files(self, point_property, bundle_files):
+        if isinstance(point_property, dict):
+            for key, value in point_property.items():
+                if isinstance(value, str) and key.endswith('@'):
+                    for bundle_file in bundle_files.filter(identifier=value):
+                        bundle_file.data_point = self
+                        bundle_file.save()
+                elif isinstance(value, list) and key.endswith('@'):
+                    for identifier in value:
+                        for bundle_file in bundle_files.filter(identifier=identifier):
+                            bundle_file.data_point = self
+                            bundle_file.save()
+                else:
+                    self.attach_files(value, bundle_files)
+        elif isinstance(point_property, list):
+            for value in point_property:
+                self.attach_files(value, bundle_files)
+
+    def fetch_bundle_files(self, bundle_files):
+        properties = self.fetch_properties()
+
+        self.attach_files(properties, bundle_files)
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.generator_identifier != 'pdk-virtual-point':
             super(DataPoint, self).save(force_insert, force_update, using, update_fields)
@@ -563,7 +586,7 @@ class DataBundle(models.Model):
 
 
 class DataFile(models.Model):
-    data_point = models.ForeignKey(DataPoint, related_name='data_files', on_delete=models.CASCADE)
+    data_point = models.ForeignKey(DataPoint, related_name='data_files', null=True, blank=True, on_delete=models.CASCADE)
     data_bundle = models.ForeignKey(DataBundle, related_name='data_files', null=True, blank=True, on_delete=models.SET_NULL)
 
     identifier = models.CharField(max_length=256, db_index=True)
