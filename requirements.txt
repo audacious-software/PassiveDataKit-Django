@@ -1,4 +1,3 @@
-wheel
 arrow==0.14.7; python_version < '3.0'
 arrow==1.2.3; python_version >= '3.0'
 azure-storage-blob==12.15.0; python_version >= '3.7'
