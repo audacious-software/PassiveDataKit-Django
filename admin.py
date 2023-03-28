@@ -87,7 +87,7 @@ class DataPointAdmin(admin.OSMGeoAdmin):
     openlayers_url = 'https://openlayers.org/api/2.13.1/OpenLayers.js'
 
     formfield_overrides = {
-        JSONField: {'widget': PrettyJSONWidget}
+        JSONField: {'widget': PrettyJSONWidget(attrs={'initial': 'parsed'})}
     }
 
     inlines = [
