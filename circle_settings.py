@@ -27,7 +27,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-    'passive_data_kit'
+    'prettyjson',
+    'passive_data_kit',
 )
 
 MIDDLEWARE = (
