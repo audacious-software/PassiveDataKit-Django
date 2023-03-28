@@ -110,7 +110,7 @@ class DataPointAdmin(admin.OSMGeoAdmin):
         DataPointSourceFilter,
         )
 
-    def file_count(self, obj):
+    def file_count(self, obj): # pylint: disable=no-self-use
         return obj.data_files.all().count()
 
 @admin.register(DataBundle)
