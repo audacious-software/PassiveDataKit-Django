@@ -68,6 +68,19 @@ class DataPointSourceFilter(SimpleListFilter):
 
         return None
 
+class DataFileInline(admin.TabularInline):
+    model = DataFile
+
+    fields = ['content_file', 'identifier', 'content_type']
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 @admin.register(DataPoint)
 class DataPointAdmin(admin.OSMGeoAdmin):
@@ -77,10 +90,15 @@ class DataPointAdmin(admin.OSMGeoAdmin):
         JSONField: {'widget': PrettyJSONWidget}
     }
 
+    inlines = [
+        DataFileInline,
+    ]
+
     list_display = (
         'source_reference',
         'generator_definition',
         'secondary_identifier',
+        'file_count',
         'created',
         'recorded',
     )
@@ -91,6 +109,9 @@ class DataPointAdmin(admin.OSMGeoAdmin):
         DataPointGeneratorIdentifierFilter,
         DataPointSourceFilter,
         )
+
+    def file_count(self, obj):
+        return obj.data_files.all().count()
 
 @admin.register(DataBundle)
 class DataBundleAdmin(admin.OSMGeoAdmin):

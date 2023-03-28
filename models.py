@@ -27,6 +27,7 @@ from six import python_2_unicode_compatible
 import django
 
 from django.conf import settings
+from django.core.checks import Warning, register # pylint: disable=redefined-builtin
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import connection
 from django.db.models import Q, QuerySet
@@ -119,6 +120,16 @@ def install_supports_jsonfield():
             pass
 
     return DB_SUPPORTS_JSON
+
+@register()
+def check_prettyjson_installed(app_configs, **kwargs): # pylint: disable=unused-argument
+    errors = []
+
+    if ('prettyjson' in settings.INSTALLED_APPS) is False:
+        error = Warning('"prettyjson" not found in settings.INSTALLED_APPS', hint='Add "prettyjson" to settings.INSTALLED_APPS.', obj=None, id='passive_data_kit.W001')
+        errors.append(error)
+
+    return errors
 
 @python_2_unicode_compatible
 class DataGeneratorDefinition(models.Model):
