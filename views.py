@@ -144,11 +144,7 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         body_str = request.body.decode('utf-8')
 
-        original_len = len(body_str)
-
         body_str = body_str.replace('\\u0000', '')
-
-        new_len = len(body_str)
 
         try:
             points = json.loads(body_str)
@@ -159,6 +155,8 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            bundle = DataBundle(recorded=timezone.now())
 
             bundle.properties = json.dumps(request.body.decode('utf-8'))
             bundle.errored = timezone.now()
