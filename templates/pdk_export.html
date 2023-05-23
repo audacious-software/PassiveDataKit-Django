@@ -47,7 +47,7 @@
     <form action="{% url 'pdk_export' %}" method="POST">
         <div class="row">
             {% csrf_token %}
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <h3>Sources</h3>
                 
                 <p>
@@ -73,7 +73,7 @@
                     {% endfor %}
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <h3>Data Generators</h3>
                 <p>
                     <input type="checkbox" id="generators_select_all">&nbsp;&nbsp;Select All Generators
