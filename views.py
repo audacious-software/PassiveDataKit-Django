@@ -8,6 +8,7 @@ import io
 import json
 import os
 import re
+import traceback
 
 from django.conf import settings
 from django.db.utils import DataError
@@ -141,13 +142,28 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         points = None
 
+        body_str = request.body.decode('utf-8')
+
+        original_len = len(body_str)
+
+        body_str = body_str.replace('\\u0000', '')
+
+        new_len = len(body_str)
+
         try:
-            points = json.loads(request.body)
+            points = json.loads(body_str)
         except UnreadablePostError:
+            traceback.print_exc()
+
             response = {'message': 'Unable to parse data bundle.'}
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            bundle.properties = json.dumps(request.body.decode('utf-8'))
+            bundle.errored = timezone.now()
+            bundle.processed = timezone.now()
+            bundle.save()
 
             return response
 
@@ -161,10 +177,17 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
             bundle.save()
         except DataError:
+            traceback.print_exc()
+
             response = {'message': 'Unable to parse data bundle.'}
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            bundle.properties = json.dumps(request.body.decode('utf-8'))
+            bundle.errored = timezone.now()
+            bundle.processed = timezone.now()
+            bundle.save()
 
         return response
 
