@@ -308,8 +308,6 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 path = path + report.requested.date().isoformat() + '_'
 
             if parameters.get('prepend_source_range', False):
-                report_parameters = json.loads(report.parameters)
-
                 data_sources = report_parameters.get('sources', [])
 
                 if len(data_sources) == 1:
@@ -353,8 +351,6 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 path = path + report.requested.date().isoformat() + '_'
 
             if parameters.get('prepend_source_range', False):
-                report_parameters = json.loads(report.parameters)
-
                 data_sources = report_parameters.get('sources', [])
 
                 if len(data_sources) == 1:
@@ -417,8 +413,6 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 path = path + report.requested.date().isoformat() + '_'
 
             if parameters.get('prepend_source_range', False):
-                report_parameters = json.loads(report.parameters)
-
                 data_sources = report_parameters.get('sources', [])
 
                 if len(data_sources) == 1:
@@ -465,8 +459,6 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 path = path + report.requested.date().isoformat() + '_'
 
             if parameters.get('prepend_source_range', False):
-                report_parameters = json.loads(report.parameters)
-
                 data_sources = report_parameters.get('sources', [])
 
                 if len(data_sources) == 1:
