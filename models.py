@@ -1334,7 +1334,7 @@ class ReportJobBatchRequest(models.Model):
 
                 job_params = {}
 
-                job_params['sources'] = pending_sources
+                job_params['sources'] = sorted(pending_sources)
                 job_params['generators'] = params['generators']
                 job_params['raw_data'] = params['export_raw']
                 job_params['data_start'] = params['data_start']

@@ -301,12 +301,21 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-                if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-                if ('prepend_host' in parameters) and parameters['prepend_host']:
-                    path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
 
+            if parameters.get('prepend_source_range', False):
+                report_parameters = json.loads(report.parameters)
+
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -337,11 +346,21 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-                if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-                if ('prepend_host' in parameters) and parameters['prepend_host']:
-                    path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
+
+            if parameters.get('prepend_source_range', False):
+                report_parameters = json.loads(report.parameters)
+
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -391,11 +410,21 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if path[-1] != '/':
                     path = path + '/'
 
-            if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if ('prepend_host' in parameters) and parameters['prepend_host']:
-                path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
+
+            if parameters.get('prepend_source_range', False):
+                report_parameters = json.loads(report.parameters)
+
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -429,13 +458,21 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if path[-1] != '/':
                     path = path + '/'
 
-            if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if ('prepend_host' in parameters) and parameters['prepend_host']:
-                path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
 
-                path = path + '/'
+            if parameters.get('prepend_source_range', False):
+                report_parameters = json.loads(report.parameters)
+
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
