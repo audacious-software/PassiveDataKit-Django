@@ -313,7 +313,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if len(data_sources) == 1:
                     path = path + data_sources[0] + '_'
                 elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -356,7 +356,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if len(data_sources) == 1:
                     path = path + data_sources[0] + '_'
                 elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -418,7 +418,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if len(data_sources) == 1:
                     path = path + data_sources[0] + '_'
                 elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -464,7 +464,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if len(data_sources) == 1:
                     path = path + data_sources[0] + '_'
                 elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '.' + data_sources[-1] + '_'
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
