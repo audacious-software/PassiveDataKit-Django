@@ -671,14 +671,26 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
 
     for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-            return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+            response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
 
     for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.id_pattern == '.*' or re.search(config.id_pattern, identifier) is not None:
             if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-                return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+                response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
-    return HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
+                response['Access-Control-Allow-Origin'] = '*'
+
+                return response
+
+    response = HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
+
+    response['Access-Control-Allow-Origin'] = '*'
+
+    return response
 #     raise Http404('Matching configuration not found.')
 
 @staff_member_required
