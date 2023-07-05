@@ -27,7 +27,7 @@ from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource
 
 
 @csrf_exempt
-def pdk_add_data_point(request):
+def pdk_add_data_point(request): # pylint: disable=too-many-statements
     try:
         if settings.PDK_DISABLE_DATA_UPLOAD:
             response_payload = {'message': 'Data collection has been disabled and incoming transmissions are being discarded.'}
