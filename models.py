@@ -402,7 +402,7 @@ class DataPointManager(models.Manager):
 
 
 @python_2_unicode_compatible # pylint: disable=too-many-instance-attributes
-class DataPoint(models.Model):
+class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         index_together = [
             ['created', 'source_reference']
