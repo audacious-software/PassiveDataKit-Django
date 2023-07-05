@@ -94,6 +94,10 @@ class DataPointAdmin(admin.OSMGeoAdmin):
         DataFileInline,
     ]
 
+    exclude = [
+        'generated_at',
+    ]
+
     list_display = (
         'source_reference',
         'generator_definition',

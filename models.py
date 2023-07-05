@@ -401,6 +401,7 @@ class DataPointManager(models.Manager):
         return point
 
 
+@python_2_unicode_compatible
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         index_together = [
@@ -557,6 +558,9 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
             super(DataPoint, self).save(force_insert, force_update, using, update_fields)
         else:
             raise TypeError('Attempting to save pdk-virtual-point.')
+
+    def __str__(self):
+        return '%s (%s - id:%s)' % (self.generator_identifier, self.source, self.pk)
 
 @receiver(post_save, sender=DataPoint)
 def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
