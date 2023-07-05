@@ -27,7 +27,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: venv-38-{{ .Branch }}-{{ checksum "requirements.txt" }}-deps
+          key: venv-39-{{ .Branch }}-{{ checksum "requirements.txt" }}-deps
       - run:
           name: Build and validate
           command: |
@@ -55,7 +55,7 @@ jobs:
             pylint passive_data_kit
             bandit -r .      
       - save_cache:
-          key: venv-38-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
+          key: venv-39-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
             - "/home/circleci/venv"
       - store_test_results:
