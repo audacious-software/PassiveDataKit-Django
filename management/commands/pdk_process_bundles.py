@@ -169,6 +169,11 @@ class Command(BaseCommand):
 
                                     point_json = point_json.replace(r'\u0000', '')
 
+                                # while r'\ud83c' in point_json:
+                                #    print('Detected 0xd83c byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+
+                                #    point_json = point_json.replace(r'\ud83c', '')
+
                                 bundle_point = json.loads(point_json)
 
                             try:
@@ -234,7 +239,7 @@ class Command(BaseCommand):
                                         point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
 
                                         if supports_json:
-                                            point.properties = bundle_point
+                                            point.properties = json.loads(json.dumps(bundle_point, indent=2).encode('utf-16', 'surrogatepass').decode('utf-16'))
                                         else:
                                             point.properties = json.dumps(bundle_point, indent=2)
 
