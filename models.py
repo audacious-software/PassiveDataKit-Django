@@ -227,7 +227,11 @@ class DataPointQuerySet(QuerySet):
         data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
-            return super(DataPointQuerySet, self).count()
+            data_count = super(DataPointQuerySet, self).count()
+
+            DataServerMetadatum.objects.create(key=TOTAL_DATA_POINT_COUNT_DATUM, value=str(data_count))
+
+            return data_count
 
         return int(data_point_count.value)
 
@@ -578,7 +582,7 @@ class DataServerMetadatum(models.Model):
     last_updated = models.DateTimeField(null=True, blank=True)
 
     def formatted_value(self): # pylint: disable=no-self-use
-        return 'TODO'
+        return '%s = %s' % (self.key, self.value)
 
 @receiver(pre_save, sender=DataServerMetadatum)
 def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument

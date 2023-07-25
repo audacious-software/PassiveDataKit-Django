@@ -439,6 +439,9 @@ class Command(BaseCommand):
 
             logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False, errored=None).count())
 
+        else:
+            DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).delete()
+
         # elapsed = timezone.now() - start_time
 
         # print('Elapsed: ' + str(elapsed) + ' -- ' + str(processed_bundle_count) + ' bundles')
