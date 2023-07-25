@@ -15,7 +15,7 @@ import string
 
 import importlib
 
-from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from packaging.version import Version
 from future import standard_library
 from past.utils import old_div
 
@@ -214,7 +214,7 @@ class DataPointQuerySet(QuerySet):
         # clauses are present. In earlier versions these were two separate
         # properties query.where and query.having
 
-        if LooseVersion(django.get_version()) >= LooseVersion('1.9'):
+        if Version(django.get_version()) >= Version('1.9'):
             is_filtered = self.query.where
         else:
             is_filtered = self.query.where or self.query.having
