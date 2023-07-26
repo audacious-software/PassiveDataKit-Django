@@ -650,24 +650,35 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     context = None
 
     if request.method == 'GET':
-        if 'id' in request.GET:
-            identifier = request.GET['id']
+        identifier = request.GET.get('id', request.GET.get('identifier', None))
 
-        if 'context' in request.GET:
-            context = request.GET['context']
+        context = request.GET.get('context', None)
 
     if request.method == 'POST':
-        if 'id' in request.POST:
-            identifier = request.POST['id']
+        identifier = request.POST.get('id', request.POST.get('identifier', None))
 
-        if 'context' in request.POST:
-            context = request.POST['context']
+        context = request.POST.get('context', None)
 
     if identifier is None:
         identifier = 'default'
 
     if context is None:
         context = 'default'
+
+    try:
+    	settings.PDK_UPDATE_APP_CONFIGURATION(DataSource, AppConfiguration, identifier)
+    except AttributeError:
+    	pass
+
+    source = DataSource.objects.filter(identifier=identifier).first()
+
+    if source is not None:
+        if source.configuration is not None:
+            response = HttpResponse(json.dumps(source.configuration.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
 
     for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
@@ -691,7 +702,6 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     response['Access-Control-Allow-Origin'] = '*'
 
     return response
-#     raise Http404('Matching configuration not found.')
 
 @staff_member_required
 def pdk_issues(request):

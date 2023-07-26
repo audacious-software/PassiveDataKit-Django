@@ -132,6 +132,37 @@ def check_prettyjson_installed(app_configs, **kwargs): # pylint: disable=unused-
     return errors
 
 @python_2_unicode_compatible
+class AppConfiguration(models.Model):
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
+        index_together = [
+            ['is_valid', 'is_enabled'],
+            ['is_valid', 'is_enabled', 'evaluate_order'],
+        ]
+
+    name = models.CharField(max_length=1024)
+    id_pattern = models.CharField(max_length=1024, db_index=True)
+    context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)
+
+    if install_supports_jsonfield():
+        configuration_json = JSONField()
+    else:
+        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    evaluate_order = models.IntegerField(default=1)
+
+    is_valid = models.BooleanField(default=False)
+    is_enabled = models.BooleanField(default=True)
+
+    def configuration(self):
+        if install_supports_jsonfield():
+            return self.configuration_json
+
+        return json.loads(self.configuration_json)
+
+    def __str__(self):
+        return str(self.name)
+
+@python_2_unicode_compatible
 class DataGeneratorDefinition(models.Model):
     generator_identifier = models.CharField(max_length=1024)
 
@@ -659,6 +690,8 @@ class DataSource(models.Model):
     performance_metadata_updated = models.DateTimeField(db_index=True, null=True, blank=True)
 
     server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
+
+    configuration = models.ForeignKey(AppConfiguration, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name + ' (' + self.identifier + ')'
@@ -1505,33 +1538,6 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = parameters
     else:
         job.parameters = json.dumps(parameters, indent=2)
-
-class AppConfiguration(models.Model):
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
-        index_together = [
-            ['is_valid', 'is_enabled'],
-            ['is_valid', 'is_enabled', 'evaluate_order'],
-        ]
-
-    name = models.CharField(max_length=1024)
-    id_pattern = models.CharField(max_length=1024, db_index=True)
-    context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)
-
-    if install_supports_jsonfield():
-        configuration_json = JSONField()
-    else:
-        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
-
-    evaluate_order = models.IntegerField(default=1)
-
-    is_valid = models.BooleanField(default=False)
-    is_enabled = models.BooleanField(default=True)
-
-    def configuration(self):
-        if install_supports_jsonfield():
-            return self.configuration_json
-
-        return json.loads(self.configuration_json)
 
 class DataServerApiToken(models.Model):
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
