@@ -15,7 +15,7 @@ import string
 
 import importlib
 
-from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from packaging.version import Version
 from future import standard_library
 from past.utils import old_div
 
@@ -245,7 +245,7 @@ class DataPointQuerySet(QuerySet):
         # clauses are present. In earlier versions these were two separate
         # properties query.where and query.having
 
-        if LooseVersion(django.get_version()) >= LooseVersion('1.9'):
+        if Version(django.get_version()) >= Version('1.9'):
             is_filtered = self.query.where
         else:
             is_filtered = self.query.where or self.query.having
@@ -258,7 +258,11 @@ class DataPointQuerySet(QuerySet):
         data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
-            return super(DataPointQuerySet, self).count()
+            data_count = super(DataPointQuerySet, self).count()
+
+            DataServerMetadatum.objects.create(key=TOTAL_DATA_POINT_COUNT_DATUM, value=str(data_count))
+
+            return data_count
 
         return int(data_point_count.value)
 
@@ -432,6 +436,7 @@ class DataPointManager(models.Manager):
         return point
 
 
+@python_2_unicode_compatible # pylint: disable=too-many-instance-attributes
 class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
         index_together = [
@@ -589,6 +594,9 @@ class DataPoint(models.Model): # pylint: disable=too-many-instance-attributes
         else:
             raise TypeError('Attempting to save pdk-virtual-point.')
 
+    def __str__(self):
+        return '%s (%s - id:%s)' % (self.generator_identifier, self.source, self.pk)
+
 @receiver(post_save, sender=DataPoint)
 def data_point_post_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
     try:
@@ -605,7 +613,7 @@ class DataServerMetadatum(models.Model):
     last_updated = models.DateTimeField(null=True, blank=True)
 
     def formatted_value(self): # pylint: disable=no-self-use
-        return 'TODO'
+        return '%s = %s' % (self.key, self.value)
 
 @receiver(pre_save, sender=DataServerMetadatum)
 def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
