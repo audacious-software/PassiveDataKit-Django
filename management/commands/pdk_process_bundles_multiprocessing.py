@@ -33,16 +33,14 @@ from ...models import DataServerMetadatum, DataPoint, DataBundle, DataSource, \
                       SOURCES_DATUM, SOURCE_GENERATORS_DATUM
 
 def save_points(to_record, has_bundles, bundle_files):
-    # print('Saving %s - %s' % (len(to_record), os.getpid()))
+    try:
+        points = DataPoint.objects.bulk_create(to_record)
 
-    # connection.connect()
-
-    points = DataPoint.objects.bulk_create(to_record)
-
-    for point in points:
-        if has_bundles:
-            point.fetch_bundle_files(bundle_files)
-
+        for point in points:
+            if has_bundles:
+                point.fetch_bundle_files(bundle_files)
+    except: # pylint: disable=bare-except
+        traceback.print_exc()
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -71,7 +69,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         to_delete = []
 
-        pool = ThreadPool(processes=8)
+        pool = ThreadPool(processes=1)
         # pool = Pool(processes=6)
 
         supports_json = install_supports_jsonfield()
@@ -280,27 +278,6 @@ class Command(BaseCommand):
 
                                     to_record.append(point)
 
-#                                        point.save()
-#
-#                                        if has_bundles:
-#                                            point.fetch_bundle_files(bundle_files)
-#
-#                                        if (point.source in seen_sources) is False:
-#                                            seen_sources.append(point.source)
-#
-#                                        if (point.source in source_identifiers) is False:
-#                                            source_identifiers[point.source] = []
-#
-#                                        latest_key = point.source + '--' + point.generator_identifier
-#
-#                                        if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
-#                                            latest_points[latest_key] = point
-#
-#                                        if (point.generator_identifier in seen_generators) is False:
-#                                            seen_generators.append(point.generator_identifier)
-#
-#                                        if (point.generator_identifier in source_identifiers[point.source]) is False:
-#                                            source_identifiers[point.source].append(point.generator_identifier)
                                 else:
                                     if (server_url in xmit_points) is False:
                                         xmit_points[server_url] = []
@@ -313,74 +290,70 @@ class Command(BaseCommand):
                             print('Error ingesting bundle: ' + str(bundle.pk) + ':')
                             print(str(bundle.properties))
 
-                        if len(to_record) > 0: # pylint: disable=len-as-condition
-                            # print('Sending %s - %s' % (len(to_record), os.getpid()))
+                    if len(to_record) > 0: # pylint: disable=len-as-condition
+                        pool.apply_async(save_points, [to_record, has_bundles, bundle_files])
 
-                            pool.apply_async(save_points, [to_record, has_bundles, bundle_files])
+                        # points = DataPoint.objects.bulk_create(to_record)
 
-                            # print('Sent %s - %s' % (len(to_record), os.getpid()))
+                        for point in to_record:
+                            if (point.source in seen_sources) is False:
+                                seen_sources.append(point.source)
 
-                            # points = DataPoint.objects.bulk_create(to_record)
+                            if (point.source in source_identifiers) is False:
+                                source_identifiers[point.source] = []
 
-                            for point in to_record:
-                                if (point.source in seen_sources) is False:
-                                    seen_sources.append(point.source)
+                            latest_key = point.source + '--' + point.generator_identifier
 
-                                if (point.source in source_identifiers) is False:
-                                    source_identifiers[point.source] = []
+                            if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+                                latest_points[latest_key] = point
 
-                                latest_key = point.source + '--' + point.generator_identifier
+                            if (point.generator_identifier in seen_generators) is False:
+                                seen_generators.append(point.generator_identifier)
 
-                                if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
-                                    latest_points[latest_key] = point
+                            if (point.generator_identifier in source_identifiers[point.source]) is False:
+                                source_identifiers[point.source].append(point.generator_identifier)
 
-                                if (point.generator_identifier in seen_generators) is False:
-                                    seen_generators.append(point.generator_identifier)
+                    if len(xmit_points) == 0: # pylint: disable=len-as-condition
+                        bundle.processed = True
+                    else:
+                        failed = False
 
-                                if (point.generator_identifier in source_identifiers[point.source]) is False:
-                                    source_identifiers[point.source].append(point.generator_identifier)
+                        for server_url, points in xmit_points.items():
+                            if len(points) > remote_bundle_size:
+                                payload = {
+                                    'payload': json.dumps(points, indent=2)
+                                }
 
-                        if len(xmit_points) == 0: # pylint: disable=len-as-condition
-                            bundle.processed = True
-                        else:
-                            failed = False
+                                try:
+                                    bundle_post = requests.post(server_url, data=payload, timeout=remote_timeout)
 
-                            for server_url, points in xmit_points.items():
-                                if len(points) > remote_bundle_size:
-                                    payload = {
-                                        'payload': json.dumps(points, indent=2)
-                                    }
-
-                                    try:
-                                        bundle_post = requests.post(server_url, data=payload, timeout=remote_timeout)
-
-                                        if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
-                                            failed = True
-
-                                        # print(server_url + ': ' + str(len(points)))
-
-                                        xmit_points[server_url] = []
-                                    except requests.exceptions.Timeout:
-                                        print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
-
+                                    if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
                                         failed = True
 
-                            if failed is False:
-                                bundle.processed = True
-                            else:
-                                print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
+                                    # print(server_url + ': ' + str(len(points)))
 
-                        # if bundle.encrypted is False and supports_json is False:
-                        #    bundle.properties = json.dumps(bundle.properties, indent=2)
+                                    xmit_points[server_url] = []
+                                except requests.exceptions.Timeout:
+                                    print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
 
-                        bundle.properties = original_properties
+                                    failed = True
 
-                        bundle.save()
+                        if failed is False:
+                            bundle.processed = True
+                        else:
+                            print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
 
-                        if options['delete']:
-                            to_delete.append(bundle)
+                    # if bundle.encrypted is False and supports_json is False:
+                    #    bundle.properties = json.dumps(bundle.properties, indent=2)
 
-                        # print(' Bundle: %d -- %s' % (bundle.pk, timezone.now()))
+                    bundle.properties = original_properties
+
+                    bundle.save()
+
+                    if options['delete']:
+                        to_delete.append(bundle)
+
+                    # print(' Bundle: %d -- %s' % (bundle.pk, timezone.now()))
 
                 except TransactionManagementError:
                     print('Abandoning and marking errored ' + str(bundle.pk) + '.')
