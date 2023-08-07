@@ -13,6 +13,8 @@ import traceback
 
 from io import BytesIO
 
+from multiprocessing.pool import ThreadPool
+
 import requests
 import six
 
@@ -21,7 +23,7 @@ from nacl.public import PublicKey, PrivateKey, Box
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
-from django.db import transaction, DataError
+from django.db import DataError
 from django.db.transaction import TransactionManagementError
 from django.utils import timezone
 
@@ -29,6 +31,18 @@ from ...decorators import handle_lock, log_scheduled_event
 from ...models import DataServerMetadatum, DataPoint, DataBundle, DataSource, \
                       install_supports_jsonfield, TOTAL_DATA_POINT_COUNT_DATUM, \
                       SOURCES_DATUM, SOURCE_GENERATORS_DATUM
+
+def save_points(to_record, has_bundles, bundle_files):
+    # print('Saving %s - %s' % (len(to_record), os.getpid()))
+
+    # connection.connect()
+
+    points = DataPoint.objects.bulk_create(to_record)
+
+    for point in points:
+        if has_bundles:
+            point.fetch_bundle_files(bundle_files)
+
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -56,6 +70,9 @@ class Command(BaseCommand):
     @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         to_delete = []
+
+        pool = ThreadPool(processes=8)
+        # pool = Pool(processes=6)
 
         supports_json = install_supports_jsonfield()
 
@@ -97,9 +114,15 @@ class Command(BaseCommand):
 
         xmit_points = {}
 
-        # start_processing = timezone.now()
+        start_processing = timezone.now()
 
-        for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]: # pylint: disable=too-many-nested-blocks
+        bundles_size = 0
+
+        bundle_pks = DataBundle.objects.filter(processed=False, errored=None).order_by('-pk')[:options['bundle_count']].values_list('pk', flat=True)
+
+        for bundle_pk in bundle_pks: # pylint: disable=too-many-nested-blocks
+            bundle = DataBundle.objects.get(pk=bundle_pk)
+
             if new_point_count < process_limit:
                 processed_bundle_count += 1
 
@@ -110,153 +133,152 @@ class Command(BaseCommand):
                 has_bundles = (bundle_files.count() > 0)
 
                 try:
-                    with transaction.atomic():
-                        if supports_json is False:
-                            bundle.properties = json.loads(bundle.properties)
+                    if supports_json is False:
+                        bundle.properties = json.loads(bundle.properties)
 
-                        if bundle.encrypted:
-                            if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
-                                payload = base64.b64decode(bundle.properties['encrypted'])
-                                nonce = base64.b64decode(bundle.properties['nonce'])
+                    if bundle.encrypted:
+                        if 'nonce' in bundle.properties and 'encrypted' in bundle.properties:
+                            payload = base64.b64decode(bundle.properties['encrypted'])
+                            nonce = base64.b64decode(bundle.properties['nonce'])
 
-                                if private_key is None:
-                                    private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
+                            if private_key is None:
+                                private_key = PrivateKey(base64.b64decode(settings.PDK_SERVER_KEY).strip()) # pylint: disable=line-too-long
 
-                                if public_key is None:
-                                    public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
+                            if public_key is None:
+                                public_key = PublicKey(base64.b64decode(settings.PDK_CLIENT_KEY).strip()) # pylint: disable=line-too-long
 
-                                box = Box(private_key, public_key)
+                            box = Box(private_key, public_key)
 
-                                decrypted_message = box.decrypt(payload, nonce)
+                            decrypted_message = box.decrypt(payload, nonce)
 
-                                decrypted = six.text_type(decrypted_message, encoding='utf8')
+                            decrypted = six.text_type(decrypted_message, encoding='utf8')
 
-                                if bundle.compression != 'none':
-                                    compressed = base64.b64decode(decrypted)
+                            if bundle.compression != 'none':
+                                compressed = base64.b64decode(decrypted)
 
-                                    if bundle.compression == 'gzip':
-                                        fio = BytesIO(compressed)  # io.BytesIO for Python 3
-                                        gzip_file_obj = gzip.GzipFile(fileobj=fio)
-                                        payload = gzip_file_obj.read()
-                                        gzip_file_obj.close()
+                                if bundle.compression == 'gzip':
+                                    fio = BytesIO(compressed)  # io.BytesIO for Python 3
+                                    gzip_file_obj = gzip.GzipFile(fileobj=fio)
+                                    payload = gzip_file_obj.read()
+                                    gzip_file_obj.close()
 
-                                        decrypted = payload
+                                    decrypted = payload
 
-                                bundle.properties = json.loads(decrypted)
-                            elif 'encrypted' in bundle.properties:
-                                print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
-                                break
-                            elif 'nonce' in bundle.properties:
-                                print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
-                                break
-                        elif bundle.compression != 'none':
-                            compressed = base64.b64decode(bundle.properties['payload'])
+                            bundle.properties = json.loads(decrypted)
+                        elif 'encrypted' in bundle.properties:
+                            print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
+                            break
+                        elif 'nonce' in bundle.properties:
+                            print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
+                            break
+                    elif bundle.compression != 'none':
+                        compressed = base64.b64decode(bundle.properties['payload'])
 
-                            if bundle.compression == 'gzip':
-                                fio = BytesIO(compressed)  # io.BytesIO for Python 3
-                                gzip_file_obj = gzip.GzipFile(fileobj=fio)
-                                payload = gzip_file_obj.read()
-                                gzip_file_obj.close()
+                        if bundle.compression == 'gzip':
+                            fio = BytesIO(compressed)  # io.BytesIO for Python 3
+                            gzip_file_obj = gzip.GzipFile(fileobj=fio)
+                            payload = gzip_file_obj.read()
+                            gzip_file_obj.close()
 
-                                # bundle_size = len(payload)
+                            bundles_size += len(payload)
 
-                                bundle.properties = json.loads(payload)
+                            bundle.properties = json.loads(payload)
 
-                                # print(' Compress: %d -- %s' % (bundle.pk, timezone.now()))
+                            # print(' Compress: %d -- %s' % (bundle.pk, timezone.now()))
 
-                        now = timezone.now()
+                    now = timezone.now()
 
-                        to_record = []
+                    to_record = []
 
-                        for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
-                            if bundle_point is not None:
-                                point_json = json.dumps(bundle_point)
+                    for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
+                        if bundle_point is not None:
+                            point_json = json.dumps(bundle_point)
 
-                                while r'\u0000' in point_json:
-                                    print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+                            while r'\u0000' in point_json:
+                                print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
 
-                                    point_json = point_json.replace(r'\u0000', '')
+                                point_json = point_json.replace(r'\u0000', '')
 
-                                # while r'\ud83c' in point_json:
-                                #    print('Detected 0xd83c byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+                            # while r'\ud83c' in point_json:
+                            #    print('Detected 0xd83c byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
 
-                                #    point_json = point_json.replace(r'\ud83c', '')
+                            #    point_json = point_json.replace(r'\ud83c', '')
 
-                                bundle_point = json.loads(point_json)
+                            bundle_point = json.loads(point_json)
 
-                            try:
-                                if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
-                                    source = bundle_point['passive-data-metadata']['source']
+                        try:
+                            if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
+                                source = bundle_point['passive-data-metadata']['source']
 
-                                    if source == '':
-                                        source = 'missing-source'
+                                if source == '':
+                                    source = 'missing-source'
 
-                                    try:
-                                        source = settings.PDK_RENAME_SOURCE(source)
+                                try:
+                                    source = settings.PDK_RENAME_SOURCE(source)
 
-                                        bundle_point['passive-data-metadata']['source'] = source
-                                    except AttributeError:
-                                        pass # Optional method not defined
+                                    bundle_point['passive-data-metadata']['source'] = source
+                                except AttributeError:
+                                    pass # Optional method not defined
 
-                                    try:
-                                        settings.PDK_INSPECT_DATA_POINT_AT_INGEST(bundle_point)
-                                    except AttributeError:
-                                        pass # Optional method not defined
+                                try:
+                                    settings.PDK_INSPECT_DATA_POINT_AT_INGEST(bundle_point)
+                                except AttributeError:
+                                    pass # Optional method not defined
 
-                                    server_url = None
+                                server_url = None
 
-                                    if source in sources:
-                                        server_url = sources[source]
+                                if source in sources:
+                                    server_url = sources[source]
+                                else:
+                                    source_obj = DataSource.objects.filter(identifier=source).first()
+
+                                    if source_obj is not None:
+                                        if source_obj.server is not None:
+                                            server_url = source_obj.server.upload_url
                                     else:
-                                        source_obj = DataSource.objects.filter(identifier=source).first()
+                                        if source is not None:
+                                            source_obj = DataSource(name=source, identifier=source)
+                                            source_obj.save()
 
-                                        if source_obj is not None:
-                                            if source_obj.server is not None:
-                                                server_url = source_obj.server.upload_url
-                                        else:
-                                            if source is not None:
-                                                source_obj = DataSource(name=source, identifier=source)
-                                                source_obj.save()
+                                            source_obj.join_default_group()
 
-                                                source_obj.join_default_group()
+                                    if server_url is None:
+                                        server_url = ''
 
-                                        if server_url is None:
-                                            server_url = ''
+                                    sources[source] = server_url
 
-                                        sources[source] = server_url
+                                if server_url == '':
+                                    point = DataPoint(recorded=now)
+                                    bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
 
-                                    if server_url == '':
-                                        point = DataPoint(recorded=now)
-                                        bundle_point['passive-data-metadata']['encrypted_transmission'] = bundle.encrypted
+                                    point.source = bundle_point['passive-data-metadata']['source']
 
-                                        point.source = bundle_point['passive-data-metadata']['source']
+                                    if point.source is None:
+                                        point.source = '-'
 
-                                        if point.source is None:
-                                            point.source = '-'
+                                    point.generator = bundle_point['passive-data-metadata']['generator']
 
-                                        point.generator = bundle_point['passive-data-metadata']['generator']
+                                    if 'generator-id' in bundle_point['passive-data-metadata']:
+                                        point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
 
-                                        if 'generator-id' in bundle_point['passive-data-metadata']:
-                                            point.generator_identifier = bundle_point['passive-data-metadata']['generator-id']
+                                    if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
+                                        point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
+                                    elif 'latitude' in bundle_point and 'longitude' in bundle_point:
+                                        point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['longitude']) + ' ' + str(bundle_point['latitude']) + ')')
 
-                                        if 'latitude' in bundle_point['passive-data-metadata'] and 'longitude' in bundle_point['passive-data-metadata']:
-                                            point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['passive-data-metadata']['longitude']) + ' ' + str(bundle_point['passive-data-metadata']['latitude']) + ')')
-                                        elif 'latitude' in bundle_point and 'longitude' in bundle_point:
-                                            point.generated_at = GEOSGeometry('POINT(' + str(bundle_point['longitude']) + ' ' + str(bundle_point['latitude']) + ')')
+                                    point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
 
-                                        point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
+                                    if supports_json:
+                                        point.properties = json.loads(json.dumps(bundle_point, indent=2).encode('utf-16', 'surrogatepass').decode('utf-16'))
+                                    else:
+                                        point.properties = json.dumps(bundle_point, indent=2)
 
-                                        if supports_json:
-                                            point.properties = json.loads(json.dumps(bundle_point, indent=2).encode('utf-16', 'surrogatepass').decode('utf-16'))
-                                        else:
-                                            point.properties = json.dumps(bundle_point, indent=2)
+                                    point.fetch_secondary_identifier(skip_save=True, properties=bundle_point)
+                                    point.fetch_user_agent(skip_save=True, properties=bundle_point)
+                                    point.fetch_generator_definition(skip_save=True)
+                                    point.fetch_source_reference(skip_save=True)
 
-                                        point.fetch_secondary_identifier(skip_save=True, properties=bundle_point)
-                                        point.fetch_user_agent(skip_save=True, properties=bundle_point)
-                                        point.fetch_generator_definition(skip_save=True)
-                                        point.fetch_source_reference(skip_save=True)
-
-                                        to_record.append(point)
+                                    to_record.append(point)
 
 #                                        point.save()
 #
@@ -279,25 +301,28 @@ class Command(BaseCommand):
 #
 #                                        if (point.generator_identifier in source_identifiers[point.source]) is False:
 #                                            source_identifiers[point.source].append(point.generator_identifier)
-                                    else:
-                                        if (server_url in xmit_points) is False:
-                                            xmit_points[server_url] = []
+                                else:
+                                    if (server_url in xmit_points) is False:
+                                        xmit_points[server_url] = []
 
-                                        xmit_points[server_url].append(bundle_point)
+                                    xmit_points[server_url].append(bundle_point)
 
-                                    new_point_count += 1
-                            except DataError:
-                                traceback.print_exc()
-                                print('Error ingesting bundle: ' + str(bundle.pk) + ':')
-                                print(str(bundle.properties))
+                                new_point_count += 1
+                        except DataError:
+                            traceback.print_exc()
+                            print('Error ingesting bundle: ' + str(bundle.pk) + ':')
+                            print(str(bundle.properties))
 
                         if len(to_record) > 0:
-                            points = DataPoint.objects.bulk_create(to_record)
+                            # print('Sending %s - %s' % (len(to_record), os.getpid()))
 
-                            for point in points:
-                                if has_bundles:
-                                    point.fetch_bundle_files(bundle_files)
+                            pool.apply_async(save_points, [to_record, has_bundles, bundle_files])
 
+                            # print('Sent %s - %s' % (len(to_record), os.getpid()))
+
+                            # points = DataPoint.objects.bulk_create(to_record)
+
+                            for point in to_record:
                                 if (point.source in seen_sources) is False:
                                     seen_sources.append(point.source)
 
@@ -365,11 +390,15 @@ class Command(BaseCommand):
                     bundle.errored = timezone.now()
                     bundle.save()
 
-        # end_processing = timezone.now()
+        pool.close()
 
-        # elapsed = (end_processing - start_processing).total_seconds()
+        pool.join()
 
-        # print('PROCESSED: %d -- %.3f -- %.3f (%s / %s)' % (processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size))
+        end_processing = timezone.now()
+
+        elapsed = (end_processing - start_processing).total_seconds()
+
+        print('PROCESSED: %d -- %.3f -- %.3f (%s / %s -- %.6f)' % (processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundles_size, (elapsed / (bundles_size / (1024 * 1024)))))
 
         for server_url, points in xmit_points.items():
             if points:
