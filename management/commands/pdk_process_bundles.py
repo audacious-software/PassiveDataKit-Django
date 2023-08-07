@@ -291,7 +291,7 @@ class Command(BaseCommand):
                                 print('Error ingesting bundle: ' + str(bundle.pk) + ':')
                                 print(str(bundle.properties))
 
-                        if len(to_record) > 0:
+                        if len(to_record) > 0: # pylint: disable=len-as-condition
                             points = DataPoint.objects.bulk_create(to_record)
 
                             for point in points:

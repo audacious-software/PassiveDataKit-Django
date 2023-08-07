@@ -313,7 +313,7 @@ class Command(BaseCommand):
                             print('Error ingesting bundle: ' + str(bundle.pk) + ':')
                             print(str(bundle.properties))
 
-                        if len(to_record) > 0:
+                        if len(to_record) > 0: # pylint: disable=len-as-condition
                             # print('Sending %s - %s' % (len(to_record), os.getpid()))
 
                             pool.apply_async(save_points, [to_record, has_bundles, bundle_files])
