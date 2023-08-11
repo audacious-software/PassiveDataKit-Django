@@ -301,12 +301,19 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-                if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-                if ('prepend_host' in parameters) and parameters['prepend_host']:
-                    path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
 
+            if parameters.get('prepend_source_range', False):
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -337,11 +344,19 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-                if ('prepend_date' in parameters) and parameters['prepend_date']:
-                    path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-                if ('prepend_host' in parameters) and parameters['prepend_host']:
-                    path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
+
+            if parameters.get('prepend_source_range', False):
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
                 path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -391,11 +406,19 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if path[-1] != '/':
                     path = path + '/'
 
-            if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if ('prepend_host' in parameters) and parameters['prepend_host']:
-                path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
+
+            if parameters.get('prepend_source_range', False):
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -429,13 +452,19 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                 if path[-1] != '/':
                     path = path + '/'
 
-            if ('prepend_date' in parameters) and parameters['prepend_date']:
-                path = path + report.requested.date().isoformat() + '-'
+            if parameters.get('prepend_host', False):
+                path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if ('prepend_host' in parameters) and parameters['prepend_host']:
-                path = path + settings.ALLOWED_HOSTS[0] + '-'
+            if parameters.get('prepend_date', False):
+                path = path + report.requested.date().isoformat() + '_'
 
-                path = path + '/'
+            if parameters.get('prepend_source_range', False):
+                data_sources = report_parameters.get('sources', [])
+
+                if len(data_sources) == 1:
+                    path = path + data_sources[0] + '_'
+                elif len(data_sources) >= 2:
+                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
             path = path + os.path.basename(os.path.normpath(report_path))
 
@@ -634,25 +663,28 @@ def incremental_backup(parameters): # pylint: disable=too-many-locals, too-many-
     print('[passive_data_kit] Fetching count of data points...')
     sys.stdout.flush()
 
-    count = DataPoint.objects.filter(query).count()
+    point_pks = DataPoint.objects.filter(query).values_list('pk', flat=True)
 
-    index = 0
+    points_count = len(point_pks)
+    points_index = 0
 
-    while index < count:
-        filename = prefix + '_data_points_' + str(index) + '_' + str(count) + '.pdk-bundle.bz2'
+    while points_index < points_count:
+        filename = prefix + '_data_points_' + str(points_index) + '_' + str(points_count) + '.pdk-bundle.bz2'
 
-        print('[passive_data_kit] Backing up data points ' + str(index) + ' of ' + str(count) + '...')
+        print('[passive_data_kit] Backing up data points ' + str(points_index) + ' of ' + str(points_count) + '...')
         sys.stdout.flush()
 
         bundle = []
 
-        for point in DataPoint.objects.filter(query).order_by('recorded')[index:(index + bundle_size)]:
+        for point_pk in point_pks[points_index:(points_index + bundle_size)]:
+            point = DataPoint.objects.get(pk=point_pk)
+
             bundle.append(filter_sensitive_fields(point, point.fetch_properties(), parameters))
 
             if clear_archived:
                 to_clear.append('pdk:' + str(point.pk))
 
-        index += bundle_size
+        points_index += bundle_size
 
         compressed_str = bz2.compress(json.dumps(bundle).encode('utf-8'))
 

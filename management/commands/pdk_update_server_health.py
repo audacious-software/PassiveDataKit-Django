@@ -53,7 +53,8 @@ class Command(BaseCommand):
         if ('point_snapshots' in data) is False:
             data['point_snapshots'] = []
 
-        point_count = DataPoint.objects.all().count()
+        # point_count = DataPoint.objects.all().count()
+        point_count = DataPoint.objects.all().order_by('-pk').first().pk
 
         if ('last_point_count' in data) is False:
             data['last_point_count'] = point_count

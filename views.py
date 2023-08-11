@@ -8,6 +8,7 @@ import io
 import json
 import os
 import re
+import traceback
 
 from django.conf import settings
 from django.db.utils import DataError
@@ -26,7 +27,7 @@ from .models import DataPoint, DataBundle, DataFile, DataSourceGroup, DataSource
 
 
 @csrf_exempt
-def pdk_add_data_point(request):
+def pdk_add_data_point(request): # pylint: disable=too-many-statements
     try:
         if settings.PDK_DISABLE_DATA_UPLOAD:
             response_payload = {'message': 'Data collection has been disabled and incoming transmissions are being discarded.'}
@@ -58,10 +59,20 @@ def pdk_add_data_point(request):
         data_point.generator = point['passive-data-metadata']['generator']
         data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
 
+        if 'generator-id' in point['passive-data-metadata']:
+            data_point.generator_identifier = point['passive-data-metadata']['generator-id']
+
         if install_supports_jsonfield():
             data_point.properties = point
         else:
             data_point.properties = json.dumps(point, indent=2)
+
+        data_point.save()
+
+        data_point.fetch_secondary_identifier(skip_save=True, properties=data_point.properties)
+        data_point.fetch_user_agent(skip_save=True, properties=data_point.properties)
+        data_point.fetch_generator_definition(skip_save=True)
+        data_point.fetch_source_reference(skip_save=True)
 
         data_point.save()
 
@@ -81,12 +92,22 @@ def pdk_add_data_point(request):
         data_point = DataPoint(recorded=timezone.now())
         data_point.source = point['passive-data-metadata']['source']
         data_point.generator = point['passive-data-metadata']['generator']
-        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['source'], tz=timezone.get_default_timezone())
+        data_point.created = datetime.datetime.fromtimestamp(point['passive-data-metadata']['timestamp'], tz=timezone.get_default_timezone())
+
+        if 'generator-id' in point['passive-data-metadata']:
+            data_point.generator_identifier = point['passive-data-metadata']['generator-id']
 
         if install_supports_jsonfield():
             data_point.properties = point
         else:
             data_point.properties = json.dumps(point, indent=2)
+
+        data_point.save()
+
+        data_point.fetch_secondary_identifier(skip_save=True, properties=data_point.properties)
+        data_point.fetch_user_agent(skip_save=True, properties=data_point.properties)
+        data_point.fetch_generator_definition(skip_save=True)
+        data_point.fetch_source_reference(skip_save=True)
 
         data_point.save()
 
@@ -141,13 +162,26 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
         points = None
 
+        body_str = request.body.decode('utf-8')
+
+        body_str = body_str.replace('\\u0000', '')
+
         try:
-            points = json.loads(request.body)
+            points = json.loads(body_str)
         except UnreadablePostError:
+            traceback.print_exc()
+
             response = {'message': 'Unable to parse data bundle.'}
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            bundle = DataBundle(recorded=timezone.now())
+
+            bundle.properties = json.dumps(request.body.decode('utf-8'))
+            bundle.errored = timezone.now()
+            bundle.processed = timezone.now()
+            bundle.save()
 
             return response
 
@@ -161,10 +195,17 @@ def pdk_add_data_bundle(request): # pylint: disable=too-many-statements, too-man
 
             bundle.save()
         except DataError:
+            traceback.print_exc()
+
             response = {'message': 'Unable to parse data bundle.'}
             response = HttpResponse(json.dumps(response, indent=2), \
                                     content_type='application/json', \
                                     status=400)
+
+            bundle.properties = json.dumps(request.body.decode('utf-8'))
+            bundle.errored = timezone.now()
+            bundle.processed = timezone.now()
+            bundle.save()
 
         return response
 
