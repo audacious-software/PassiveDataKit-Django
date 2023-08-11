@@ -108,6 +108,17 @@ class Command(BaseCommand):
 
                 zips_to_merge = []
 
+                excluded_sources = []
+
+                try:
+                    excluded_sources = settings.PDK_EXCLUDED_SOURCES
+                except AttributeError:
+                    pass
+
+                for excluded_source in excluded_sources:
+                    while excluded_source in sources:
+                        sources.remove(excluded_source)
+
                 with open(filename, 'wb') as final_output_file:
                     to_delete = []
 
