@@ -15,6 +15,7 @@ from io import BytesIO
 
 from multiprocessing.pool import ThreadPool
 
+import humanize
 import requests
 import six
 
@@ -32,15 +33,40 @@ from ...models import DataServerMetadatum, DataPoint, DataBundle, DataSource, \
                       install_supports_jsonfield, TOTAL_DATA_POINT_COUNT_DATUM, \
                       SOURCES_DATUM, SOURCE_GENERATORS_DATUM
 
-def save_points(to_record, has_bundles, bundle_files):
+def save_points(to_record, has_bundles, bundle_files, bundle):
     try:
         points = DataPoint.objects.bulk_create(to_record)
 
         for point in points:
             if has_bundles:
                 point.fetch_bundle_files(bundle_files)
+
+    except DataError:
+        for point in to_record:
+            try:
+                point.save()
+
+                point.fetch_bundle_files(bundle_files)
+            except: # pylint: disable=bare-except
+                traceback.print_exc()
+
+                if bundle.errored is not None:
+                    logging.critical('Marking errored %s.', bundle.pk)
+
+                    bundle = DataBundle.objects.get(pk=bundle.pk)
+                    bundle.processed = False
+                    bundle.errored = timezone.now()
+                    bundle.save()
     except: # pylint: disable=bare-except
         traceback.print_exc()
+
+        logging.critical('Marking errored %s.', bundle.pk)
+
+        bundle = DataBundle.objects.get(pk=bundle.pk)
+        bundle.processed = False
+        bundle.errored = timezone.now()
+        bundle.save()
+
 
 class Command(BaseCommand):
     help = 'Convert unprocessed DataBundle instances into DataPoint instances.'
@@ -70,7 +96,6 @@ class Command(BaseCommand):
         to_delete = []
 
         pool = ThreadPool(processes=1)
-        # pool = Pool(processes=6)
 
         supports_json = install_supports_jsonfield()
 
@@ -164,10 +189,10 @@ class Command(BaseCommand):
 
                             bundle.properties = json.loads(decrypted)
                         elif 'encrypted' in bundle.properties:
-                            print('Missing "nonce" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
+                            logging.critical('Missing "nonce" in encrypted bundle. Cannot decrypt bundle %s. Skipping...', bundle.pk)
                             break
                         elif 'nonce' in bundle.properties:
-                            print('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle ' + str(bundle.pk) + '. Skipping...')
+                            logging.critical('Missing "encrypted" in encrypted bundle. Cannot decrypt bundle %s. Skipping...', bundle.pk)
                             break
                     elif bundle.compression != 'none':
                         compressed = base64.b64decode(bundle.properties['payload'])
@@ -182,8 +207,6 @@ class Command(BaseCommand):
 
                             bundle.properties = json.loads(payload)
 
-                            # print(' Compress: %d -- %s' % (bundle.pk, timezone.now()))
-
                     now = timezone.now()
 
                     to_record = []
@@ -192,17 +215,19 @@ class Command(BaseCommand):
                         if bundle_point is not None:
                             point_json = json.dumps(bundle_point)
 
-                            while r'\u0000' in point_json:
-                                print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+                            point_json = point_json.encode('utf-16', 'surrogatepass').decode('utf-16')
 
-                                point_json = point_json.replace(r'\u0000', '')
+                            try:
+                                bundle_point = json.loads(point_json)
+                            except json.decoder.JSONDecodeError:
+                                bundle_point = None
 
-                            # while r'\ud83c' in point_json:
-                            #    print('Detected 0xd83c byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+                                bundle = DataBundle.objects.get(pk=bundle.pk)
+                                bundle.processed = False
+                                bundle.errored = timezone.now()
+                                bundle.save()
 
-                            #    point_json = point_json.replace(r'\ud83c', '')
-
-                            bundle_point = json.loads(point_json)
+                                break
 
                         try:
                             if bundle_point is not None and 'passive-data-metadata' in bundle_point and 'source' in bundle_point['passive-data-metadata'] and 'generator' in bundle_point['passive-data-metadata']:
@@ -287,13 +312,11 @@ class Command(BaseCommand):
                                 new_point_count += 1
                         except DataError:
                             traceback.print_exc()
-                            print('Error ingesting bundle: ' + str(bundle.pk) + ':')
-                            print(str(bundle.properties))
+                            logging.critical('Error ingesting bundle: %s:', bundle.pk)
+                            logging.critical(str(bundle.properties))
 
                     if len(to_record) > 0: # pylint: disable=len-as-condition
-                        pool.apply_async(save_points, [to_record, has_bundles, bundle_files])
-
-                        # points = DataPoint.objects.bulk_create(to_record)
+                        pool.apply_async(save_points, [to_record, has_bundles, bundle_files, bundle])
 
                         for point in to_record:
                             if (point.source in seen_sources) is False:
@@ -314,7 +337,9 @@ class Command(BaseCommand):
                                 source_identifiers[point.source].append(point.generator_identifier)
 
                     if len(xmit_points) == 0: # pylint: disable=len-as-condition
+                        bundle = DataBundle.objects.get(pk=bundle.pk)
                         bundle.processed = True
+                        bundle.save()
                     else:
                         failed = False
 
@@ -330,18 +355,16 @@ class Command(BaseCommand):
                                     if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
                                         failed = True
 
-                                    # print(server_url + ': ' + str(len(points)))
-
                                     xmit_points[server_url] = []
                                 except requests.exceptions.Timeout:
-                                    print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
+                                    logging.critical('Unable to transmit data to %s (timeout=%s).', server_url, remote_timeout)
 
                                     failed = True
 
                         if failed is False:
                             bundle.processed = True
                         else:
-                            print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
+                            logging.critical('Error encountered uploading contents of %s.', bundle.pk)
 
                     # if bundle.encrypted is False and supports_json is False:
                     #    bundle.properties = json.dumps(bundle.properties, indent=2)
@@ -353,10 +376,8 @@ class Command(BaseCommand):
                     if options['delete']:
                         to_delete.append(bundle)
 
-                    # print(' Bundle: %d -- %s' % (bundle.pk, timezone.now()))
-
                 except TransactionManagementError:
-                    print('Abandoning and marking errored ' + str(bundle.pk) + '.')
+                    logging.critical('Abandoning and marking errored %s.', bundle.pk)
 
                     bundle = DataBundle.objects.get(pk=bundle.pk)
 
@@ -371,7 +392,7 @@ class Command(BaseCommand):
 
         elapsed = (end_processing - start_processing).total_seconds()
 
-        print('PROCESSED: %d -- %.3f -- %.3f (%s / %s -- %.6f)' % (processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundles_size, (elapsed / (bundles_size / (1024 * 1024)))))
+        logging.info('Bundle Ingestion Summary: %d bundles, %.3f sec. elapsed, %.3f bundle/s, %s points added, %.3f MB, %.3f MB/s', processed_bundle_count, elapsed, (processed_bundle_count / elapsed), humanize.intcomma(new_point_count), bundles_size / (1024 * 1024), ((bundles_size / (1024 * 1024)) / elapsed))
 
         for server_url, points in xmit_points.items():
             if points:
@@ -385,11 +406,9 @@ class Command(BaseCommand):
                     if bundle_post.status_code < 200 and bundle_post.status_code >= 300:
                         failed = True
 
-                    # print(server_url + ': ' + str(len(points)))
-
                     xmit_points[server_url] = []
                 except requests.exceptions.Timeout:
-                    print('Unable to transmit data to ' + server_url + ' (timeout=' + str(remote_timeout) + ').')
+                    logging.critical('Unable to transmit data to %s (timeout=%s).', server_url, remote_timeout)
 
         for bundle in to_delete:
             bundle.delete()
@@ -486,7 +505,3 @@ class Command(BaseCommand):
 
         else:
             DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).delete()
-
-        # elapsed = timezone.now() - start_time
-
-        # print('Elapsed: ' + str(elapsed) + ' -- ' + str(processed_bundle_count) + ' bundles')
