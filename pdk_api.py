@@ -701,7 +701,8 @@ def update_data_type_definition(definition, data_type=None, override_existing=Fa
             definition['passive-data-metadata.generator']['examples'] = definition['passive-data-metadata.generator']['observed'][:8]
 
     if 'passive-data-metadata.source' in definition:
-        del definition['passive-data-metadata.source']['observed']
+        if 'observed' in definition['passive-data-metadata.source']:
+            del definition['passive-data-metadata.source']['observed']
 
         definition['passive-data-metadata.source']['is_freetext'] = True
 
