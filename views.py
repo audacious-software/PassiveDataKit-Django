@@ -385,7 +385,7 @@ def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
         excluded_sources = settings.PDK_EXCLUDED_SOURCES
     except AttributeError:
         pass
-        
+
     context['excluded_sources'] = excluded_sources
 
     return render(request, 'pdk_home.html', context=context)
@@ -404,7 +404,7 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
         excluded_sources = settings.PDK_EXCLUDED_SOURCES
     except AttributeError:
         pass
-        
+
     if source_id in excluded_sources:
         return HttpResponseNotFound()
 
@@ -434,7 +434,7 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
         excluded_sources = settings.PDK_EXCLUDED_SOURCES
     except AttributeError:
         pass
-        
+
     if source_id in excluded_sources:
         return HttpResponseNotFound()
 
