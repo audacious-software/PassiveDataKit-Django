@@ -90,14 +90,14 @@ class Command(BaseCommand):
 
         sources = {}
 
-        # start_time = timezone.now()
-
         private_key = None
         public_key = None
 
         xmit_points = {}
 
-        # start_processing = timezone.now()
+        start_processing = timezone.now()
+
+        bundle_size = 0
 
         for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]: # pylint: disable=too-many-nested-blocks
             if new_point_count < process_limit:
@@ -158,7 +158,7 @@ class Command(BaseCommand):
                                 payload = gzip_file_obj.read()
                                 gzip_file_obj.close()
 
-                                # bundle_size = len(payload)
+                                bundle_size += len(payload)
 
                                 bundle.properties = json.loads(payload)
 
@@ -345,17 +345,12 @@ class Command(BaseCommand):
                             else:
                                 print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
 
-                        # if bundle.encrypted is False and supports_json is False:
-                        #    bundle.properties = json.dumps(bundle.properties, indent=2)
-
                         bundle.properties = original_properties
 
                         bundle.save()
 
                         if options['delete']:
                             to_delete.append(bundle)
-
-                        # print(' Bundle: %d -- %s' % (bundle.pk, timezone.now()))
 
                 except TransactionManagementError:
                     print('Abandoning and marking errored ' + str(bundle.pk) + '.')
@@ -365,11 +360,11 @@ class Command(BaseCommand):
                     bundle.errored = timezone.now()
                     bundle.save()
 
-        # end_processing = timezone.now()
+        end_processing = timezone.now()
 
-        # elapsed = (end_processing - start_processing).total_seconds()
+        elapsed = (end_processing - start_processing).total_seconds()
 
-        # print('PROCESSED: %d -- %.3f -- %.3f (%s / %s)' % (processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size))
+        logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size)
 
         for server_url, points in xmit_points.items():
             if points:

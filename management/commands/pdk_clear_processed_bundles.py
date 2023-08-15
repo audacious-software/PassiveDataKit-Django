@@ -1,9 +1,10 @@
 # pylint: disable=no-member,line-too-long
 from __future__ import print_function
 
-from builtins import str # pylint: disable=redefined-builtin
+import logging
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from ...decorators import handle_lock
 from ...models import DataBundle
@@ -34,9 +35,7 @@ class Command(BaseCommand):
             bundles = DataBundle.objects.filter(processed=True, pk__lte=start)
 
             while bundles.count() > 0:
-                print(str(deleted) + ' / ' + str(total) + ' [' + str(start) + ']')
-
-                # deleted += bundles.delete()[0]
+                logging.debug('Progress: %s of %s (%s)', deleted, total, timezone.now())
 
                 deleted += bundles._raw_delete(bundles.db) # pylint: disable=protected-access
 
