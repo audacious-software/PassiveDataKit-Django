@@ -29,7 +29,7 @@ cryptography==41.0.4; python_version >= '3.7'
 dj-database-url==0.5.0; python_version < '3.0'
 dj-database-url==2.1.0; python_version >= '3.0'
 Django==1.11.29; python_version < '3.0'
-Django==3.2.20; python_version >= '3.0'
+Django==3.2.22; python_version >= '3.0'
 django-mathfilters==1.0.0
 django-prettyjson==0.4.1
 django-user-agents==0.4.0
@@ -57,7 +57,7 @@ psycopg2-binary==2.9.8; python_version >= '3.0'
 psycopg2-binary==2.8.6; python_version < '3.0'
 pushjack==1.6.0
 pyfcm==1.5.4
-pylint==3.0.0; python_version >= '3.7.2'
+pylint==3.0.1; python_version >= '3.7.2'
 pylint==2.14.5; python_version >= '3.7' and python_version < '3.7.2'
 pylint==2.13.9; python_version == '3.6'
 pylint==1.9.5; python_version < '3.0'
