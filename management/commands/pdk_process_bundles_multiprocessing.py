@@ -384,6 +384,14 @@ class Command(BaseCommand):
                     bundle.errored = timezone.now()
                     bundle.save()
 
+                except gzip.BadGzipFile:
+                    logging.critical('Bad GZip payload and marking errored %s.', bundle.pk)
+
+                    bundle = DataBundle.objects.get(pk=bundle.pk)
+
+                    bundle.errored = timezone.now()
+                    bundle.save()
+
         pool.close()
 
         pool.join()
