@@ -37,5 +37,51 @@ requirejs(['./common'], function (common) {
 		
 		$('#data_start').datepicker();
 		$('#data_end').datepicker();
+
+		$('#export_form').on('submit', function (e) {
+			e.preventDefault();
+			
+			var self = $(this);
+
+			const form = $(self.get(0)).find('input')
+			
+			let sources = []
+			
+			let payload = {}
+			
+			for (let i = 0; i < form.length; i++) {
+				const input = $(form.get(i))
+				
+				const key = input.attr('name')
+				const value = input.val()
+				
+				if (key !== undefined && value !== undefined) {
+					if (key.startsWith('source_')) {
+						if (value === 'on') {
+							if (input.is(':checked')) {
+								sources.push(key.replaceAll('source_', ''))
+							}
+						}
+					} else {
+						if (value === 'on') {
+							if (input.is(':checked')) {
+								payload[key] = value
+							}
+						} else {
+							payload[key] = value
+						}
+					}
+				}
+			}
+			
+			payload['sources'] = sources.join(';')
+			
+			$.post(self.find('form').attr('action'), payload, function(response) {
+				if (response.success) {
+					alert('Export job request submitted.')
+					window.location = `${window.location}`
+				}
+			});			
+		});
 	}); 
 });

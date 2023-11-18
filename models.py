@@ -139,6 +139,8 @@ class AppConfiguration(models.Model):
             ['is_valid', 'is_enabled', 'evaluate_order'],
         ]
 
+        ordering = ['name']
+
     name = models.CharField(max_length=1024)
     id_pattern = models.CharField(max_length=1024, db_index=True)
     context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)

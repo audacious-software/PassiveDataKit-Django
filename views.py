@@ -615,6 +615,8 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         export_sources = []
         export_generators = []
 
+        respond_json = False
+
         for source in context['sources']:
             key = 'source_' + source
 
@@ -632,6 +634,17 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
             if key in request.POST:
                 export_generators.append(generator[0])
+
+        raw_sources = request.POST.get('sources', None)
+
+        if raw_sources is not None:
+            respond_json = True
+
+            parsed_sources = raw_sources.split(';')
+
+            for source in parsed_sources:
+                if source != '':
+                    export_sources.append(source)
 
         if len(export_sources) == 0: # pylint: disable=len-as-condition
             context['message_type'] = 'error'
@@ -661,6 +674,9 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
                 context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=
             else:
                 context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.'
+
+        if respond_json:
+            return HttpResponse(json.dumps({'success': True}, indent=2), content_type='application/json', status=200)
 
     return render(request, 'pdk_export.html', context=context)
 
@@ -724,9 +740,9 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
         context = 'default'
 
     try:
-    	settings.PDK_UPDATE_APP_CONFIGURATION(DataSource, AppConfiguration, identifier)
+        settings.PDK_UPDATE_APP_CONFIGURATION(DataSource, AppConfiguration, identifier)
     except AttributeError:
-    	pass
+        pass
 
     source = DataSource.objects.filter(identifier=identifier).first()
 

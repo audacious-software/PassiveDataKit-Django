@@ -44,7 +44,7 @@
         </div>
     {% endif %}
 
-    <form action="{% url 'pdk_export' %}" method="POST">
+    <form action="{% url 'pdk_export' %}" id="export_form" method="POST">
         <div class="row">
             {% csrf_token %}
             <div class="col-md-4">
