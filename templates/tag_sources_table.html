@@ -16,28 +16,32 @@
     </thead>
     <tbody>
         {% for source in sources.all %}
-            <tr>
-                <td>{{ source.name }}</td>
-                <td><a href="{{ source.details_url }}">{{ source.identifier }}</a></td>
-                {% if source.server %}
-                    <td>{{ source.server.name }}</td>
-                {% else %}
-                    <td>Local</td>
-                {% endif %}
-                <td>{{ source.latest_user_agent }}</td>
-                <td>{% date_ago source.latest_point_created %}</td>
-                <td>
-                    {% if source.performance_metadata_updated %}
-                        <span style="display: none;">{{ source.performance_metadata_updated.isoformat }}</span>
-                        {{ source.performance_metadata_updated }}
-                    {% else %}
-                        Never
-                    {% endif %}
-                </td>
-                <td>{% point_count source %}</td>
-                <td>{% point_hz source %}</td>
-                <td>{% additional_home_actions source %}</td>
-            </tr>
+        	{% if source.identifier in excluded_sources %}
+        	
+        	{% else %}
+				<tr>
+					<td>{{ source.name }}</td>
+					<td><a href="{{ source.details_url }}">{{ source.identifier }}</a></td>
+					{% if source.server %}
+						<td>{{ source.server.name }}</td>
+					{% else %}
+						<td>Local</td>
+					{% endif %}
+					<td>{{ source.latest_user_agent }}</td>
+					<td>{% date_ago source.latest_point_created %}</td>
+					<td>
+						{% if source.performance_metadata_updated %}
+							<span style="display: none;">{{ source.performance_metadata_updated.isoformat }}</span>
+							{{ source.performance_metadata_updated }}
+						{% else %}
+							Never
+						{% endif %}
+					</td>
+					<td>{% point_count source %}</td>
+					<td>{% point_hz source %}</td>
+					<td>{% additional_home_actions source %}</td>
+				</tr>
+			{% endif %}
         {% endfor %}
     </tbody>
 </table>

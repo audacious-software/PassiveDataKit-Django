@@ -379,6 +379,15 @@ def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
     context['groups'] = DataSourceGroup.objects.order_by('name')
     context['solo_sources'] = DataSource.objects.filter(group=None).order_by('name')
 
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    context['excluded_sources'] = excluded_sources
+
     return render(request, 'pdk_home.html', context=context)
 
 
@@ -388,6 +397,16 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
         return redirect('pdk_source', source_id=source_id.replace('/', ''))
 
     context = {}
+
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    if source_id in excluded_sources:
+        return HttpResponseNotFound()
 
     source = DataSource.objects.filter(identifier=source_id).first()
 
@@ -408,6 +427,16 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
         return redirect('pdk_source_generator', source_id=source_id.replace('/', ''), generator_id=generator_id.replace('/', ''))
 
     context = {}
+
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    if source_id in excluded_sources:
+        return HttpResponseNotFound()
 
     source = DataSource.objects.filter(identifier=source_id).first()
 
@@ -495,11 +524,19 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
     groups = []
 
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
     for group in DataSourceGroup.objects.all().order_by('name'):
         group_def = (group.name, [], group.pk)
 
         for source in group.sources.all().order_by('name'):
-            group_def[1].append(source)
+            if (source.identifier in excluded_sources) is False:
+                group_def[1].append(source)
 
         if len(group_def[1]) > 0: # pylint: disable=len-as-condition
             groups.append(group_def)
@@ -507,7 +544,8 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     group_def = ('(Not in group)', [], 0)
 
     for source in DataSource.objects.filter(group=None).order_by('name'):
-        group_def[1].append(source)
+        if (source.identifier in excluded_sources) is False:
+            group_def[1].append(source)
 
     if len(group_def[1]) > 0: # pylint: disable=len-as-condition
         groups.append(group_def)
