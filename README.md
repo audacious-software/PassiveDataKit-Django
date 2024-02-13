@@ -9,7 +9,7 @@ Passive Data Kit (PDK) is a platform for gathering passively-acquired data from 
 
 It is functionally a time-series database, where entries consist of hetergeneous "data points" that reflect something happening at some point in time. *Data points* can be sensor data (such as accelerometer readings from a mobile device), behavioral observations (such as which link a user selected from a list of search results in a browser), or information solicited from users at particular times (such as questionnaire or survey responses).
 
-PDK is designed to provide reliable data collection in environments where reliable Internet connectivity cannot be taken for granted. PDK clients implement a "store and forward" architecture where *data generators* (PDK elements engaged directly in data collection) forward the data points that they emit to a local *data transmitter*, which typically includes a local database to gather data points to be tranmitted. Periodically, data transmitters will assemble *data bundles*, consisting of data points that have not yet been transmitted, and send those data points to a PDK server online, which functions as the central data aggregation hub for all of the remote PDK clients configured to transmit data points to that PDK server for further analysis and processing
+PDK is designed to provide reliable data collection in environments where reliable Internet connectivity cannot be taken for granted. PDK clients implement a "store and forward" architecture where *data generators* (PDK elements engaged directly in data collection) forward the data points that they emit to a local *data transmitter*, which typically includes a local database to gather data points to be tranmitted. Periodically, data transmitters will assemble *data bundles*, consisting of data points that have not yet been transmitted, and send those data points to a PDK server online, which functions as the central data aggregation hub for all of the remote PDK clients configured to transmit data points to that PDK server for further analysis and processing.
 
 This repository contains the relevant core software for standing up a PDK server using the Django framework. Other repositories contain the various client implementations (e.g. [Android](https://github.com/audacious-software/PassiveDataKit-Android), [iOS](https://github.com/audacious-software/PassiveDataKit-iOS)) and add-on packages (e.g. [External Data](https://github.com/audacious-software/Passive-Data-Kit-External-Data), [Codebook](https://github.com/audacious-software/Passive-Data-Kit-Codebook)).
 
@@ -122,7 +122,7 @@ The `<SCHEDULE_DEFINITION>` is defined by [the CRON scheduling format](https://e
 
 For the remainder of this section, we'll use `/var/www/venv` for `<PATH_TO_VIRTUAL_ENVIRONMENT>` and `/var/www/myproject` for `<PATH_TO_PROJECT>`.
 
-On to the commands...
+On to the background jobs...
 
 ### pdk_process_bundles
 
@@ -144,7 +144,7 @@ In the event that a background job exits and fails to remove its lock file (such
 
 `0 3 * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_clear_processed_bundles`
 
-Once `DataBundle` objects have been processed, the system has no more need of them, and they can be safely deleted. The **pdk_clear_processed_bundles** job clears out that unneeded data so that the local database doesn't grow too large. Note that this job doesn't need to be run frequently - in the line above, this runs at 3 AM server time every day,
+Once `DataBundle` objects have been processed, the system has no more need of them, and they can be safely deleted. The **pdk_clear_processed_bundles** job clears out that unneeded data so that the local database doesn't grow too large. Note that this job doesn't need to be run frequently - in the line above, this runs at 3 AM server time every day.
 
 ### pdk_update_server_health
 
