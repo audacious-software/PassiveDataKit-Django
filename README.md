@@ -172,14 +172,47 @@ They would select the data sources that they are interested in from the column o
 
 When an analyst requests a data export, PDK creates a `DataReportBatchRequest` object that describes the request. When the **pdk_compile_reports** job runs, it will inspect any new `DataReportBatchRequest` object and split it into `DataReportJob` objects. Given that the volume of data requested may be extremely large, this splitting functionality divides the request into manageable sizes that both respect the local system memory limits, while also limiting to what extent unweildy large export files can be generated. Typically, for large requests, the jobs are split up into groups of data sources, where all of the data associated with a particular data source will reside in the same export file.
 
-Note that some export jobs may take hours or days to run, which is the reason for a background batch-processing arrangement, instead of simply providing the requestor a link to download the file (which will timeout well before the job is completed).
+Some export jobs may take hours or days to run, which is the reason for a background batch-processing arrangement, instead of simply providing the requestor a link to download the file (which will timeout well before the job is completed).
 
 When a report job is finished, PDK typically sends an e-mail to requestor with a link to download the output. Since it is pretty common for jobs to generate export files on the order of tens or hundreds of megabytes, sending those files as attachments is rarely feasible.
 
-Note that by default, PDK provides a number of reports for standard PDK data types (e.g. `pdk-location`, `pdk-system-status`, etc.). You can inspect the code that implements the export job by choosing one of the data types in the [`generators`](https://github.com/audacious-software/PassiveDataKit-Django/tree/main/generators) folder and inspecting the `compile_report` method that is responsible for translating the raw JSON data into something more structured for analysis.
+By default, PDK provides a number of reports for standard PDK data types (e.g. `pdk-location`, `pdk-system-status`, etc.). You can inspect the code that implements the export job by choosing one of the data types in the [`generators`](https://github.com/audacious-software/PassiveDataKit-Django/tree/main/generators) folder and inspecting the `compile_report` method that is responsible for translating the raw JSON data into something more structured for analysis. Note that in addition to the standard reports that are included in the PDK Django app, this mechanism may be extended by creating a `pdk_api.py` file in *another* Django app, and implementing the `compile_report` function using the default PDK implementation in its own [`pdk_api.py`](https://github.com/audacious-software/PassiveDataKit-Django/blob/main/pdk_api.py) as an example.
 
+### pdk_run_status_checks
 
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_run_status_checks`
 
+*(Description coming soon)*
+
+### pdk_update_performance_metadata
+
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
+
+*(Description coming soon)*
+
+### pdk_update_performance_metadata
+
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
+
+*(Description coming soon)*
+
+### pdk_update_performance_metadata
+
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
+
+*(Description coming soon)*
+
+### pdk_update_performance_metadata
+
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
+
+*(Description coming soon)*
+
+### pdk_compile_visualizations
+
+`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_compile_visualizations`
+
+*(Description coming soon)*
 
 ## License and Other Project Information
 
