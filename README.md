@@ -152,7 +152,7 @@ Once `DataBundle` objects have been processed, the system has no more need of th
 
 This optiona job inspects the `DataBundle` objects to determine how many have been processed since the last check and to measure how many pending items remain. This information is displayed on the Passive Data Kit dashboard at `https://myserver.example.com/data/system-health`:
 
-    ![Graphs of data bundle processing progress](assets/documentation/pdk_system_health.png)
+![Graphs of data bundle processing progress](assets/documentation/pdk_system_health.png)
 
 Green lines represent bundles processed and red lines represent bundles pending. While it's no problem for the pending bundles (red line) to exceed the processed bundles (green line) height periodically, should the processed bundles not return to zero over time, this is evidence that data is being transmitted to the PDK server faster than it's being processed, which indicates a need for server tuning (a subject beyond the scope of this document) or deploying more data collection servers using PDK's server federation features (also beyond the scope of this document).
 
@@ -166,7 +166,7 @@ While `DataPoint` objects are stored (primarily) as JSON text, most analysts pre
 
 Analysts may request reports from the data export interface at `https://myserver.example.com/data/export`.
 
-    ![Graphs of data bundle processing progress](assets/documentation/pdk_export_data.png)
+![Graphs of data bundle processing progress](assets/documentation/pdk_export_data.png)
 
 They would select the data sources that they are interested in from the column on the left, and the data types of interest from the column on the right. The requested data can be time-bound either by when the data was captured by the client (the *created* date) or when it was recorded on the server during bundle processing (the *recorded* date). The requestor can also specify if they would prefer to receive the data in processed form (the default) or as raw JSON files that they can process themselves.
 
