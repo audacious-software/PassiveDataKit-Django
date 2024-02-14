@@ -150,7 +150,7 @@ enable_alerts.description = 'Enable Alerts'
 @admin.register(DataSource)
 class DataSourceAdmin(admin.OSMGeoAdmin):
     list_display = ('name', 'identifier', 'group', 'suppress_alerts', 'server', 'performance_metadata_updated',)
-    list_filter = ('group', 'suppress_alerts', 'performance_metadata_updated',)
+    list_filter = ('group', 'suppress_alerts', 'performance_metadata_updated', 'configuration',)
     search_fields = ['name', 'identifier']
 
     actions = [enable_alerts, suppress_alerts]
@@ -224,6 +224,10 @@ class AppConfigurationAdmin(admin.OSMGeoAdmin):
     search_fields = ('name', 'id_pattern', 'context_pattern', 'configuration_json',)
 
     list_filter = ('is_enabled', 'is_valid',)
+
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget(attrs={'initial': 'parsed'})}
+    }
 
 @admin.register(DataGeneratorDefinition)
 class DataGeneratorDefinitionAdmin(admin.OSMGeoAdmin):

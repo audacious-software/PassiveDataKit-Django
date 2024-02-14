@@ -615,6 +615,8 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         export_sources = []
         export_generators = []
 
+        respond_json = False
+
         for source in context['sources']:
             key = 'source_' + source
 
@@ -632,6 +634,17 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
             if key in request.POST:
                 export_generators.append(generator[0])
+
+        raw_sources = request.POST.get('sources', None)
+
+        if raw_sources is not None:
+            respond_json = True
+
+            parsed_sources = raw_sources.split(';')
+
+            for source in parsed_sources:
+                if source != '':
+                    export_sources.append(source)
 
         if len(export_sources) == 0: # pylint: disable=len-as-condition
             context['message_type'] = 'error'
@@ -661,6 +674,9 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
                 context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=
             else:
                 context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.'
+
+        if respond_json:
+            return HttpResponse(json.dumps({'success': True}, indent=2), content_type='application/json', status=200)
 
     return render(request, 'pdk_export.html', context=context)
 
@@ -708,18 +724,14 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     context = None
 
     if request.method == 'GET':
-        if 'id' in request.GET:
-            identifier = request.GET['id']
+        identifier = request.GET.get('id', request.GET.get('identifier', None))
 
-        if 'context' in request.GET:
-            context = request.GET['context']
+        context = request.GET.get('context', None)
 
     if request.method == 'POST':
-        if 'id' in request.POST:
-            identifier = request.POST['id']
+        identifier = request.POST.get('id', request.POST.get('identifier', None))
 
-        if 'context' in request.POST:
-            context = request.POST['context']
+        context = request.POST.get('context', None)
 
     if identifier is None:
         identifier = 'default'
@@ -727,17 +739,43 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     if context is None:
         context = 'default'
 
+    try:
+        settings.PDK_UPDATE_APP_CONFIGURATION(DataSource, AppConfiguration, identifier)
+    except AttributeError:
+        pass
+
+    source = DataSource.objects.filter(identifier=identifier).first()
+
+    if source is not None:
+        if source.configuration is not None:
+            response = HttpResponse(json.dumps(source.configuration.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
+
     for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-            return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+            response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
 
     for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.id_pattern == '.*' or re.search(config.id_pattern, identifier) is not None:
             if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-                return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+                response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
-    return HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
-#     raise Http404('Matching configuration not found.')
+                response['Access-Control-Allow-Origin'] = '*'
+
+                return response
+
+    response = HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
+
+    response['Access-Control-Allow-Origin'] = '*'
+
+    return response
 
 @staff_member_required
 def pdk_issues(request):

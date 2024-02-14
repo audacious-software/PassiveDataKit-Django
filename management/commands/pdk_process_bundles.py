@@ -169,6 +169,8 @@ class Command(BaseCommand):
                         to_record = []
 
                         for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
+                            logging.debug('POINT: %s', json.dumps(bundle_point, indent=2))
+
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
 
@@ -364,7 +366,10 @@ class Command(BaseCommand):
 
         elapsed = (end_processing - start_processing).total_seconds()
 
-        logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size)
+        if processed_bundle_count > 0:
+            logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size)
+        else:
+            logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, 0, new_point_count, bundle_size)
 
         for server_url, points in xmit_points.items():
             if points:

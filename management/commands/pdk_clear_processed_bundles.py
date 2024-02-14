@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         total = DataBundle.objects.filter(processed=True).count()
 
-        first_bundle = DataBundle.objects.filter(processed=True).order_by('pk').first()
+        first_bundle = DataBundle.objects.filter(processed=True).order_by('pk').only('pk').first()
 
         if first_bundle is not None:
             start = first_bundle.pk + options['batch_count']
