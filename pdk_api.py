@@ -774,3 +774,22 @@ def update_data_type_definition(definition, data_type=None, override_existing=Fa
         definition['passive-data-metadata.encrypted_transmission']['pdk_variable_description'] = 'Indictates whether the data point was encrypted prior to transmission'
         definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_group'] = 'Passive Data Kit'
         definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_order'] = 7
+        definition['passive-data-metadata.encrypted_transmission']['types'] = ['boolean']
+
+    identifier_module = definition['passive-data-metadata.generator-id']['observed'][0].replace('-', '_')
+
+    try:
+        for app in settings.INSTALLED_APPS:
+            try:
+                package_name = '%s.generators.%s' % (app, identifier_module)
+
+                generator = importlib.import_module(package_name)
+
+                generator.update_data_type_definition(definition)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+    except:
+        traceback.print_exc()
+

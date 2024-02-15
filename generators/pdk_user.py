@@ -136,3 +136,15 @@ def compile_report(generator, sources, data_start=None, data_end=None): # pylint
             os.remove(secondary_filename)
 
     return filename
+
+def update_data_type_definition(definition):
+    if 'mode' in definition:
+        definition['mode']['pdk_variable_name'] = 'User mode'
+        definition['mode']['pdk_variable_description'] = 'Mode of the device user. Updated when the user mode changes.'
+        definition['mode']['pdk_codebook_group'] = 'Passive Data Kit: User Mode'
+        definition['mode']['pdk_codebook_order'] = 0
+        definition['mode']['observed'] = ['foreground', 'background', 'unknown']
+
+    del definition['observed']
+
+    definition['pdk_description'] = 'Simple generator reporting the new user mode when that mode changes on the device.'

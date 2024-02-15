@@ -166,3 +166,14 @@ def extract_secondary_identifier(properties):
         return properties['state']
 
     return None
+
+def update_data_type_definition(definition):
+    if 'state' in definition:
+        definition['state']['pdk_variable_name'] = 'Screen state'
+        definition['state']['pdk_variable_description'] = 'New state of the screen, emitted when the state changes.'
+        definition['state']['pdk_codebook_group'] = 'Passive Data Kit: Screen State'
+        definition['state']['pdk_codebook_order'] = 0
+
+    del definition['observed']
+
+    definition['pdk_description'] = 'Simple generator reporting the state of the device screen when that state changes.'

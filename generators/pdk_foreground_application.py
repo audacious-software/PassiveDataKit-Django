@@ -282,3 +282,47 @@ def fetch_app_genre(package_name):
     cached_metadata.save()
 
     return cached_metadata.value
+
+def update_data_type_definition(definition):
+    if 'application' in definition:
+        definition['application']['pdk_variable_name'] = 'Application identifier'
+        definition['application']['pdk_variable_description'] = 'Identifier of an application observed running in the foreground. Note that in cases where the device has been configured to obscure certain applications, this identifier may be a device-specific hash value for the obscured application\'s identifier.'
+        definition['application']['pdk_codebook_group'] = 'Passive Data Kit: Application Information'
+        definition['application']['pdk_codebook_order'] = 0
+        definition['application']['examples'] = sorted(definition['application']['observed'], key=lambda x: len(x))[:16]
+
+    if 'category' in definition:
+        definition['category']['pdk_variable_name'] = 'Application category'
+        definition['category']['pdk_variable_description'] = 'Category of an application observed running in the foreground. Note that in cases where the device has been configured to obscure certain applications, this may be a device-specific hash value for the obscured application\'s original category.'
+        definition['category']['pdk_codebook_group'] = 'Passive Data Kit: Application Information'
+        definition['category']['pdk_codebook_order'] = 1
+        definition['category']['examples'] = [item for item in definition['category']['observed'] if len(item) < 48]
+
+    if 'is_home' in definition:
+        definition['is_home']['pdk_variable_name'] = 'Is home screen or launcher app'
+        definition['is_home']['pdk_variable_description'] = 'Boolean value indicating whether the observed application is a home screen or launcher application.'
+        definition['is_home']['pdk_codebook_group'] = 'Passive Data Kit: Application Information'
+        definition['is_home']['pdk_codebook_order'] = 2
+        definition['is_home']['types'] = ['boolean']
+
+    if 'duration' in definition:
+        definition['duration']['pdk_variable_name'] = 'Sample duration'
+        definition['duration']['pdk_variable_description'] = 'Sampling duration used to generate this observation (in milliseconds)'
+        definition['duration']['pdk_codebook_group'] = 'Passive Data Kit: Application Information'
+        definition['duration']['pdk_codebook_order'] = 3
+
+    if 'display_state' in definition:
+        definition['display_state']['pdk_variable_name'] = 'Display mode'
+        definition['display_state']['pdk_variable_description'] = 'State of the display when the application observation was made.'
+        definition['display_state']['pdk_codebook_group'] = 'Passive Data Kit: Application Information (Device State)'
+        definition['display_state']['pdk_codebook_order'] = 0
+
+    if 'screen_active' in definition:
+        definition['screen_active']['pdk_variable_name'] = 'Screen power state'
+        definition['screen_active']['pdk_variable_description'] = 'Indicates whether the device\'s screen was powered on when the application observation was recorded.'
+        definition['screen_active']['pdk_codebook_group'] = 'Data Kit: Application Information (Device State)'
+        definition['screen_active']['pdk_codebook_order'] = 1
+
+    del definition['observed']
+
+    definition['pdk_description'] = 'Records the foreground applications running on the device, typically using a 5000 ms sampling interval.'

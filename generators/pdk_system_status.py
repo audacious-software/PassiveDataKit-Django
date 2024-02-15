@@ -208,3 +208,91 @@ def compile_visualization(identifier, points, folder, source=None): # pylint: di
 
     with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         outfile.write(json.dumps(timestamp_counts, indent=2, ensure_ascii=False))
+
+def update_data_type_definition(definition):
+    if 'runtime' in definition:
+        definition['runtime']['pdk_variable_name'] = 'App runtime'
+        definition['runtime']['pdk_variable_description'] = 'Measures the number of milliseconds since the app\'s last restart.'
+        definition['runtime']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Runtime)'
+        definition['runtime']['pdk_codebook_order'] = 0
+        definition['runtime']['types'] = ['timestamp']
+
+    if 'system_runtime' in definition:
+        definition['system_runtime']['pdk_variable_name'] = 'Device runtime'
+        definition['system_runtime']['pdk_variable_description'] = 'Measures the number of milliseconds since the device\'s last restart, including periods spent sleeping.'
+        definition['system_runtime']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Runtime)'
+        definition['system_runtime']['pdk_codebook_order'] = 1
+        definition['system_runtime']['types'] = ['timestamp']
+
+    if 'storage_path' in definition:
+        definition['storage_path']['pdk_variable_name'] = 'App data path'
+        definition['storage_path']['pdk_variable_description'] = 'Path to the location on the device where the app is storing user data.'
+        definition['storage_path']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Storage)'
+        definition['storage_path']['pdk_codebook_order'] = 0
+
+    if 'storage_total' in definition:
+        definition['storage_total']['pdk_variable_name'] = 'Total device storage'
+        definition['storage_total']['pdk_variable_description'] = 'Total available storage space (used and free, in bytes) on the device.'
+        definition['storage_total']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Storage)'
+        definition['storage_total']['pdk_codebook_order'] = 1
+
+    if 'storage_available' in definition:
+        definition['storage_available']['pdk_variable_name'] = 'Availiable device storage'
+        definition['storage_available']['pdk_variable_description'] = 'Total free storage space (in bytes) on the device available for use.'
+        definition['storage_available']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Storage)'
+        definition['storage_available']['pdk_codebook_order'] = 2
+
+    if 'storage_app' in definition:
+        definition['storage_app']['pdk_variable_name'] = 'App data storage'
+        definition['storage_app']['pdk_variable_description'] = 'Storage space (in bytes) used for app data.'
+        definition['storage_app']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Storage)'
+        definition['storage_app']['pdk_codebook_order'] = 3
+
+    if 'storage_other' in definition:
+        definition['storage_other']['pdk_variable_name'] = 'System and other apps\' storage'
+        definition['storage_other']['pdk_variable_description'] = 'Amount of storage (in bytes) used by other apps and the system.'
+        definition['storage_other']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Storage)'
+        definition['storage_other']['pdk_codebook_order'] = 0
+
+    if 'granted_permissions' in definition:
+        definition['granted_permissions']['pdk_variable_name'] = 'Granted permissions'
+        definition['granted_permissions']['pdk_variable_description'] = 'Local device permissions granted to the app.'
+        definition['granted_permissions']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Permissions)'
+        definition['granted_permissions']['pdk_codebook_order'] = 0
+
+    if 'missing_permissions' in definition:
+        definition['missing_permissions']['pdk_variable_name'] = 'Denied permissions'
+        definition['missing_permissions']['pdk_variable_description'] = 'Local device permissions denied to the app by the user or system. Also includes permissions that may not be available on the device.'
+        definition['missing_permissions']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Permissions)'
+        definition['missing_permissions']['pdk_codebook_order'] = 1
+
+    if 'has_app_usage_permission' in definition:
+        definition['has_app_usage_permission']['pdk_variable_name'] = 'App usage data permission status'
+        definition['has_app_usage_permission']['pdk_variable_description'] = 'Indicates whether the user has granted the app permission to access app usage data on the device.'
+        definition['has_app_usage_permission']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Permissions)'
+        definition['has_app_usage_permission']['pdk_codebook_order'] = 2
+        definition['has_app_usage_permission']['types'] = ['boolean']
+
+    if 'ignores_battery_optimization' in definition:
+        definition['ignores_battery_optimization']['pdk_variable_name'] = 'App ignores system power optimizations'
+        definition['ignores_battery_optimization']['pdk_variable_description'] = 'Indicates whether the user has granted the app ignore device power optimizations and run unimpeded.'
+        definition['ignores_battery_optimization']['pdk_codebook_group'] = 'Passive Data Kit: Device Status (Permissions)'
+        definition['ignores_battery_optimization']['pdk_codebook_order'] = 3
+        definition['ignores_battery_optimization']['types'] = ['boolean']
+
+    if 'pending_transmissions' in definition:
+        definition['pending_transmissions']['pdk_variable_name'] = 'Pending data transmissions'
+        definition['pending_transmissions']['pdk_variable_description'] = 'Number of data bundles on the device awaiting transmission to the server.'
+        definition['pending_transmissions']['pdk_codebook_group'] = 'Passive Data Kit: Device Status'
+        definition['pending_transmissions']['pdk_codebook_order'] = 0
+
+    if 'remote_options' in definition:
+        definition['remote_options']['pdk_variable_name'] = 'Remote configuration'
+        definition['remote_options']['pdk_variable_description'] = 'Contains the remote configuration (in JSON format) that the device retrieved from the server.'
+        definition['remote_options']['pdk_codebook_group'] = 'Passive Data Kit: Device Status'
+        definition['remote_options']['pdk_codebook_order'] = 0
+        definition['remote_options']['types'] = ['timestamp']
+
+    del definition['observed']
+
+    definition['pdk_description'] = 'Routine device status reports generated to assist with app troubleshooting (e.g. missing data transmissions) and to monitor the status of devices sending data.'
