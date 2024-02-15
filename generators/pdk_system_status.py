@@ -209,7 +209,7 @@ def compile_visualization(identifier, points, folder, source=None): # pylint: di
     with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         outfile.write(json.dumps(timestamp_counts, indent=2, ensure_ascii=False))
 
-def update_data_type_definition(definition):
+def update_data_type_definition(definition): # pylint: disable=too-many-branches, too-many-statements
     if 'runtime' in definition:
         definition['runtime']['pdk_variable_name'] = 'App runtime'
         definition['runtime']['pdk_variable_description'] = 'Measures the number of milliseconds since the app\'s last restart.'

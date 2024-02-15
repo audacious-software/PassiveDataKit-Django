@@ -711,7 +711,7 @@ def clear_points(to_clear):
 
         DataPoint.objects.filter(pk=point_pk).delete()
 
-def update_data_type_definition(definition, data_type=None, override_existing=False): # pylint: disable=unused-argument
+def update_data_type_definition(definition, data_type=None, override_existing=False): # pylint: disable=unused-argument, too-many-branches, too-many-statements
     if 'passive-data-metadata' in definition:
         del definition['passive-data-metadata']
 
@@ -778,18 +778,14 @@ def update_data_type_definition(definition, data_type=None, override_existing=Fa
 
     identifier_module = definition['passive-data-metadata.generator-id']['observed'][0].replace('-', '_')
 
-    try:
-        for app in settings.INSTALLED_APPS:
-            try:
-                package_name = '%s.generators.%s' % (app, identifier_module)
+    for app in settings.INSTALLED_APPS:
+        try:
+            package_name = '%s.generators.%s' % (app, identifier_module)
 
-                generator = importlib.import_module(package_name)
+            generator = importlib.import_module(package_name)
 
-                generator.update_data_type_definition(definition)
-            except ImportError:
-                pass
-            except AttributeError:
-                pass
-    except:
-        traceback.print_exc()
-
+            generator.update_data_type_definition(definition)
+        except ImportError:
+            pass
+        except AttributeError:
+            pass

@@ -289,7 +289,7 @@ def update_data_type_definition(definition):
         definition['application']['pdk_variable_description'] = 'Identifier of an application observed running in the foreground. Note that in cases where the device has been configured to obscure certain applications, this identifier may be a device-specific hash value for the obscured application\'s identifier.'
         definition['application']['pdk_codebook_group'] = 'Passive Data Kit: Application Information'
         definition['application']['pdk_codebook_order'] = 0
-        definition['application']['examples'] = sorted(definition['application']['observed'], key=lambda x: len(x))[:16]
+        definition['application']['examples'] = sorted(definition['application']['observed'], key=lambda x: len(x))[:16] # pylint: disable=unnecessary-lambda
 
     if 'category' in definition:
         definition['category']['pdk_variable_name'] = 'Application category'
