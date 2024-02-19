@@ -79,5 +79,5 @@ rsa==4.0; python_version < '3.0'
 six==1.16.0
 standardjson==0.3.1
 XlsxWriter==2.0.0; python_version < '3.4'
-XlsxWriter==3.1.9; python_version >= '3.4'
+XlsxWriter==3.2.0; python_version >= '3.4'
 zipstream==1.1.4
