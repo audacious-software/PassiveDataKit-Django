@@ -25,14 +25,8 @@ from django.utils.text import slugify
 
 from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 
-def extract_secondary_identifier(properties):
-    if 'status' in properties:
-        return properties['status']
-
-    return None
-
 def generator_name(identifier): # pylint: disable=unused-argument
-    return 'Device Battery Status'
+    return 'Device Connection Test'
 
 def visualization(source, generator): # pylint: disable=unused-argument
     context = {}
@@ -278,61 +272,4 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
     return filename
 
 def update_data_type_definition(definition):
-    if 'level' in definition:
-        definition['level']['pdk_variable_name'] = 'Battery level'
-        definition['level']['pdk_variable_description'] = 'Current charge level of the device\'s battery.'
-        definition['level']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['level']['pdk_codebook_order'] = 0
-
-    if 'scale' in definition:
-        definition['scale']['pdk_variable_name'] = 'Battery level scale'
-        definition['scale']['pdk_variable_description'] = 'Maximum value of the `level` property indicating a full charge.'
-        definition['scale']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['scale']['pdk_codebook_order'] = 1
-
-    if 'status' in definition:
-        definition['status']['pdk_variable_name'] = 'Battery status'
-        definition['status']['pdk_variable_description'] = 'Status of the battery.'
-        definition['status']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['status']['pdk_codebook_order'] = 2
-
-    if 'plugged' in definition:
-        definition['plugged']['pdk_variable_name'] = 'Recharge source'
-        definition['plugged']['pdk_variable_description'] = 'Type of power source recharging the battery.'
-        definition['plugged']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['plugged']['pdk_codebook_order'] = 3
-
-    if 'health' in definition:
-        definition['health']['pdk_variable_name'] = 'Battery health'
-        definition['health']['pdk_variable_description'] = 'Simple descriptor indicating the overall status of the device battery.'
-        definition['health']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['health']['pdk_codebook_order'] = 4
-
-    if 'present' in definition:
-        definition['present']['pdk_variable_name'] = 'Battery is present'
-        definition['present']['pdk_variable_description'] = 'Boolean indicator of whether the device has a battery present.'
-        definition['present']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['present']['pdk_codebook_order'] = 5
-        definition['present']['types'] = ['boolean']
-
-    if 'technology' in definition:
-        definition['technology']['pdk_variable_name'] = 'Battery technology'
-        definition['technology']['pdk_variable_description'] = 'Type of battery present.'
-        definition['technology']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['technology']['pdk_codebook_order'] = 6
-
-    if 'temperature' in definition:
-        definition['temperature']['pdk_variable_name'] = 'Battery temperature'
-        definition['temperature']['pdk_variable_description'] = 'Temperature of the battery, expressed in tenths of a degree Celcius. 275 = 27.5 degrees Celcius.'
-        definition['temperature']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['temperature']['pdk_codebook_order'] = 7
-
-    if 'voltage' in definition:
-        definition['voltage']['pdk_variable_name'] = 'Battery voltage'
-        definition['voltage']['pdk_variable_description'] = 'Battery voltage level'
-        definition['voltage']['pdk_codebook_group'] = 'Passive Data Kit: Power State'
-        definition['voltage']['pdk_codebook_order'] = 7
-
-    del definition['observed']
-
-    definition['pdk_description'] = 'Provides device battery status, primarily used for troubleshooting. New data points are typically generated when the battery level changes.'
+    definition['pdk_description'] = 'Small data point type often used in app onboarding to determine if users\' devices are able to communicate with a Passive Data Kit data server.'

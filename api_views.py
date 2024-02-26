@@ -24,7 +24,7 @@ from passive_data_kit.models import DataServerApiToken, DataPoint, DataServerAcc
 
 def valid_pdk_token_required(function):
     def wrap(request, *args, **kwargs):
-        token = request.POST['token']
+        token = request.POST.get('token', None)
 
         now = timezone.now()
 
@@ -100,7 +100,7 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
         latest = None
 
         if 'latest' in request.POST:
-            latest = int(request.POST['latest_pk'])
+            latest = int(request.POST.get('latest_pk', 0))
         else:
             latest_point = DataPoint.objects.all().order_by('-pk').first()
 
@@ -173,14 +173,14 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 
         payload['matches'] = matches
 
-        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+        token = DataServerApiToken.objects.filter(token=request.POST.get('token', None)).first()
 
         access_request = DataServerAccessRequestPending()
 
         if token is not None:
             access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
         else:
-            access_request.user_identifier = 'api_token: ' + request.POST['token']
+            access_request.user_identifier = 'api_token: ' + request.POST.get('token', None)
 
         access_request.request_type = 'api-data-points-request'
         access_request.request_time = timezone.now()
@@ -196,12 +196,12 @@ def pdk_data_point_query(request): # pylint: disable=too-many-locals, too-many-b
 @valid_pdk_token_required
 def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST':
-        page_size = int(request.POST['page_size'])
-        page_index = int(request.POST['page_index'])
+        page_size = int(request.POST.get('page_size', '32'))
+        page_index = int(request.POST.get('page_index', '0'))
 
-        filters = json.loads(request.POST['filters'])
-        excludes = json.loads(request.POST['excludes'])
-        order_bys = json.loads(request.POST['order_by'])
+        filters = json.loads(request.POST.get('filters', '[]'))
+        excludes = json.loads(request.POST.get('excludes', '[]'))
+        order_bys = json.loads(request.POST.get('order_by', '[]'))
 
         query = None
 
@@ -266,14 +266,14 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 
         payload['matches'] = matches
 
-        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+        token = DataServerApiToken.objects.filter(token=request.POST.get('token', None)).first()
 
         access_request = DataServerAccessRequestPending()
 
         if token is not None:
             access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
         else:
-            access_request.user_identifier = 'api_token: ' + request.POST['token']
+            access_request.user_identifier = 'api_token: ' + request.POST.get('token', None)
 
         access_request.request_type = 'api-data-source-request'
         access_request.request_time = timezone.now()
@@ -289,9 +289,9 @@ def pdk_data_source_query(request): # pylint: disable=too-many-locals, too-many-
 @valid_pdk_token_required
 def pdk_data_source_update(request): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     if request.method == 'POST': # pylint: disable=too-many-nested-blocks
-        filters = json.loads(request.POST['filters'])
-        excludes = json.loads(request.POST['excludes'])
-        updates = json.loads(request.POST['updates'])
+        filters = json.loads(request.POST.get('filters', '[]'))
+        excludes = json.loads(request.POST.get('excludes', '[]'))
+        updates = json.loads(request.POST.get('updates', {}))
 
         query = None
 
@@ -355,14 +355,14 @@ def pdk_data_source_update(request): # pylint: disable=too-many-locals, too-many
             'updated': update_count,
         }
 
-        token = DataServerApiToken.objects.filter(token=request.POST['token']).first()
+        token = DataServerApiToken.objects.filter(token=request.POST.get('token', None)).first()
 
         access_request = DataServerAccessRequestPending()
 
         if token is not None:
             access_request.user_identifier = str(token.user.pk) + ': ' + str(token.user.username)
         else:
-            access_request.user_identifier = 'api_token: ' + request.POST['token']
+            access_request.user_identifier = 'api_token: ' + request.POST.get('token', None)
 
         access_request.request_type = 'api-data-source-update'
         access_request.request_time = timezone.now()
