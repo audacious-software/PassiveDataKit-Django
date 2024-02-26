@@ -72,17 +72,13 @@ def visualization(source, generator):
         latitude = properties['latitude']
         longitude = properties['longitude']
 
-        if latitude < min_latitude:
-            min_latitude = latitude
+        min_latitude = min(min_latitude, latitude)
 
-        if latitude > max_latitude:
-            max_latitude = latitude
+        max_latitude = max(max_latitude, latitude)
 
-        if longitude < min_longitude:
-            min_longitude = longitude
+        min_longitude = min(min_longitude, longitude)
 
-        if longitude > max_longitude:
-            max_longitude = longitude
+        max_longitude = max(max_longitude, longitude)
 
     context['values'] = values
 
