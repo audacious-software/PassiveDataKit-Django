@@ -36,7 +36,7 @@ django-mathfilters==1.0.0
 django-prettyjson==0.4.1
 django-user-agents==0.4.0
 dropbox==11.36.2
-future==0.18.3
+future==1.0.0
 humanize==1.0.0; python_version < '3.0'
 humanize==3.14.0; python_version == '3.6'
 humanize==4.6.0; python_version == '3.7'
@@ -64,7 +64,7 @@ pyfcm==1.5.4
 pylint==1.9.5; python_version < '3.0'
 pylint==2.13.9; python_version == '3.6'
 pylint==2.17.7; python_version == '3.7'
-pylint==3.0.3; python_version >= '3.8'
+pylint==3.1.0; python_version >= '3.8'
 PyNaCl==1.4.0; python_version < '3.0'
 PyNaCl==1.5.0; python_version >= '3.0'
 python-dateutil==2.6.0; python_version < '3.0'
