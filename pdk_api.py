@@ -556,8 +556,6 @@ def upload_file_contents(destination, file_path, contents): # pylint: disable=to
 
     elif destination.destination == 'local':
         try:
-            parameters = destination.fetch_parameters()
-
             path = ''
 
             if 'path' in parameters:
@@ -577,8 +575,6 @@ def upload_file_contents(destination, file_path, contents): # pylint: disable=to
             traceback.print_exc()
     elif destination.destination == 's3':
         try:
-            parameters = destination.fetch_parameters()
-
             aws_config = Config(
                 region_name=parameters['region'],
                 retries={'max_attempts': 10, 'mode': 'standard'}
