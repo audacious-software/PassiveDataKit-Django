@@ -1311,6 +1311,17 @@ class ReportDestination(models.Model):
             except AttributeError:
                 pass
 
+    def upload_file_contents(self, path, contents):
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                pdk_api.upload_file_contents(self, path, contents)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
 @receiver(pre_save, sender=ReportDestination)
 def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
     destination = kwargs['instance']
