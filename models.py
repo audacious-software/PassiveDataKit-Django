@@ -12,6 +12,7 @@ import datetime
 import json
 import random
 import string
+import sys
 
 import importlib
 
@@ -38,13 +39,17 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 
 try:
     from urllib.parse import urlparse, urlunsplit
 except ImportError:
     from urlparse import urlparse, urlunsplit
+
+if sys.version_info[0] > 2:
+    from django.db.models import JSONField
+else:
+    from django.contrib.postgres.fields import JSONField
 
 standard_library.install_aliases()
 
