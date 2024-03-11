@@ -47,7 +47,7 @@ except ImportError:
     from urlparse import urlparse, urlunsplit
 
 if sys.version_info[0] > 2:
-    from django.db.models import JSONField
+    from django.db.models import JSONField # pylint: disable=no-name-in-module
 else:
     from django.contrib.postgres.fields import JSONField
 
