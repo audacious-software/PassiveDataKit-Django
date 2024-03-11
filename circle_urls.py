@@ -15,7 +15,10 @@ Including another URLconf
 
 import django
 
-from django.conf.urls import include, url
+if sys.version_info[0] > 2:
+    from django.urls import re_path as url, include
+else:
+    from django.conf.urls import url, include
 
 urlpatterns = [
     url(r'^admin/', django.contrib.admin.site.urls),
