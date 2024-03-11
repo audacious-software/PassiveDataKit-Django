@@ -17,7 +17,7 @@ jobs:
   build-310:
     docker:
       - image: cimg/python:3.10
-      - image: cimg/postgres:12.186-postgis
+      - image: cimg/postgres:12.18-postgis
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -42,7 +42,7 @@ jobs:
             mv project passive_data_kit
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit pdk
             cd pdk
             ls
@@ -68,7 +68,7 @@ jobs:
   build-39:
     docker:
       - image: cimg/python:3.9
-      - image: cimg/postgres:12.186-postgis
+      - image: cimg/postgres:12.18-postgis
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -93,7 +93,7 @@ jobs:
             mv project passive_data_kit
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit pdk
             cd pdk
             ls
@@ -119,7 +119,7 @@ jobs:
   build-38:
     docker:
       - image: cimg/python:3.8
-      - image: cimg/postgres:9.6-postgis
+      - image: cimg/postgres:12.18-postgis
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -144,7 +144,7 @@ jobs:
             mv project passive_data_kit
             mkdir django
             cd django
-            django-admin.py startproject pdk
+            django-admin startproject pdk
             mv ../passive_data_kit pdk
             cd pdk
             ls
