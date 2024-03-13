@@ -376,7 +376,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                             pass
 
                         if trust_host_keys:
-                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
 
                         ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
@@ -534,7 +534,7 @@ def upload_file_contents(destination, file_path, contents): # pylint: disable=to
                         pass
 
                     if trust_host_keys:
-                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
 
                     ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
