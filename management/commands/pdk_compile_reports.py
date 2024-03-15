@@ -248,7 +248,7 @@ class Command(BaseCommand):
                             final_output_file.write(data)
 
                 if zips_to_merge:
-                    with zipfile.ZipFile(filename, 'a') as zip_output:
+                    with zipfile.ZipFile(filename, 'a', compression=zipfile.ZIP_BZIP2) as zip_output:
                         for zip_filename in zips_to_merge:
                             with zipfile.ZipFile(zip_filename, 'r') as zip_file:
                                 for child_file in zip_file.namelist():
@@ -262,7 +262,7 @@ class Command(BaseCommand):
 
                                     print('Extracted %s to %s' % (child_file, child_filename))
 
-                                    zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_DEFLATED)
+                                    zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_BZIP2)
 
                                     logging.info('pdk_compile_reports: Finished writing %s.', child_file)
 

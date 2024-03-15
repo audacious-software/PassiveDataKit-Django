@@ -12,6 +12,7 @@ import datetime
 import json
 import random
 import string
+import sys
 
 import importlib
 
@@ -38,13 +39,17 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 
 try:
     from urllib.parse import urlparse, urlunsplit
 except ImportError:
     from urlparse import urlparse, urlunsplit
+
+if sys.version_info[0] > 2:
+    from django.db.models import JSONField # pylint: disable=no-name-in-module
+else:
+    from django.contrib.postgres.fields import JSONField
 
 standard_library.install_aliases()
 
@@ -1306,6 +1311,17 @@ class ReportDestination(models.Model):
                 pdk_api = importlib.import_module(app + '.pdk_api')
 
                 pdk_api.send_to_destination(self, report, report_file)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
+    def upload_file_contents(self, path, contents):
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                pdk_api.upload_file_contents(self, path, contents)
             except ImportError:
                 pass
             except AttributeError:

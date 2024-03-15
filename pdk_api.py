@@ -376,7 +376,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                             pass
 
                         if trust_host_keys:
-                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
 
                         ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
@@ -477,6 +477,135 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
 
     if file_sent is False:
         print('Unable to transmit report to destination "' + destination.destination + '".')
+
+def upload_file_contents(destination, file_path, contents): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    file_sent = False
+
+    parameters = destination.fetch_parameters()
+
+    if destination.destination == 'dropbox':
+        try:
+            if 'access_token' in parameters:
+                client = dropbox.Dropbox(parameters['access_token'])
+
+                path = '/'
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                path = path + os.path.normpath(file_path)
+
+                try:
+                    client.files_upload(contents, file_path)
+
+                    file_sent = True
+                except: # pylint: disable=bare-except
+                    print('Unable to upload - error encountered.')
+
+                    traceback.print_exc()
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 'sftp': # pylint: disable=too-many-nested-blocks
+        try:
+            if ('username' in parameters) and ('host' in parameters) and ('key' in parameters):
+                path = ''
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                path = path + os.path.normpath(file_path)
+
+                try:
+                    key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
+
+                    ssh_client = paramiko.SSHClient()
+
+                    trust_host_keys = True
+
+                    try:
+                        trust_host_keys = settings.PDK_API_TRUST_HOST_KEYS
+                    except AttributeError:
+                        pass
+
+                    if trust_host_keys:
+                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
+
+                    ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+
+                    ftp_client = ssh_client.open_sftp()
+
+                    with io.BytesIO(contents) as content_bytes:
+                        ftp_client.putfo(content_bytes, path)
+
+                    ftp_client.close()
+
+                    file_sent = True
+                except: # pylint: disable=bare-except
+                    print('Unable to upload - error encountered.')
+
+                    traceback.print_exc()
+
+        except BaseException:
+            traceback.print_exc()
+
+    elif destination.destination == 'local':
+        try:
+            path = ''
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+                if path[-1] != '/':
+                    path = path + '/'
+
+            path = path + os.path.normpath(file_path)
+
+            with open(path, 'wb') as export_file:
+                export_file.write(contents)
+
+            file_sent = True
+
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 's3':
+        try:
+            aws_config = Config(
+                region_name=parameters['region'],
+                retries={'max_attempts': 10, 'mode': 'standard'}
+            )
+
+            os.environ['AWS_ACCESS_KEY_ID'] = parameters['access_key_id']
+            os.environ['AWS_SECRET_ACCESS_KEY'] = parameters['secret_access_key']
+
+            client = boto3.client('s3', config=aws_config)
+
+            s3_bucket = parameters['bucket']
+
+            path = ''
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+                if path[-1] != '/':
+                    path = path + '/'
+
+            path = path + os.path.normpath(file_path)
+
+            client.put_object(Body=contents, Bucket=s3_bucket, Key=path)
+
+            file_sent = True
+        except: # pylint: disable=bare-except
+            traceback.print_exc()
+
+    if file_sent is False:
+        print('Unable to transmit report to destination "' + destination.destination + '".')
+
 
 def annotate_source_definition(source, definition):
     active_alerts = []
@@ -711,7 +840,7 @@ def clear_points(to_clear):
 
         DataPoint.objects.filter(pk=point_pk).delete()
 
-def update_data_type_definition(definition, data_type=None, override_existing=False): # pylint: disable=unused-argument
+def update_data_type_definition(definition, data_type=None, override_existing=False): # pylint: disable=unused-argument, too-many-branches, too-many-statements
     if 'passive-data-metadata' in definition:
         del definition['passive-data-metadata']
 
@@ -774,3 +903,18 @@ def update_data_type_definition(definition, data_type=None, override_existing=Fa
         definition['passive-data-metadata.encrypted_transmission']['pdk_variable_description'] = 'Indictates whether the data point was encrypted prior to transmission'
         definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_group'] = 'Passive Data Kit'
         definition['passive-data-metadata.encrypted_transmission']['pdk_codebook_order'] = 7
+        definition['passive-data-metadata.encrypted_transmission']['types'] = ['boolean']
+
+    identifier_module = definition['passive-data-metadata.generator-id']['observed'][0].replace('-', '_')
+
+    for app in settings.INSTALLED_APPS:
+        try:
+            package_name = '%s.generators.%s' % (app, identifier_module)
+
+            generator = importlib.import_module(package_name)
+
+            generator.update_data_type_definition(definition)
+        except ImportError:
+            pass
+        except AttributeError:
+            pass

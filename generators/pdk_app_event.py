@@ -172,3 +172,30 @@ def compile_visualization(identifier, points, folder, source=None): # pylint: di
 
     with io.open(folder + os.path.sep + 'timestamp-counts.json', 'w', encoding='utf-8') as outfile:
         outfile.write(json.dumps(timestamp_counts, indent=2, ensure_ascii=False))
+
+def update_data_type_definition(definition):
+    if 'event_name' in definition:
+        definition['event_name']['pdk_variable_name'] = 'Event name'
+        definition['event_name']['pdk_variable_description'] = 'Name of the event emitted. Name assigned by app developer.'
+        definition['event_name']['pdk_codebook_group'] = 'Passive Data Kit: App Events'
+        definition['event_name']['pdk_codebook_order'] = 0
+        definition['event_name']['examples'] = definition['event_name']['observed'][:16]
+
+    if 'event_details' in definition:
+        definition['event_details']['pdk_variable_name'] = 'Event value'
+        definition['event_details']['pdk_variable_description'] = 'Details about the app event. Structure is determined by app developer.'
+        definition['event_details']['pdk_codebook_group'] = 'Passive Data Kit: App Events'
+        definition['event_details']['pdk_codebook_order'] = 1
+
+    to_delete = []
+
+    for key in definition.keys():
+        if key.startswith('event_details.'):
+            to_delete.append(key)
+
+    for key in to_delete:
+        del definition[key]
+
+    del definition['observed']
+
+    definition['pdk_description'] = 'Simple app event reporting capability built into Passive Data Kit. App developers can log events by name, and using a custom structure (expressible in JSON) for the values.'

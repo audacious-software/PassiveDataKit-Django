@@ -1,8 +1,14 @@
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long, wrong-import-position
 
-from django.conf.urls import url
+import sys
+
 from django.contrib.auth.views import LogoutView
 from django.conf import settings
+
+if sys.version_info[0] > 2:
+    from django.urls import re_path as url # pylint: disable=no-name-in-module
+else:
+    from django.conf.urls import url
 
 from .views import pdk_add_data_point, pdk_add_data_bundle, pdk_app_config, pdk_issues, \
                    pdk_issues_json, pdk_fetch_metadata_json
