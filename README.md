@@ -190,22 +190,6 @@ By default, PDK provides a number of reports for standard PDK data types (e.g. `
 
 *(Description coming soon)*
 
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
-
-*(Description coming soon)*
-
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
-
-*(Description coming soon)*
-
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
-
 *(Description coming soon)*
 
 ### pdk_compile_visualizations
