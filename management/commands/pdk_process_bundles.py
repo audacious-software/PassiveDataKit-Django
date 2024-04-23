@@ -90,14 +90,16 @@ class Command(BaseCommand):
 
         sources = {}
 
-        # start_time = timezone.now()
-
         private_key = None
         public_key = None
 
         xmit_points = {}
 
-        for bundle in DataBundle.objects.filter(processed=False, errored=None).order_by('compression', '-recorded')[:options['bundle_count']]:
+        start_processing = timezone.now()
+
+        bundle_size = 0
+
+        for bundle in DataBundle.objects.filter(processed=False, errored=None)[:options['bundle_count']]: # pylint: disable=too-many-nested-blocks
             if new_point_count < process_limit:
                 processed_bundle_count += 1
 
@@ -156,11 +158,19 @@ class Command(BaseCommand):
                                 payload = gzip_file_obj.read()
                                 gzip_file_obj.close()
 
+                                bundle_size += len(payload)
+
                                 bundle.properties = json.loads(payload)
+
+                                # print(' Compress: %d -- %s' % (bundle.pk, timezone.now()))
 
                         now = timezone.now()
 
+                        to_record = []
+
                         for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
+                            logging.debug('POINT: %s', json.dumps(bundle_point, indent=2))
+
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
 
@@ -168,6 +178,11 @@ class Command(BaseCommand):
                                     print('Detected 0x00 byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
 
                                     point_json = point_json.replace(r'\u0000', '')
+
+                                # while r'\ud83c' in point_json:
+                                #    print('Detected 0xd83c byte in ' + str(bundle.pk) + '. Stripping and ingesting...')
+
+                                #    point_json = point_json.replace(r'\ud83c', '')
 
                                 bundle_point = json.loads(point_json)
 
@@ -234,7 +249,7 @@ class Command(BaseCommand):
                                         point.created = datetime.datetime.fromtimestamp(bundle_point['passive-data-metadata']['timestamp'], tz=default_tz)
 
                                         if supports_json:
-                                            point.properties = bundle_point
+                                            point.properties = json.loads(json.dumps(bundle_point, indent=2).encode('utf-16', 'surrogatepass').decode('utf-16'))
                                         else:
                                             point.properties = json.dumps(bundle_point, indent=2)
 
@@ -243,27 +258,29 @@ class Command(BaseCommand):
                                         point.fetch_generator_definition(skip_save=True)
                                         point.fetch_source_reference(skip_save=True)
 
-                                        point.save()
+                                        to_record.append(point)
 
-                                        if has_bundles:
-                                            point.fetch_bundle_files(bundle_files)
-
-                                        if (point.source in seen_sources) is False:
-                                            seen_sources.append(point.source)
-
-                                        if (point.source in source_identifiers) is False:
-                                            source_identifiers[point.source] = []
-
-                                        latest_key = point.source + '--' + point.generator_identifier
-
-                                        if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
-                                            latest_points[latest_key] = point
-
-                                        if (point.generator_identifier in seen_generators) is False:
-                                            seen_generators.append(point.generator_identifier)
-
-                                        if (point.generator_identifier in source_identifiers[point.source]) is False:
-                                            source_identifiers[point.source].append(point.generator_identifier)
+#                                        point.save()
+#
+#                                        if has_bundles:
+#                                            point.fetch_bundle_files(bundle_files)
+#
+#                                        if (point.source in seen_sources) is False:
+#                                            seen_sources.append(point.source)
+#
+#                                        if (point.source in source_identifiers) is False:
+#                                            source_identifiers[point.source] = []
+#
+#                                        latest_key = point.source + '--' + point.generator_identifier
+#
+#                                        if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+#                                            latest_points[latest_key] = point
+#
+#                                        if (point.generator_identifier in seen_generators) is False:
+#                                            seen_generators.append(point.generator_identifier)
+#
+#                                        if (point.generator_identifier in source_identifiers[point.source]) is False:
+#                                            source_identifiers[point.source].append(point.generator_identifier)
                                     else:
                                         if (server_url in xmit_points) is False:
                                             xmit_points[server_url] = []
@@ -275,6 +292,30 @@ class Command(BaseCommand):
                                 traceback.print_exc()
                                 print('Error ingesting bundle: ' + str(bundle.pk) + ':')
                                 print(str(bundle.properties))
+
+                        if len(to_record) > 0: # pylint: disable=len-as-condition
+                            points = DataPoint.objects.bulk_create(to_record)
+
+                            for point in points:
+                                if has_bundles:
+                                    point.fetch_bundle_files(bundle_files)
+
+                                if (point.source in seen_sources) is False:
+                                    seen_sources.append(point.source)
+
+                                if (point.source in source_identifiers) is False:
+                                    source_identifiers[point.source] = []
+
+                                latest_key = point.source + '--' + point.generator_identifier
+
+                                if (latest_key in latest_points) is False or latest_points[latest_key].created < point.created:
+                                    latest_points[latest_key] = point
+
+                                if (point.generator_identifier in seen_generators) is False:
+                                    seen_generators.append(point.generator_identifier)
+
+                                if (point.generator_identifier in source_identifiers[point.source]) is False:
+                                    source_identifiers[point.source].append(point.generator_identifier)
 
                         if len(xmit_points) == 0: # pylint: disable=len-as-condition
                             bundle.processed = True
@@ -306,15 +347,13 @@ class Command(BaseCommand):
                             else:
                                 print('Error encountered uploading contents of ' + str(bundle.pk) + '.')
 
-                        # if bundle.encrypted is False and supports_json is False:
-                        #    bundle.properties = json.dumps(bundle.properties, indent=2)
-
                         bundle.properties = original_properties
 
                         bundle.save()
 
                         if options['delete']:
                             to_delete.append(bundle)
+
                 except TransactionManagementError:
                     print('Abandoning and marking errored ' + str(bundle.pk) + '.')
 
@@ -322,6 +361,15 @@ class Command(BaseCommand):
 
                     bundle.errored = timezone.now()
                     bundle.save()
+
+        end_processing = timezone.now()
+
+        elapsed = (end_processing - start_processing).total_seconds()
+
+        if processed_bundle_count > 0:
+            logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, (elapsed / processed_bundle_count), new_point_count, bundle_size)
+        else:
+            logging.debug('PROCESSED: %d -- %.3f -- %.3f (%s / %s)', processed_bundle_count, elapsed, 0, new_point_count, bundle_size)
 
         for server_url, points in xmit_points.items():
             if points:
@@ -433,6 +481,9 @@ class Command(BaseCommand):
                 DataPoint.objects.set_latest_point(point.source, 'pdk-data-frequency', point)
 
             logging.debug("%d unprocessed payloads remaining.", DataBundle.objects.filter(processed=False, errored=None).count())
+
+        else:
+            DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).delete()
 
         # elapsed = timezone.now() - start_time
 

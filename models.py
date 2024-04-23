@@ -12,10 +12,11 @@ import datetime
 import json
 import random
 import string
+import sys
 
 import importlib
 
-from distutils.version import LooseVersion # pylint: disable=no-name-in-module, import-error
+from packaging.version import Version
 from future import standard_library
 from past.utils import old_div
 
@@ -38,13 +39,17 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 
 try:
     from urllib.parse import urlparse, urlunsplit
 except ImportError:
     from urlparse import urlparse, urlunsplit
+
+if sys.version_info[0] > 2:
+    from django.db.models import JSONField # pylint: disable=no-name-in-module
+else:
+    from django.contrib.postgres.fields import JSONField
 
 standard_library.install_aliases()
 
@@ -132,6 +137,39 @@ def check_prettyjson_installed(app_configs, **kwargs): # pylint: disable=unused-
     return errors
 
 @python_2_unicode_compatible
+class AppConfiguration(models.Model):
+    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
+        index_together = [
+            ['is_valid', 'is_enabled'],
+            ['is_valid', 'is_enabled', 'evaluate_order'],
+        ]
+
+        ordering = ['name']
+
+    name = models.CharField(max_length=1024)
+    id_pattern = models.CharField(max_length=1024, db_index=True)
+    context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)
+
+    if install_supports_jsonfield():
+        configuration_json = JSONField()
+    else:
+        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
+
+    evaluate_order = models.IntegerField(default=1)
+
+    is_valid = models.BooleanField(default=False)
+    is_enabled = models.BooleanField(default=True)
+
+    def configuration(self):
+        if install_supports_jsonfield():
+            return self.configuration_json
+
+        return json.loads(self.configuration_json)
+
+    def __str__(self):
+        return str(self.name)
+
+@python_2_unicode_compatible
 class DataGeneratorDefinition(models.Model):
     generator_identifier = models.CharField(max_length=1024)
 
@@ -214,7 +252,7 @@ class DataPointQuerySet(QuerySet):
         # clauses are present. In earlier versions these were two separate
         # properties query.where and query.having
 
-        if LooseVersion(django.get_version()) >= LooseVersion('1.9'):
+        if Version(django.get_version()) >= Version('1.9'):
             is_filtered = self.query.where
         else:
             is_filtered = self.query.where or self.query.having
@@ -227,7 +265,11 @@ class DataPointQuerySet(QuerySet):
         data_point_count = DataServerMetadatum.objects.filter(key=TOTAL_DATA_POINT_COUNT_DATUM).first()
 
         if data_point_count is None:
-            return super(DataPointQuerySet, self).count()
+            data_count = super(DataPointQuerySet, self).count()
+
+            DataServerMetadatum.objects.create(key=TOTAL_DATA_POINT_COUNT_DATUM, value=str(data_count))
+
+            return data_count
 
         return int(data_point_count.value)
 
@@ -578,7 +620,7 @@ class DataServerMetadatum(models.Model):
     last_updated = models.DateTimeField(null=True, blank=True)
 
     def formatted_value(self): # pylint: disable=no-self-use
-        return 'TODO'
+        return '%s = %s' % (self.key, self.value)
 
 @receiver(pre_save, sender=DataServerMetadatum)
 def data_server_metadatum_pre_save(sender, instance, *args, **kwargs): # pylint: disable=unused-argument
@@ -663,6 +705,8 @@ class DataSource(models.Model):
     performance_metadata_updated = models.DateTimeField(db_index=True, null=True, blank=True)
 
     server = models.ForeignKey(DataServer, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
+
+    configuration = models.ForeignKey(AppConfiguration, related_name='sources', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name + ' (' + self.identifier + ')'
@@ -1272,6 +1316,17 @@ class ReportDestination(models.Model):
             except AttributeError:
                 pass
 
+    def upload_file_contents(self, path, contents):
+        for app in settings.INSTALLED_APPS:
+            try:
+                pdk_api = importlib.import_module(app + '.pdk_api')
+
+                pdk_api.upload_file_contents(self, path, contents)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
 @receiver(pre_save, sender=ReportDestination)
 def report_destination_pre_save_handler(sender, **kwargs): # pylint: disable=unused-argument, invalid-name
     destination = kwargs['instance']
@@ -1509,33 +1564,6 @@ def report_job_batch_request_pre_save_handler(sender, **kwargs): # pylint: disab
         job.parameters = parameters
     else:
         job.parameters = json.dumps(parameters, indent=2)
-
-class AppConfiguration(models.Model):
-    class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value
-        index_together = [
-            ['is_valid', 'is_enabled'],
-            ['is_valid', 'is_enabled', 'evaluate_order'],
-        ]
-
-    name = models.CharField(max_length=1024)
-    id_pattern = models.CharField(max_length=1024, db_index=True)
-    context_pattern = models.CharField(max_length=1024, default='.*', db_index=True)
-
-    if install_supports_jsonfield():
-        configuration_json = JSONField()
-    else:
-        configuration_json = models.TextField(max_length=(32 * 1024 * 1024 * 1024))
-
-    evaluate_order = models.IntegerField(default=1)
-
-    is_valid = models.BooleanField(default=False)
-    is_enabled = models.BooleanField(default=True)
-
-    def configuration(self):
-        if install_supports_jsonfield():
-            return self.configuration_json
-
-        return json.loads(self.configuration_json)
 
 class DataServerApiToken(models.Model):
     class Meta(object): # pylint: disable=old-style-class, no-init, too-few-public-methods, bad-option-value

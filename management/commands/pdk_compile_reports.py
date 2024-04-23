@@ -9,6 +9,7 @@ import datetime
 import importlib
 import io
 import json
+import logging
 import os
 import tempfile
 import traceback
@@ -108,13 +109,23 @@ class Command(BaseCommand):
 
                 zips_to_merge = []
 
+                excluded_sources = []
+
+                try:
+                    excluded_sources = settings.PDK_EXCLUDED_SOURCES
+                except AttributeError:
+                    pass
+
+                for excluded_source in excluded_sources:
+                    while excluded_source in sources:
+                        sources.remove(excluded_source)
+
                 with open(filename, 'wb') as final_output_file:
                     to_delete = []
 
                     with zipstream.ZipFile(mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as export_stream: # pylint: disable=line-too-long
                         for generator in generators: # pylint: disable=too-many-nested-blocks
-                            if options.get('verbosity') > 0:
-                                print('Exporting %s for %s.' % (generator, sources))
+                            logging.info('pdk_compile_reports: Exporting %s for %s.', generator, sources)
 
                             if raw_json:
                                 for source in sources:
@@ -198,6 +209,8 @@ class Command(BaseCommand):
                                             pdk_api = importlib.import_module(app + '.pdk_api')
 
                                             try:
+                                                logging.info('pdk_compile_reports: Exporting for %s: %s.%s.', sources, app, generator)
+
                                                 output_file = pdk_api.compile_report(generator, sources, data_start=data_start, data_end=data_end, date_type=date_type)
 
                                                 if output_file is not None:
@@ -235,21 +248,23 @@ class Command(BaseCommand):
                             final_output_file.write(data)
 
                 if zips_to_merge:
-                    with zipfile.ZipFile(filename, 'a') as zip_output:
+                    with zipfile.ZipFile(filename, 'a', compression=zipfile.ZIP_BZIP2) as zip_output:
                         for zip_filename in zips_to_merge:
                             with zipfile.ZipFile(zip_filename, 'r') as zip_file:
                                 for child_file in zip_file.namelist():
                                     child_filename = tempfile.gettempdir() + os.path.sep + child_file
 
-                                    print('Extracting %s to %s' % (child_file, child_filename))
+                                    logging.info('pdk_compile_reports: Extracting %s to %s.', child_file, child_filename)
 
                                     zip_file.extract(child_file, path=tempfile.gettempdir())
 
+                                    logging.info('pdk_compile_reports: Extracted %s to %s.', child_file, child_filename)
+
                                     print('Extracted %s to %s' % (child_file, child_filename))
 
-                                    zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_DEFLATED)
+                                    zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_BZIP2)
 
-                                    print('Finished writing %s' % child_file)
+                                    logging.info('pdk_compile_reports: Finished writing %s.', child_file)
 
                                     os.remove(child_filename)
 
@@ -327,6 +342,6 @@ class Command(BaseCommand):
 
         if request is not None:
             if options.get('verbosity') > 0:
-                print('Splitting batch request %d.' % request.pk)
+                logging.info('pdk_compile_reports: Splitting batch request %d.', request.pk)
 
             request.process()

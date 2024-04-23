@@ -379,6 +379,15 @@ def pdk_home(request): # pylint: disable=too-many-branches, too-many-statements
     context['groups'] = DataSourceGroup.objects.order_by('name')
     context['solo_sources'] = DataSource.objects.filter(group=None).order_by('name')
 
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    context['excluded_sources'] = excluded_sources
+
     return render(request, 'pdk_home.html', context=context)
 
 
@@ -388,6 +397,16 @@ def pdk_source(request, source_id): # pylint: disable=unused-argument
         return redirect('pdk_source', source_id=source_id.replace('/', ''))
 
     context = {}
+
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    if source_id in excluded_sources:
+        return HttpResponseNotFound()
 
     source = DataSource.objects.filter(identifier=source_id).first()
 
@@ -408,6 +427,16 @@ def pdk_source_generator(request, source_id, generator_id): # pylint: disable=un
         return redirect('pdk_source_generator', source_id=source_id.replace('/', ''), generator_id=generator_id.replace('/', ''))
 
     context = {}
+
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
+    if source_id in excluded_sources:
+        return HttpResponseNotFound()
 
     source = DataSource.objects.filter(identifier=source_id).first()
 
@@ -495,11 +524,19 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
     groups = []
 
+    excluded_sources = []
+
+    try:
+        excluded_sources = settings.PDK_EXCLUDED_SOURCES
+    except AttributeError:
+        pass
+
     for group in DataSourceGroup.objects.all().order_by('name'):
         group_def = (group.name, [], group.pk)
 
         for source in group.sources.all().order_by('name'):
-            group_def[1].append(source)
+            if (source.identifier in excluded_sources) is False:
+                group_def[1].append(source)
 
         if len(group_def[1]) > 0: # pylint: disable=len-as-condition
             groups.append(group_def)
@@ -507,7 +544,8 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
     group_def = ('(Not in group)', [], 0)
 
     for source in DataSource.objects.filter(group=None).order_by('name'):
-        group_def[1].append(source)
+        if (source.identifier in excluded_sources) is False:
+            group_def[1].append(source)
 
     if len(group_def[1]) > 0: # pylint: disable=len-as-condition
         groups.append(group_def)
@@ -577,6 +615,8 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
         export_sources = []
         export_generators = []
 
+        respond_json = False
+
         for source in context['sources']:
             key = 'source_' + source
 
@@ -594,6 +634,17 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
 
             if key in request.POST:
                 export_generators.append(generator[0])
+
+        raw_sources = request.POST.get('sources', None)
+
+        if raw_sources is not None:
+            respond_json = True
+
+            parsed_sources = raw_sources.split(';')
+
+            for source in parsed_sources:
+                if source != '':
+                    export_sources.append(source)
 
         if len(export_sources) == 0: # pylint: disable=len-as-condition
             context['message_type'] = 'error'
@@ -623,6 +674,9 @@ def pdk_export(request): # pylint: disable=too-many-branches, too-many-locals, t
                 context['message'] = 'Export job queued. Check your e-mail for a link to the output when the export is complete.' # pylint: disable=
             else:
                 context['message'] = 'Export jobs queued. Check your e-mail for links to the output when the export is complete.'
+
+        if respond_json:
+            return HttpResponse(json.dumps({'success': True}, indent=2), content_type='application/json', status=200)
 
     return render(request, 'pdk_export.html', context=context)
 
@@ -670,18 +724,14 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     context = None
 
     if request.method == 'GET':
-        if 'id' in request.GET:
-            identifier = request.GET['id']
+        identifier = request.GET.get('id', request.GET.get('identifier', None))
 
-        if 'context' in request.GET:
-            context = request.GET['context']
+        context = request.GET.get('context', None)
 
     if request.method == 'POST':
-        if 'id' in request.POST:
-            identifier = request.POST['id']
+        identifier = request.POST.get('id', request.POST.get('identifier', None))
 
-        if 'context' in request.POST:
-            context = request.POST['context']
+        context = request.POST.get('context', None)
 
     if identifier is None:
         identifier = 'default'
@@ -689,17 +739,43 @@ def pdk_app_config(request): # pylint: disable=too-many-statements, too-many-bra
     if context is None:
         context = 'default'
 
+    try:
+        settings.PDK_UPDATE_APP_CONFIGURATION(DataSource, AppConfiguration, identifier)
+    except AttributeError:
+        pass
+
+    source = DataSource.objects.filter(identifier=identifier).first()
+
+    if source is not None:
+        if source.configuration is not None:
+            response = HttpResponse(json.dumps(source.configuration.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
+
     for config in AppConfiguration.objects.filter(id_pattern=identifier, is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-            return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+            response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+
+            response['Access-Control-Allow-Origin'] = '*'
+
+            return response
 
     for config in AppConfiguration.objects.filter(is_valid=True, is_enabled=True).order_by('evaluate_order'):
         if config.id_pattern == '.*' or re.search(config.id_pattern, identifier) is not None:
             if config.context_pattern == '.*' or re.search(config.context_pattern, context) is not None:
-                return HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
+                response = HttpResponse(json.dumps(config.configuration(), indent=2), content_type='application/json', status=200)
 
-    return HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
-#     raise Http404('Matching configuration not found.')
+                response['Access-Control-Allow-Origin'] = '*'
+
+                return response
+
+    response = HttpResponse(json.dumps({}, indent=2), content_type='application/json', status=200)
+
+    response['Access-Control-Allow-Origin'] = '*'
+
+    return response
 
 @staff_member_required
 def pdk_issues(request):

@@ -56,4 +56,4 @@ target/
 
 Dockerfile
 Procfile
-
+.DS_Store
