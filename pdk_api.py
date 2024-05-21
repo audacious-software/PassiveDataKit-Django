@@ -301,35 +301,35 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-            if parameters.get('prepend_host', False):
-                path = path + settings.ALLOWED_HOSTS[0] + '_'
+                if parameters.get('prepend_host', False):
+                    path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if parameters.get('prepend_date', False):
-                path = path + report.requested.date().isoformat() + '_'
+                if parameters.get('prepend_date', False):
+                    path = path + report.requested.date().isoformat() + '_'
 
-            if parameters.get('prepend_source_range', False):
-                data_sources = report_parameters.get('sources', [])
+                if parameters.get('prepend_source_range', False):
+                    data_sources = report_parameters.get('sources', [])
 
-                if len(data_sources) == 1:
-                    path = path + data_sources[0] + '_'
-                elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
+                    if len(data_sources) == 1:
+                        path = path + data_sources[0] + '_'
+                    elif len(data_sources) >= 2:
+                        path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
-                path = path + os.path.basename(os.path.normpath(report_path))
+                    path = path + os.path.basename(os.path.normpath(report_path))
 
-                for duration in sleep_durations:
-                    time.sleep(duration)
+                    for duration in sleep_durations:
+                        time.sleep(duration)
 
-                    try:
-                        with io.open(report_path, 'rb') as report_file:
-                            client.files_upload(report_file.read(), path)
+                        try:
+                            with io.open(report_path, 'rb') as report_file:
+                                client.files_upload(report_file.read(), path)
 
-                            file_sent = True
-                    except: # pylint: disable=bare-except
-                        if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+                                file_sent = True
+                        except: # pylint: disable=bare-except
+                            if duration == sleep_durations[-1]:
+                                print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
-                            traceback.print_exc()
+                                traceback.print_exc()
 
         except BaseException:
             traceback.print_exc()
