@@ -288,7 +288,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
     except AttributeError:
         pass # Use defaults above.
 
-    if destination.destination == 'dropbox':
+    if destination.destination == 'dropbox': # pylint: disable=too-many-nested-blocks
         try:
             if 'access_token' in parameters:
                 client = dropbox.Dropbox(parameters['access_token'])
