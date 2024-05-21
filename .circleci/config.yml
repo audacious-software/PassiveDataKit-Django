@@ -47,14 +47,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-310-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
@@ -98,14 +98,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-39-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
@@ -149,14 +149,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-38-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
@@ -199,14 +199,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-37-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
@@ -250,14 +250,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-36-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:
@@ -301,14 +301,14 @@ jobs:
             cd pdk
             ls
             pwd
-            cp passive_data_kit/circle_settings.py pdk/settings.py
-            cp passive_data_kit/circle_urls.py pdk/urls.py
+            cp passive_data_kit/.circleci/circle_settings.py pdk/settings.py
+            cp passive_data_kit/.circleci/circle_urls.py pdk/urls.py
             python manage.py migrate
             python manage.py pdk_generate_backup_key
             python manage.py test
             cp passive_data_kit/.pylintrc .
             pylint passive_data_kit
-            bandit -r .      
+            bandit -r .
       - save_cache:
           key: venv-27-{{ .Branch }}-{{ checksum "/home/circleci/django/pdk/passive_data_kit/requirements.txt" }}-deps
           paths:

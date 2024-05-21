@@ -54,6 +54,28 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
 
             secondary_filename = tempfile.gettempdir() + os.path.sep + identifier + '.txt'
 
+            source_reference = DataSourceReference.reference_for_source(source)
+            generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
+
+            points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
+
+            if data_start is not None:
+                if date_type == 'recorded':
+                    points = points.filter(recorded__gte=data_start)
+                else:
+                    points = points.filter(created__gte=data_start)
+
+            if data_end is not None:
+                if date_type == 'recorded':
+                    points = points.filter(recorded__lte=data_end)
+                else:
+                    points = points.filter(created__lte=data_end)
+
+            points = points.order_by('source', 'created')
+
+            if points.count() == 0:
+                continue
+
             with io.open(secondary_filename, 'w', encoding='utf-8') as outfile:
                 writer = csv.writer(outfile, delimiter='\t')
 
@@ -66,28 +88,10 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     'Package',
                     'Channel',
                     'Action',
+                    'Reason',
                 ]
 
                 writer.writerow(columns)
-
-                source_reference = DataSourceReference.reference_for_source(source)
-                generator_definition = DataGeneratorDefinition.definition_for_identifier(generator)
-
-                points = DataPoint.objects.filter(source_reference=source_reference, generator_definition=generator_definition)
-
-                if data_start is not None:
-                    if date_type == 'recorded':
-                        points = points.filter(recorded__gte=data_start)
-                    else:
-                        points = points.filter(created__gte=data_start)
-
-                if data_end is not None:
-                    if date_type == 'recorded':
-                        points = points.filter(recorded__lte=data_end)
-                    else:
-                        points = points.filter(created__lte=data_end)
-
-                points = points.order_by('source', 'created')
 
                 for point in points:
                     properties = point.fetch_properties()
@@ -107,6 +111,7 @@ def compile_report(generator, sources, data_start=None, data_end=None, date_type
                     row.append(properties.get('package', ''))
                     row.append(properties.get('channel', ''))
                     row.append(properties.get('action', ''))
+                    row.append(properties.get('reason', ''))
 
                     writer.writerow(row)
 
