@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-DEBUG = False
+DEBUG = True
 ADMINS = [(os.getenv('DJANGO_ADMIN_NAME'), os.getenv('DJANGO_ADMIN_EMAIL'))]
 
 ALLOWED_HOSTS = ['*']
@@ -41,7 +41,7 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
 )
 
-ROOT_URLCONF = 'pdk.urls'
+ROOT_URLCONF = 'live_site.urls'
 
 TEMPLATES = [
     {
@@ -59,7 +59,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'pdk.wsgi.application'
+WSGI_APPLICATION = 'live_site.wsgi.application'
 
 DATABASES = {
     'default': {

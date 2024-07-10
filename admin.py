@@ -1,12 +1,17 @@
-# pylint: disable=no-member, line-too-long
+# pylint: disable=no-member, line-too-long, wrong-import-position
 
 import datetime
+import sys
 
 from prettyjson import PrettyJSONWidget
 
 from django.contrib.admin import SimpleListFilter
 from django.contrib.gis import admin
-from django.contrib.postgres.fields import JSONField
+
+if sys.version_info[0] > 2:
+    from django.db.models import JSONField # pylint: disable=no-name-in-module
+else:
+    from django.contrib.postgres.fields import JSONField
 
 from .models import DataPoint, DataBundle, DataSource, DataSourceGroup, \
                     DataPointVisualization, ReportJob, DataSourceAlert, \
@@ -120,7 +125,7 @@ class DataPointAdmin(admin.OSMGeoAdmin):
 @admin.register(DataBundle)
 class DataBundleAdmin(admin.OSMGeoAdmin):
     formfield_overrides = {
-        JSONField: {'widget': PrettyJSONWidget}
+        JSONField: {'widget': PrettyJSONWidget(attrs={'initial': 'parsed'})}
     }
 
     list_display = ('recorded', 'processed', 'errored', 'compression',)

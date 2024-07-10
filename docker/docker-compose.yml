@@ -1,15 +1,15 @@
 services:
   db:
-    image: mdillon/postgis:11
+    image: postgis/postgis:13-3.4
     hostname: db
     volumes:
-      - ./volumes/postgres_db:/var/lib/postgresql/data
+      - ./volumes/db_volume:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${PG_DB}
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: "pg_isready -U ${PG_USER} -d ${PG_DB}"
       interval: 1s
       timeout: 5s
       retries: 10
@@ -21,10 +21,14 @@ services:
     env_file: .env
     command: bash /app/run.sh
     volumes:
-      - ./volumes/webapp_media:/media
-      - ./volumes/webapp_static:/static
+      - type: bind
+        source: ${DJANGO_MEDIA_FILES}
+        target: /media
+      - type: bind
+        source: ${DJANGO_STATIC_FILES}
+        target: /static
     ports:
-      - "$WEB_PORT:$WEB_PORT"
+      - "${WEB_PORT}:${WEB_PORT}"
     depends_on:
       db:
         condition: service_healthy

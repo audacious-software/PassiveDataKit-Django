@@ -54,8 +54,6 @@ docs/_build/
 # PyBuilder
 target/
 
-Dockerfile
-Procfile
 .DS_Store
 
 docker/volumes

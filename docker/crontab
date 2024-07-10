@@ -1,0 +1,7 @@
+* * * * *     . /app/venv/bin/activate && python3 /app/live_site/manage.py pdk_process_bundles
+0 3 * * *     . /app/venv/bin/activate && python3 /var/www/myproject/manage.py pdk_clear_processed_bundles
+*/15 * * * *  . /app/venv/bin/activate && python3 /var/www/myproject/manage.py pdk_update_server_health
+* * * * *     . /app/venv/bin/activate && python3 /app/live_site/manage.py pdk_compile_reports
+*/5 * * * *   . /app/venv/bin/activate && python3 /app/live_site/manage.py pdk_update_performance_metadata
+*/5 * * * *   . /app/venv/bin/activate && python3 /app/live_site/manage.py pdk_compile_visualizations
+*/5 * * * *   . /app/venv/bin/activate && python3 /app/live_site/manage.py pdk_run_status_checks

@@ -26,4 +26,3 @@ class Command(BaseCommand):
         removed = DataBundle.objects.filter(processed=True, recorded__lte=oldest).delete()
 
         logging.info("Removed %d unprocessed payloads.", removed)
-        
