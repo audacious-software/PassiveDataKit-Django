@@ -1,0 +1,30 @@
+services:
+  db:
+    image: mdillon/postgis:11
+    hostname: db
+    volumes:
+      - ./volumes/postgres_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${PG_DB}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file: .env
+    command: bash /app/run.sh
+    volumes:
+      - ./volumes/webapp_media:/media
+      - ./volumes/webapp_static:/static
+    ports:
+      - "$WEB_PORT:$WEB_PORT"
+    depends_on:
+      db:
+        condition: service_healthy
