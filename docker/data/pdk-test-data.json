@@ -8,7 +8,7 @@
         "properties": [
           {
             "observed": 1717308394702,
-            "message": "If you see this data point in the data points folder, your Docker setup was a success.",
+            "message": "If you see this data point in the data points table, your Docker setup was a success.",
             "passive-data-metadata": {
               "source": "docker",
               "timezone": "America/Chicago",
