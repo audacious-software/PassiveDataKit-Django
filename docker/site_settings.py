@@ -100,3 +100,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = '/media'
 
 SILENCED_SYSTEM_CHECKS = ['fields.W904']
+
+PDK_DASHBOARD_ENABLED = True
