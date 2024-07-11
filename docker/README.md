@@ -49,8 +49,11 @@ If you see a `pdk-docker-test` data point in the table, the background processin
 * You can speed up the web container launch by commenting out the following lines:
 
     ```python3 manage.py test```
+
     ```python3 manage.py check```
+
     ```pylint passive_data_kit```
+
     ```bandit -r .```
 
   These are code-correctness checks to verify that the Docker container is running properly and the Passive Data Kit server is fully functional.
