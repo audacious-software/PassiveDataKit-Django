@@ -44,7 +44,7 @@ If you see a `pdk-docker-test` data point in the table, the background processin
 
 ## Notes
 
-* If you have trouble connecting to the local web server, try using a different browser first. Many browsers silently and automaticaly will rewrite HTTP URLs into HTTPS URLs, which can interfere with testing.
+* If you have trouble connecting to the local web server, try using a different browser first. Many browsers silently and automatically will rewrite HTTP URLs into HTTPS URLs, which can interfere with testing.
 
 * You can speed up the web container launch by commenting out the following lines:
 
