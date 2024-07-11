@@ -1,27 +1,27 @@
 [
-    {
-      "model": "passive_data_kit.databundle",
-      "pk": 1,
-      "fields": {
-        "recorded": "2000-01-01T00:00:00Z",
-        "errored": null,
-        "properties": [
-          {
-            "observed": 1717308394702,
-            "message": "If you see this data point in the data points table, your Docker setup was a success.",
-            "passive-data-metadata": {
-              "source": "docker",
-              "timezone": "America/Chicago",
-              "generator": "pdk-docker-test: Passive Data Kit/1.0",
-              "timestamp": 1717308695,
-              "generator-id": "pdk-docker-test",
-              "timezone-offset": 18000
-            }
+  {
+    "model": "passive_data_kit.databundle",
+    "pk": 1,
+    "fields": {
+      "recorded": "2000-01-01T00:00:00Z",
+      "errored": null,
+      "properties": [
+        {
+          "observed": 1717308394702,
+          "message": "If you see this data point in the data points table, your Docker setup was a success.",
+          "passive-data-metadata": {
+            "source": "docker",
+            "timezone": "America/Chicago",
+            "generator": "pdk-docker-test: Passive Data Kit/1.0",
+            "timestamp": 1717308695,
+            "generator-id": "pdk-docker-test",
+            "timezone-offset": 18000
           }
-        ],
-        "processed": false,
-        "encrypted": false,
-        "compression": "none"
-      }
+        }
+      ],
+      "processed": false,
+      "encrypted": false,
+      "compression": "none"
     }
-  ]
+  }
+]
