@@ -43,7 +43,7 @@ dropbox==12.0.2
 future==1.0.0
 humanize==1.0.0; python_version < '3.0'
 humanize==3.14.0; python_version == '3.6'
-humanize==4.6.0; python_version == '3.7'
+humanize==4.10.0; python_version == '3.7'
 humanize==4.10.0; python_version >= '3.8'
 lockfile==0.12.2
 lxml==5.0.1; python_version < '3.0'
