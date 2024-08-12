@@ -23,7 +23,7 @@ caniusepython3==7.3.0
 certifi==2021.10.8; python_version < '3.0'
 certifi==2024.7.4; python_version >= '3.0'
 cffi==1.15.1; python_version < '3.8'
-cffi==1.16.0; python_version >= '3.8'
+cffi==1.17.0; python_version >= '3.8'
 chardet==4.0.0; python_version < '3.0'
 chardet==5.0.0; python_version >= '3.0' and python_version < '3.7'
 chardet==5.2.0; python_version >= '3.7'
