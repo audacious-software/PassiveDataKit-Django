@@ -94,11 +94,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/static'
+STATIC_ROOT = '/app/static/'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/media'
+MEDIA_ROOT = '/app/media'
 
 SILENCED_SYSTEM_CHECKS = ['fields.W904']
 
 PDK_DASHBOARD_ENABLED = True
+
+PDK_ENABLED_CHECKS = []
