@@ -12,9 +12,11 @@ RUN touch /var/log/cron.log
 # Install Ubuntu packages
 
 RUN apt-get update
-RUN apt-get install -y apt-utils curl git build-essential python3-dev python3-venv libldap2-dev libsasl2-dev slapd ldap-utils cron gdal-bin
+RUN apt-get install -y apt-utils curl git build-essential python3-dev python3-venv libldap2-dev libsasl2-dev slapd ldap-utils cron gdal-bin ssmtp mailutils moreutils
 
 WORKDIR /app
+
+# Set up local application environment
 
 RUN python3 -m venv /app/venv
 RUN . /app/venv/bin/activate && pip install -U wheel pip
@@ -36,5 +38,6 @@ RUN mv /etc/environment /etc/environment.old
 ADD ./docker/.env /etc/environment
 RUN cat /etc/environment.old >> /etc/environment
 
-# Run the command on container startup
-CMD cron && tail -f /var/log/cron.log
+# Setup SSMTP
+
+ADD ./docker/cron/run.sh /app/run.sh
