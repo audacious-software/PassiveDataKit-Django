@@ -54,37 +54,41 @@ class Command(BaseCommand):
             data['point_snapshots'] = []
 
         # point_count = DataPoint.objects.all().count()
-        point_count = DataPoint.objects.all().order_by('-pk').first().pk
 
-        if ('last_point_count' in data) is False:
+        last_point = DataPoint.objects.all().order_by('-pk').first()
+
+        if last_point is not None:
+            point_count = last_point.pk
+
+            if ('last_point_count' in data) is False:
+                data['last_point_count'] = point_count
+
+            data['point_snapshots'].append({
+                'time': calendar.timegm(now.utctimetuple()),
+                'added': point_count - data['last_point_count']
+            })
+
             data['last_point_count'] = point_count
 
-        data['point_snapshots'].append({
-            'time': calendar.timegm(now.utctimetuple()),
-            'added': point_count - data['last_point_count']
-        })
+            start_ts = calendar.timegm(start.utctimetuple())
 
-        data['last_point_count'] = point_count
+            to_delete = []
 
-        start_ts = calendar.timegm(start.utctimetuple())
+            for bundle in data['bundle_snapshots']:
+                if bundle['time'] < start_ts:
+                    to_delete.append(bundle)
 
-        to_delete = []
+            for bundle in to_delete:
+                data['bundle_snapshots'].remove(bundle)
 
-        for bundle in data['bundle_snapshots']:
-            if bundle['time'] < start_ts:
-                to_delete.append(bundle)
+            to_delete = []
 
-        for bundle in to_delete:
-            data['bundle_snapshots'].remove(bundle)
+            for point in data['point_snapshots']:
+                if point['time'] < start_ts:
+                    to_delete.append(point)
 
-        to_delete = []
+            for point in to_delete:
+                data['point_snapshots'].remove(point)
 
-        for point in data['point_snapshots']:
-            if point['time'] < start_ts:
-                to_delete.append(point)
-
-        for point in to_delete:
-            data['point_snapshots'].remove(point)
-
-        datum.value = json.dumps(data, indent=2)
-        datum.save()
+            datum.value = json.dumps(data, indent=2)
+            datum.save()

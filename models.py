@@ -387,7 +387,7 @@ class DataPointManager(models.Manager):
             latest_point_datum.value = str(new_point.pk)
             latest_point_datum.save()
 
-    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None, skip_save=False, skip_extract_secondary_identifier=False): # pylint: disable=no-self-use, too-many-arguments, invalid-name
+    def create_data_point(self, identifier, source, payload, user_agent='Passive Data Kit Server', created=None, skip_save=False, skip_extract_secondary_identifier=False): # pylint: disable=no-self-use, too-many-arguments, invalid-name, too-many-positional-arguments
         now = timezone.now()
 
         if created is None:
@@ -1228,7 +1228,7 @@ class DataPointVisualization(models.Model):
 
 
 class ReportJobManager(models.Manager): # pylint: disable=too-few-public-methods
-    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments
+    def create_jobs(self, user, sources, generators, export_raw=False, data_start=None, data_end=None, date_type='created'): # pylint: disable=too-many-locals, too-many-branches, too-many-statements, no-self-use, too-many-arguments, too-many-positional-arguments
         batch_request = ReportJobBatchRequest(requester=user, requested=timezone.now())
 
         params = {}

@@ -27,7 +27,8 @@ class Command(BaseCommand):
     @handle_lock
     @log_scheduled_event
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches
-        push_service = FCMNotification(api_key=settings.PDK_FIREBASE_API_KEY)
+        # push_service = FCMNotification(api_key=settings.PDK_FIREBASE_API_KEY)
+        push_service = FCMNotification(service_account_file=settings.PDK_FIREBASE_JSON_PATH, project_id=settings.PDK_FIREBASE_PROJECT_ID)
 
         event_definition = DataGeneratorDefinition.definition_for_identifier('pdk-app-event')
 
