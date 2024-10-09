@@ -169,7 +169,7 @@ class Command(BaseCommand):
                         to_record = []
 
                         for bundle_point in bundle.properties: # pylint: disable=too-many-nested-blocks
-                            logging.debug('POINT: %s', json.dumps(bundle_point, indent=2))
+                            # logging.debug('POINT: %s', json.dumps(bundle_point, indent=2))
 
                             if bundle_point is not None:
                                 point_json = json.dumps(bundle_point)
@@ -355,7 +355,15 @@ class Command(BaseCommand):
                             to_delete.append(bundle)
 
                 except TransactionManagementError:
-                    print('Abandoning and marking errored ' + str(bundle.pk) + '.')
+                    print('[TransactionManagementError] Abandoning and marking errored ' + str(bundle.pk) + '.')
+
+                    bundle = DataBundle.objects.get(pk=bundle.pk)
+
+                    bundle.errored = timezone.now()
+                    bundle.save()
+
+                except TypeError:
+                    print('[TypeError] Abandoning and marking errored ' + str(bundle.pk) + '.')
 
                     bundle = DataBundle.objects.get(pk=bundle.pk)
 
