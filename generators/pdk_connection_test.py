@@ -28,61 +28,6 @@ from ..models import DataPoint, DataSourceReference, DataGeneratorDefinition
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Device Connection Test'
 
-def visualization(source, generator): # pylint: disable=unused-argument
-    context = {}
-
-    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'battery-level.json'
-
-    with io.open(filename, encoding='utf-8') as infile:
-        context['data'] = json.load(infile)
-
-    filename = settings.MEDIA_ROOT + os.path.sep + 'pdk_visualizations' + os.path.sep + source.identifier + os.path.sep + 'pdk-device-battery' + os.path.sep + 'timestamp-counts.json'
-
-    try:
-        with io.open(filename, encoding='utf-8') as infile:
-            hz_data = json.load(infile)
-
-            context['hz_data'] = hz_data
-    except IOError:
-        context['hz_data'] = {}
-
-    return render_to_string('generators/pdk_device_battery_template.html', context)
-
-def compile_visualization(identifier, points, folder, source=None): # pylint: disable=unused-argument
-    context = {}
-
-    values = []
-
-    latest = points.order_by('-created').first()
-
-    now = latest.created.replace(second=0, microsecond=0)
-
-    remainder = 10 - (now.minute % 10)
-
-    now = now.replace(minute=((now.minute + remainder) % 60))
-
-    start = now - datetime.timedelta(days=7)
-
-    for point in points.filter(created__gte=start).order_by('created'):
-        properties = point.fetch_properties()
-
-        value = {}
-
-        value['ts'] = properties['passive-data-metadata']['timestamp']
-        value['value'] = properties['level']
-
-        values.append(value)
-
-    context['values'] = values
-
-    context['start'] = calendar.timegm(start.timetuple())
-    context['end'] = calendar.timegm(now.timetuple())
-
-    with io.open(folder + os.path.sep + 'battery-level.json', 'w', encoding='utf8') as outfile:
-        json.dump(context, outfile, indent=2)
-
-    compile_frequency_visualization(identifier, points, folder)
-
 def compile_frequency_visualization(identifier, points, folder): # pylint: disable=unused-argument
     latest = points.order_by('-created').first()
 
