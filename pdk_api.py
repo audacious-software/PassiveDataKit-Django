@@ -288,7 +288,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
     except AttributeError:
         pass # Use defaults above.
 
-    if destination.destination == 'dropbox':
+    if destination.destination == 'dropbox': # pylint: disable=too-many-nested-blocks
         try:
             if 'access_token' in parameters:
                 client = dropbox.Dropbox(parameters['access_token'])
@@ -301,35 +301,35 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     if path[-1] != '/':
                         path = path + '/'
 
-            if parameters.get('prepend_host', False):
-                path = path + settings.ALLOWED_HOSTS[0] + '_'
+                if parameters.get('prepend_host', False):
+                    path = path + settings.ALLOWED_HOSTS[0] + '_'
 
-            if parameters.get('prepend_date', False):
-                path = path + report.requested.date().isoformat() + '_'
+                if parameters.get('prepend_date', False):
+                    path = path + report.requested.date().isoformat() + '_'
 
-            if parameters.get('prepend_source_range', False):
-                data_sources = report_parameters.get('sources', [])
+                if parameters.get('prepend_source_range', False):
+                    data_sources = report_parameters.get('sources', [])
 
-                if len(data_sources) == 1:
-                    path = path + data_sources[0] + '_'
-                elif len(data_sources) >= 2:
-                    path = path + data_sources[0] + '-' + data_sources[-1] + '_'
+                    if len(data_sources) == 1:
+                        path = path + data_sources[0] + '_'
+                    elif len(data_sources) >= 2:
+                        path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
-                path = path + os.path.basename(os.path.normpath(report_path))
+                    path = path + os.path.basename(os.path.normpath(report_path))
 
-                for duration in sleep_durations:
-                    time.sleep(duration)
+                    for duration in sleep_durations:
+                        time.sleep(duration)
 
-                    try:
-                        with io.open(report_path, 'rb') as report_file:
-                            client.files_upload(report_file.read(), path)
+                        try:
+                            with io.open(report_path, 'rb') as report_file:
+                                client.files_upload(report_file.read(), path)
 
-                            file_sent = True
-                    except: # pylint: disable=bare-except
-                        if duration == sleep_durations[-1]:
-                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+                                file_sent = True
+                        except: # pylint: disable=bare-except
+                            if duration == sleep_durations[-1]:
+                                print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
 
-                            traceback.print_exc()
+                                traceback.print_exc()
 
         except BaseException:
             traceback.print_exc()
@@ -376,7 +376,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                             pass
 
                         if trust_host_keys:
-                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # lgtm[py/paramiko-missing-host-key-validation]
+                            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
 
                         ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
 
@@ -477,6 +477,135 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
 
     if file_sent is False:
         print('Unable to transmit report to destination "' + destination.destination + '".')
+
+def upload_file_contents(destination, file_path, contents): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    file_sent = False
+
+    parameters = destination.fetch_parameters()
+
+    if destination.destination == 'dropbox':
+        try:
+            if 'access_token' in parameters:
+                client = dropbox.Dropbox(parameters['access_token'])
+
+                path = '/'
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                path = path + os.path.normpath(file_path)
+
+                try:
+                    client.files_upload(contents, file_path)
+
+                    file_sent = True
+                except: # pylint: disable=bare-except
+                    print('Unable to upload - error encountered.')
+
+                    traceback.print_exc()
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 'sftp': # pylint: disable=too-many-nested-blocks
+        try:
+            if ('username' in parameters) and ('host' in parameters) and ('key' in parameters):
+                path = ''
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                path = path + os.path.normpath(file_path)
+
+                try:
+                    key = paramiko.RSAKey.from_private_key(io.StringIO(parameters['key']))
+
+                    ssh_client = paramiko.SSHClient()
+
+                    trust_host_keys = True
+
+                    try:
+                        trust_host_keys = settings.PDK_API_TRUST_HOST_KEYS
+                    except AttributeError:
+                        pass
+
+                    if trust_host_keys:
+                        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy()) # nosec
+
+                    ssh_client.connect(hostname=parameters['host'], username=parameters['username'], pkey=key)
+
+                    ftp_client = ssh_client.open_sftp()
+
+                    with io.BytesIO(contents) as content_bytes:
+                        ftp_client.putfo(content_bytes, path)
+
+                    ftp_client.close()
+
+                    file_sent = True
+                except: # pylint: disable=bare-except
+                    print('Unable to upload - error encountered.')
+
+                    traceback.print_exc()
+
+        except BaseException:
+            traceback.print_exc()
+
+    elif destination.destination == 'local':
+        try:
+            path = ''
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+                if path[-1] != '/':
+                    path = path + '/'
+
+            path = path + os.path.normpath(file_path)
+
+            with open(path, 'wb') as export_file:
+                export_file.write(contents)
+
+            file_sent = True
+
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 's3':
+        try:
+            aws_config = Config(
+                region_name=parameters['region'],
+                retries={'max_attempts': 10, 'mode': 'standard'}
+            )
+
+            os.environ['AWS_ACCESS_KEY_ID'] = parameters['access_key_id']
+            os.environ['AWS_SECRET_ACCESS_KEY'] = parameters['secret_access_key']
+
+            client = boto3.client('s3', config=aws_config)
+
+            s3_bucket = parameters['bucket']
+
+            path = ''
+
+            if 'path' in parameters:
+                path = parameters['path']
+
+                if path[-1] != '/':
+                    path = path + '/'
+
+            path = path + os.path.normpath(file_path)
+
+            client.put_object(Body=contents, Bucket=s3_bucket, Key=path)
+
+            file_sent = True
+        except: # pylint: disable=bare-except
+            traceback.print_exc()
+
+    if file_sent is False:
+        print('Unable to transmit report to destination "' + destination.destination + '".')
+
 
 def annotate_source_definition(source, definition):
     active_alerts = []

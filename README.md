@@ -103,7 +103,7 @@ To start setting up your CRON jobs, log into the server using a local account th
 
 Launch the interactive CRON editor by running `crontab -e`.
 
-Before you start defining job schedules, set up the shell to be used and the e-mail address to be notified if a job fails for some reason (also be sure that your server has been configured to send e-mails from the command line):
+Before you start defining job schedules, set up the shell to be used and the e-mail address to be notified if a job fails for some reason (first be sure that your server has been configured to send e-mails from the command line, which may be facilitated by an email API service such as [mailgun](https://mailgun.com)):
 
 ```
 MAILTO=me@example.com
@@ -189,22 +189,6 @@ By default, PDK provides a number of reports for standard PDK data types (e.g. `
 `*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
 
 *(Description coming soon)*
-
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
-
-*(Description coming soon)*
-
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
-
-*(Description coming soon)*
-
-### pdk_update_performance_metadata
-
-`*/5 * * * *    source /var/www/venv/bin/activate && python /var/www/myproject/manage.py pdk_update_performance_metadata`
 
 *(Description coming soon)*
 
