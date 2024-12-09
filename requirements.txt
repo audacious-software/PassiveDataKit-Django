@@ -89,7 +89,7 @@ requests-oauthlib==2.0.0; python_version >= '3.0'
 requests-toolbelt==1.0.0
 rsa==4.9; python_version >= '3.0'
 rsa==4.0; python_version < '3.0'
-six==1.16.0
+six==1.17.0
 standardjson==0.3.1
 stone==3.3.1; python_version < '3.0'
 XlsxWriter==2.0.0; python_version < '3.4'
