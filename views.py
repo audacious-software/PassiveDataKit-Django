@@ -844,7 +844,7 @@ def pdk_issues_json(request): # pylint: disable=too-many-statements
             issue_obj = {}
 
             issue_obj['source'] = issue.device.source.identifier
-            issue_obj['model'] = issue.device.model.__unicode__()
+            issue_obj['model'] = str(issue.device.model)
             issue_obj['state'] = issue.state
             issue_obj['created'] = issue.created.isoformat()
 
