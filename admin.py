@@ -175,6 +175,10 @@ reset_report_jobs.description = 'Reset report jobs'
 
 @admin.register(ReportJob)
 class ReportJobAdmin(admin.OSMGeoAdmin):
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget(attrs={'initial': 'parsed'})}
+    }
+
     list_display = (
         'requester',
         'requested',
@@ -193,6 +197,10 @@ class ReportJobAdmin(admin.OSMGeoAdmin):
 
 @admin.register(ReportJobBatchRequest)
 class ReportJobBatchRequestAdmin(admin.OSMGeoAdmin):
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidget(attrs={'initial': 'parsed'})}
+    }
+
     list_display = ('requester', 'requested', 'priority', 'started', 'completed')
     list_filter = ('requested', 'started', 'completed', 'priority', 'requester')
 

@@ -27,6 +27,11 @@ import paramiko
 
 from botocore.config import Config
 
+from google.oauth2 import service_account
+
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
 from django.conf import settings
 from django.core import management
 from django.db.models import Q
@@ -73,7 +78,6 @@ def filter_structure(pattern, structure, prefix=''):
     else:
         pass # Nothing to do for other variable types
 
-
 def filter_sensitive_fields(point, point_properties, parameters):
     if hasattr(settings, 'PDK_SENSITIVE_FIELDS') and 'filter_sensitive' in parameters and parameters['filter_sensitive'] is not False:
         if point.generator_identifier in settings.PDK_SENSITIVE_FIELDS:
@@ -83,8 +87,6 @@ def filter_sensitive_fields(point, point_properties, parameters):
                 filter_structure(re.compile(sensitive_field), point_properties)
 
     return point_properties
-
-
 
 def visualization(source, generator):
     try:
@@ -288,7 +290,75 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
     except AttributeError:
         pass # Use defaults above.
 
-    if destination.destination == 'dropbox': # pylint: disable=too-many-nested-blocks
+    if destination.destination == 'google_drive': # pylint: disable=too-many-nested-blocks
+        try:
+            with open(parameters.get('credentials', None), 'rb') as json_file:
+                json_credentials = json.load(json_file)
+
+                credentials = service_account.Credentials.from_service_account_info(json_credentials)
+
+                service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
+
+                path = ''
+
+                if 'path' in parameters:
+                    path = parameters['path']
+
+                    if path[-1] != '/':
+                        path = path + '/'
+
+                if parameters.get('prepend_host', False):
+                    path = path + settings.ALLOWED_HOSTS[0] + '_'
+
+                if parameters.get('prepend_date', False):
+                    path = path + report.requested.date().isoformat() + '_'
+
+                if parameters.get('prepend_source_range', False):
+                    data_sources = report_parameters.get('sources', [])
+
+                    if len(data_sources) == 1:
+                        path = path + data_sources[0] + '_'
+                    elif len(data_sources) >= 2:
+                        path = path + data_sources[0] + '-' + data_sources[-1] + '_'
+
+                filename = os.path.basename(os.path.normpath(report_path))
+
+                path = path + os.path.basename(os.path.normpath(report_path))
+
+                file_metadata = {
+                    'name': filename,
+                    'parents': [parameters.get('folder', None)]
+                }
+
+                print('PATH: %s' % path)
+                print('report_path: %s' % report_path)
+                print('MD: %s' % json.dumps(file_metadata, indent=2))
+
+                for duration in sleep_durations:
+                    time.sleep(duration)
+
+                    try:
+                        media = MediaFileUpload(report_path, resumable=True)
+
+                        result = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+
+                        print('RESULT: %s' % result)
+
+                        file_sent = True
+                    except: # pylint: disable=bare-except
+                        traceback.print_exc()
+
+                        if duration == sleep_durations[-1]:
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+
+                            traceback.print_exc()
+
+                    if file_sent:
+                        break
+
+        except BaseException:
+            traceback.print_exc()
+    elif destination.destination == 'dropbox': # pylint: disable=too-many-nested-blocks
         try:
             if 'access_token' in parameters:
                 client = dropbox.Dropbox(parameters['access_token'])
@@ -315,21 +385,26 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
                     elif len(data_sources) >= 2:
                         path = path + data_sources[0] + '-' + data_sources[-1] + '_'
 
-                    path = path + os.path.basename(os.path.normpath(report_path))
+                path = path + os.path.basename(os.path.normpath(report_path))
 
-                    for duration in sleep_durations:
-                        time.sleep(duration)
+                for duration in sleep_durations:
+                    time.sleep(duration)
 
-                        try:
-                            with io.open(report_path, 'rb') as report_file:
-                                client.files_upload(report_file.read(), path)
+                    try:
+                        with io.open(report_path, 'rb') as report_file:
+                            client.files_upload(report_file.read(), path)
 
-                                file_sent = True
-                        except: # pylint: disable=bare-except
-                            if duration == sleep_durations[-1]:
-                                print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+                            file_sent = True
+                    except: # pylint: disable=bare-except
+                        traceback.print_exc()
 
-                                traceback.print_exc()
+                        if duration == sleep_durations[-1]:
+                            print('Unable to upload - error encountered. (Latest sleep = ' + str(duration) + ' seconds.)')
+
+                            traceback.print_exc()
+
+                    if file_sent:
+                        break
 
         except BaseException:
             traceback.print_exc()
@@ -476,7 +551,7 @@ def send_to_destination(destination, report, report_path): # pylint: disable=too
             traceback.print_exc()
 
     if file_sent is False:
-        print('Unable to transmit report to destination "' + destination.destination + '".')
+        print('[1] Unable to transmit report to destination "' + destination.destination + '".')
 
 def upload_file_contents(destination, file_path, contents): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     file_sent = False
@@ -604,7 +679,7 @@ def upload_file_contents(destination, file_path, contents): # pylint: disable=to
             traceback.print_exc()
 
     if file_sent is False:
-        print('Unable to transmit report to destination "' + destination.destination + '".')
+        print('[2]  "' + destination.destination + '".')
 
 
 def annotate_source_definition(source, definition):
