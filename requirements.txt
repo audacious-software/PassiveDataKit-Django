@@ -69,7 +69,7 @@ oauthlib==3.2.2; python_version >= '3.0'
 paramiko==2.12.0; python_version < '3.0'
 paramiko==3.5.1; python_version >= '3.0'
 pbr==6.1.1
-psutil==6.1.1
+psutil==7.0.0
 psycopg2-binary==2.8.6; python_version < '3.0'
 psycopg2-binary==2.9.8; python_version >= '3.0' and python_version < '3.7'
 psycopg2-binary==2.9.9; python_version == '3.7'
