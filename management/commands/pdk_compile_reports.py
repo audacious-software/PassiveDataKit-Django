@@ -237,7 +237,7 @@ class Command(BaseCommand):
                                                         export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
                                             except TypeError as exception:
                                                 traceback.print_exc()
-                                                logging.warn('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
+                                                logging.warning('Verify that %s.%s implements all compile_report arguments!', app, generator)
                                                 raise exception
                                         except ImportError:
                                             output_file = None
