@@ -237,7 +237,7 @@ class Command(BaseCommand):
                                                         export_stream.write(output_file, name, compress_type=zipfile.ZIP_DEFLATED)
                                             except TypeError as exception:
                                                 traceback.print_exc()
-                                                print('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
+                                                logging.warn('Verify that ' + app + '.' + generator + ' implements all compile_report arguments!')
                                                 raise exception
                                         except ImportError:
                                             output_file = None
@@ -259,8 +259,6 @@ class Command(BaseCommand):
                                     zip_file.extract(child_file, path=tempfile.gettempdir())
 
                                     logging.info('pdk_compile_reports: Extracted %s to %s.', child_file, child_filename)
-
-                                    print('Extracted %s to %s' % (child_file, child_filename))
 
                                     zip_output.write(child_filename, child_file, compress_type=zipfile.ZIP_BZIP2)
 
