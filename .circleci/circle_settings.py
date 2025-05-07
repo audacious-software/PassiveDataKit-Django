@@ -13,7 +13,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'foobar' # nosec
 
 DEBUG = False
-ADMINS = [('Chris Karr', 'chris@audacious-software.com')]
+ADMINS = [('PDK Admin', 'pdk-admin@bric.digital')]
 
 ALLOWED_HOSTS = []
 
