@@ -6,4 +6,4 @@ This project is still under active development and security fixes are applied to
 
 ## Reporting a Vulnerability
 
-To report a vulnerability in this project, e-mail [chris@audacious-software.com](mailto:chris@audacious-software.com).
+To report a vulnerability in this project, e-mail [chris@bric.digital](mailto:chris@bric.digital).
