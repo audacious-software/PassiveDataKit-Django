@@ -1,6 +1,6 @@
 # Passive Data Kit: Django Server App
 
-[![CircleCI](https://circleci.com/gh/audacious-software/PassiveDataKit-Django.svg?style=svg)](https://circleci.com/gh/audacious-software/PassiveDataKit-Django)
+[![CircleCI](https://circleci.com/gh/bric-digital/PassiveDataKit-Django.svg?style=svg)](https://circleci.com/gh/bric-digital/PassiveDataKit-Django)
 
 
 ## About Passive Data Kit
