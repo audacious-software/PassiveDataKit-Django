@@ -11,7 +11,7 @@ It is functionally a time-series database, where entries consist of hetergeneous
 
 PDK is designed to provide reliable data collection in environments where reliable Internet connectivity cannot be taken for granted. PDK clients implement a "store and forward" architecture where *data generators* (PDK elements engaged directly in data collection) forward the data points that they emit to a local *data transmitter*, which typically includes a local database to gather data points to be tranmitted. Periodically, data transmitters will assemble *data bundles*, consisting of data points that have not yet been transmitted, and send those data points to a PDK server online, which functions as the central data aggregation hub for all of the remote PDK clients configured to transmit data points to that PDK server for further analysis and processing.
 
-This repository contains the relevant core software for standing up a PDK server using the Django framework. Other repositories contain the various client implementations (e.g. [Android](https://github.com/audacious-software/PassiveDataKit-Android), [iOS](https://github.com/audacious-software/PassiveDataKit-iOS)) and add-on packages (e.g. [External Data](https://github.com/audacious-software/Passive-Data-Kit-External-Data), [Codebook](https://github.com/audacious-software/Passive-Data-Kit-Codebook)).
+This repository contains the relevant core software for standing up a PDK server using the Django framework. Other repositories contain the various client implementations (e.g. [Android](https://github.com/bric-digital/PassiveDataKit-Android), [iOS](https://github.com/bric-digital/PassiveDataKit-iOS)) and add-on packages (e.g. [External Data](https://github.com/bric-digital/Passive-Data-Kit-External-Data), [Codebook](https://github.com/bric-digital/Passive-Data-Kit-Codebook)).
 
 
 ## Prerequisites
@@ -41,7 +41,7 @@ If you are operating in an environment that fulfills all of the requirements abo
 
 4. Once Django is fully installed, create a new Django project: `django-admin startproject myproject`. [Refer to the Django tutorial](https://docs.djangoproject.com/en/3.2/intro/tutorial01/) to understand how everything fits together.
 
-5. Within your project, add the Passive Data Kit app by checking it out from Git: `git clone https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit` (if you are not using Git to track changes yet) or `git submodule add https://github.com/audacious-software/PassiveDataKit-Django.git passive_data_kit` (if you would like PDK added as a submodule dependency).
+5. Within your project, add the Passive Data Kit app by checking it out from Git: `git clone https://github.com/bric-digital/PassiveDataKit-Django.git passive_data_kit` (if you are not using Git to track changes yet) or `git submodule add https://github.com/bric-digital/PassiveDataKit-Django.git passive_data_kit` (if you would like PDK added as a submodule dependency).
 
 6. If you have not already created a `requirements.txt` file to track your installed Python dependencies, create a new one with the contents:
   
@@ -176,7 +176,7 @@ Some export jobs may take hours or days to run, which is the reason for a backgr
 
 When a report job is finished, PDK typically sends an e-mail to requestor with a link to download the output. Since it is pretty common for jobs to generate export files on the order of tens or hundreds of megabytes, sending those files as attachments is rarely feasible.
 
-By default, PDK provides a number of reports for standard PDK data types (e.g. `pdk-location`, `pdk-system-status`, etc.). You can inspect the code that implements the export job by choosing one of the data types in the [`generators`](https://github.com/audacious-software/PassiveDataKit-Django/tree/main/generators) folder and inspecting the `compile_report` method that is responsible for translating the raw JSON data into something more structured for analysis. Note that in addition to the standard reports that are included in the PDK Django app, this mechanism may be extended by creating a `pdk_api.py` file in *another* Django app, and implementing the `compile_report` function using the default PDK implementation in its own [`pdk_api.py`](https://github.com/audacious-software/PassiveDataKit-Django/blob/main/pdk_api.py) as an example.
+By default, PDK provides a number of reports for standard PDK data types (e.g. `pdk-location`, `pdk-system-status`, etc.). You can inspect the code that implements the export job by choosing one of the data types in the [`generators`](https://github.com/bric-digital/PassiveDataKit-Django/tree/main/generators) folder and inspecting the `compile_report` method that is responsible for translating the raw JSON data into something more structured for analysis. Note that in addition to the standard reports that are included in the PDK Django app, this mechanism may be extended by creating a `pdk_api.py` file in *another* Django app, and implementing the `compile_report` function using the default PDK implementation in its own [`pdk_api.py`](https://github.com/bric-digital/PassiveDataKit-Django/blob/main/pdk_api.py) as an example.
 
 ### pdk_run_status_checks
 
@@ -200,7 +200,7 @@ By default, PDK provides a number of reports for standard PDK data types (e.g. `
 
 ## License and Other Project Information
 
-Copyright 2015-2024 Audacious Software
+Copyright 2015-2025 Behavioral Research Innovation Center
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
