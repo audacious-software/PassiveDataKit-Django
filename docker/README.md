@@ -10,17 +10,17 @@ This implementation may also be used to stand up a *basic* Passive Data Kit serv
 
 1. Check out the Passive Data Kit repository:
 
-    ```git clone https://github.com/audacious-software/PassiveDataKit-Django.git```
+    ```git clone https://github.com/bric-digital/PassiveDataKit-Django.git```
 
 2. Navigate to the included `docker` folder and copy the `template.env` file to `.env` in the same directory.
 
     ```cp template.env .env```
 
-3. Open the [`.env`](https://github.com/audacious-software/PassiveDataKit-Django/blob/main/docker/template.env) file and update the relevant options as needed. Note that if you are serving static files using a web server such as Apache or Nginx, the `DJANGO_MEDIA_FILES` and `DJANGO_STATIC_FILES` paths should reflect where you checked out the Git repository.
+3. Open the [`.env`](https://github.com/bric-digital/PassiveDataKit-Django/blob/main/docker/template.env) file and update the relevant options as needed. Note that if you are serving static files using a web server such as Apache or Nginx, the `DJANGO_MEDIA_FILES` and `DJANGO_STATIC_FILES` paths should reflect where you checked out the Git repository.
 
-4. This configuration is intended to run with an Nginx web server on the container host providing SSL and static file serving services. An example site definition is provided in the [`host/host.nginx`](https://github.com/audacious-software/PassiveDataKit-Django/blob/main/docker/host/host.nginx) file to illustrate both how to map to the relevant static file path, and how to set up a proxy tunnel to the application server on the Docker container.
+4. This configuration is intended to run with an Nginx web server on the container host providing SSL and static file serving services. An example site definition is provided in the [`host/host.nginx`](https://github.com/bric-digital/PassiveDataKit-Django/blob/main/docker/host/host.nginx) file to illustrate both how to map to the relevant static file path, and how to set up a proxy tunnel to the application server on the Docker container.
 
-5. If you are running this server on your local machine, open the [`run.sh`](https://github.com/audacious-software/PassiveDataKit-Django/blob/main/docker/run.sh) file and comment out the lines containing with `gunicorn` and uncomment the lines below to use Django's built-in web server:
+5. If you are running this server on your local machine, open the [`run.sh`](https://github.com/bric-digital/PassiveDataKit-Django/blob/main/docker/run.sh) file and comment out the lines containing with `gunicorn` and uncomment the lines below to use Django's built-in web server:
 
    ```python3 manage.py runserver 0.0.0.0:$WEB_PORT```
 
@@ -60,4 +60,4 @@ If you see a `pdk-docker-test` data point in the table, the background processin
 
 ## Contact Us
 
-This is an early-stage implementation, so if you have any questions or comments, please mail them to [chris@audacious-software.com](mailto:chris@audacious-software.com).
+This is an early-stage implementation, so if you have any questions or comments, please mail them to [chris@bric.digital](mailto:chris@bric.digital).
