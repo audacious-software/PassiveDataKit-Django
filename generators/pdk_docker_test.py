@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long
+
 def generator_name(identifier): # pylint: disable=unused-argument
     return 'Docker Setup Test Point'
 
