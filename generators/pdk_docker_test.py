@@ -7,8 +7,8 @@ def update_data_type_definition(definition):
     if 'message' in definition:
         definition['message']['pdk_variable_name'] = 'Message'
         definition['message']['pdk_variable_description'] = 'Should always read "If you see this data point in the data points table, your Docker setup was a success."'
-        definition['level']['pdk_codebook_group'] = 'Passive Data Kit: Docker Setup'
-        definition['level']['pdk_codebook_order'] = 0
+        definition['message']['pdk_codebook_group'] = 'Passive Data Kit: Docker Setup'
+        definition['message']['pdk_codebook_order'] = 0
 
     del definition['observed']
 
